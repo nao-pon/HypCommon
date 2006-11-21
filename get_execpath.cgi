@@ -1,4 +1,3 @@
-#!/usr/bin/env php
 <?php
 $dat = $path = "";
 
@@ -23,7 +22,7 @@ if ($out)
 }
 $dat .= "?>\n";
 
-$filename = "execpath.inc.php";
+$filename = dirname(__FILE__)."/execpath.inc.php";
 
 if ($fp = @fopen($filename,"wb"))
 {

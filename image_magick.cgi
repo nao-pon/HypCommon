@@ -1,5 +1,4 @@
-#!/usr/bin/env php
-<?
+<?php
 error_reporting(0);
 
 if (php_sapi_name() == "cli")
@@ -167,5 +166,3 @@ else if ($m == "rj" || $m == "ri")
 
 
 exit($ret);
-
-?>
