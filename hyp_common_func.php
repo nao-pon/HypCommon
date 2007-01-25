@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.1 2006/11/21 13:08:30 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.2 2007/01/25 05:40:23 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -780,15 +780,14 @@ EOF;
 				{
 					foreach($filters as $reg => $point)
 					{
-						$counts[3] += (count(preg_split($reg,$dat)) - 1) * $point;
-						//echo $dat."<br>".$reg.": ".$counts[3]."<hr>";
+						$tmp['filter'] += (count(preg_split($reg,$dat)) - 1) * $point;
 					}
 				}
 			}
-			$counts[0] += $tmp['a'];
-			$counts[1] += $tmp['bb'];
-			$counts[2] += $tmp['url'];
-			$counts[3] += $tmp['filter'];
+			$counts[0] = max($counts[0], $tmp['a']);
+			$counts[1] = max($counts[1], $tmp['bb']);
+			$counts[2] = max($counts[2], $tmp['url']);
+			$counts[3] = max($counts[3], $tmp['filter']);
 		}
 		return $counts;
 	}
