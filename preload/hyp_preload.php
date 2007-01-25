@@ -70,7 +70,7 @@ class HypCommonPreLoad extends XCube_ActionFilter {
 		// Set Query Words
 		if ($this->use_set_query_words) {
 			HypCommonFunc::set_query_words($this->q_word, $this->q_word2, $this->se_name, $this->kakasi_cache_dir);
-			if ($this->use_words_highlight && constant($this->q_word2)) {
+			if ($this->use_words_highlight) {
 				ob_start(array(&$this, 'obFilter'));
 			}
 		}
