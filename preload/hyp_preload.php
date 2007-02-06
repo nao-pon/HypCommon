@@ -57,8 +57,8 @@ class HypCommonPreLoad extends XCube_ActionFilter {
 			// 同じURLが1行に3回 11pt
 			"/((?:ht|f)tps?:\/\/[!~*'();\/?:\@&=+\$,%#\w.-]+)[^!~*'();\/?:\@&=+\$,%#\w.-]+?\\1[^!~*'();\/?:\@&=+\$,%#\w.-]+?\\1/i" => 11,
 			
-			// 50文字以上の英数文字のみで構成されている 15pt
-			"/^[\x20-\x7e\s]{50,}$/" => 15
+			// 100文字以上の英数文字のみで構成されている 15pt
+			"/^[\x20-\x7e\s]{100,}$/" => 15
 		);
 
 
@@ -109,7 +109,7 @@ class HypCommonPreLoad extends XCube_ActionFilter {
 				// Default スパムサイト定義読み込み 30pt
 				$datfile = dirname(dirname(__FILE__)) . '/spamsites.dat';
 				if (file_exists($datfile)) {
-					HypCommonFunc::PostSpam_filter("#https?://(".str_replace(array("\r","\n"),'',trim(join("|",file($datfile)))).")#i", 30);
+					HypCommonFunc::PostSpam_filter("#((ht|f)tps?://(.+\.)*|@)(".str_replace(array('.',"\r","\n"),array('\.',''),trim(join("|",file($datfile)))).")#i", 30);
 				}
 				
 				// 判定
@@ -120,7 +120,7 @@ class HypCommonPreLoad extends XCube_ActionFilter {
 					$level = HypCommonFunc::get_postspam_avr($this->post_spam_a, $this->post_spam_bb, $this->post_spam_url);
 					if ($level > $spamlev) {
 						if ($this->use_mail_notify) $this->sendMail($level);
-						header("Location: ".XOOPS_URL."/");
+						//header("Location: ".XOOPS_URL."/");
 						exit();
 					}
 				}
