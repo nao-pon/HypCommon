@@ -15,9 +15,8 @@ class XCube_ActionFilter
 }
 }
 
-class HypCommonPreLoad extends XCube_ActionFilter {
+class HypCommonPreLoadBase extends XCube_ActionFilter {
 	
-	// 各種設定
 	var $use_set_query_words = 1;   // 検索ワードを定数にセット
 	var $use_words_highlight = 1;   // 検索ワードをハイライト表示
 	
@@ -39,29 +38,10 @@ class HypCommonPreLoad extends XCube_ActionFilter {
 	var $q_word  = 'XOOPS_QUERY_WORD';         // 検索ワード
 	var $q_word2 = 'XOOPS_QUERY_WORD2';        // 検索ワード分かち書き
 	var $se_name = 'XOOPS_SEARCH_ENGINE_NAME'; // 検索元名
-	var $kakasi_cache_dir = '';                // コンストラクタ内で設定
+	var $kakasi_cache_dir = '';   
 	
 	// コンストラクタ
-	function HypCommonPreLoad (& $controller) {
-		
-		/*
-			KAKASI のパスは、XOOPS_TRUST_PATH/class/hyp_common/hyp_kakasi.php で
-			設定する。規定値: '/usr/bin/kakasi'
-		*/
-		
-		// KAKASI での分かち書き結果のキャッシュ先
-		$this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
-		
-		// POST SPAM のポイント加算設定
-		$this->post_spam_rules = array(
-			// 同じURLが1行に3回 11pt
-			"/((?:ht|f)tps?:\/\/[!~*'();\/?:\@&=+\$,%#\w.-]+)[^!~*'();\/?:\@&=+\$,%#\w.-]+?\\1[^!~*'();\/?:\@&=+\$,%#\w.-]+?\\1/i" => 11,
-			
-			// 100文字以上の英数文字のみで構成されている 15pt
-			'/^[\x00-\x7f\s]{100,}$/' => 15
-		);
-
-
+	function HypCommonPreLoadBase (& $controller) {
 		parent::XCube_ActionFilter($controller);
 	}
 	
@@ -173,5 +153,62 @@ class HypCommonPreLoad extends XCube_ActionFilter {
 		$xoopsMailer->reset();
 
 	}
+}
+
+if (file_exists(XOOPS_ROOT_PATH.'/class/hyp_common/hyp_preload.conf.php')) {
+	include_once(XOOPS_ROOT_PATH.'/class/hyp_common/hyp_preload.conf.php');
+} else if (file_exists(dirname(__FILE__).'/hyp_preload.conf.php')) {
+	include_once(dirname(__FILE__).'/hyp_preload.conf.php');
+}
+
+if (! class_exists('HypCommonPreLoad')) {
+class HypCommonPreLoad extends HypCommonPreLoadBase {
+	
+	function HypCommonPreLoad (& $controller) {
+		
+		// 各種設定
+		$this->use_set_query_words = 1;   // 検索ワードを定数にセット
+		$this->use_words_highlight = 1;   // 検索ワードをハイライト表示
+		
+		$this->use_proxy_check = 1;       // POST時プロキシチェックする
+		$this->no_proxy_check = '/^(127\.0\.0\.1|192\.168\.1\.)/'; // 除外IP
+		
+		$this->use_dependence_filter = 1; // 機種依存文字フィルター
+		
+		$this->use_post_spam_filter = 1;  // POST SPAM フィルター
+		$this->use_mail_notify = 1;       // POST SPAM メール通知
+		$this->post_spam_a   = 1;         // <a> タグ 1個あたりのポイント
+		$this->post_spam_bb  = 1;         // BBリンク 1個あたりのポイント
+		$this->post_spam_url = 1;         // URL      1個あたりのポイント
+		$this->post_spam_user  = 30;      // POST SPAM 閾値: ログインユーザー
+		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
+	
+		// 検索ワード定数名
+		$this->q_word  = 'XOOPS_QUERY_WORD';         // 検索ワード
+		$this->q_word2 = 'XOOPS_QUERY_WORD2';        // 検索ワード分かち書き
+		$this->se_name = 'XOOPS_SEARCH_ENGINE_NAME'; // 検索元名
+	
+		// KAKASI のパスは、XOOPS_TRUST_PATH/class/hyp_common/hyp_kakasi.php で
+		// 設定する。規定値: '/usr/bin/kakasi'
+		
+		// KAKASI での分かち書き結果のキャッシュ先
+		$this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
+		
+		// POST SPAM のポイント加算設定
+		$this->post_spam_rules = array(
+			// 同じURLが1行に3回 11pt
+			"/((?:ht|f)tps?:\/\/[!~*'();\/?:\@&=+\$,%#\w.-]+)[^!~*'();\/?:\@&=+\$,%#\w.-]+?\\1[^!~*'();\/?:\@&=+\$,%#\w.-]+?\\1/i" => 11,
+			
+			// 100文字以上の英数文字のみで構成されている 15pt
+			'/^[\x00-\x7f\s]{100,}$/' => 15,
+			
+			// 無効な文字コードがある 30pt
+			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f\xff]+/' => 30
+		);
+		
+		parent::HypCommonPreLoadBase($controller);
+		
+	}
+}
 }
 ?>
