@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.2 2007/01/25 05:40:23 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.3 2007/02/13 05:09:05 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -769,6 +769,9 @@ EOF;
 			}
 			else
 			{
+				// NULLバイト削除
+				$dat = str_replace("\0", '', $dat);
+				
 				// <a> タグの個数
 				$tmp['a'] = count(preg_split("/<a.+?\/a>/i",$dat)) - 1;
 				// [url] タグの個数
