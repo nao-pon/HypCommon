@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.3 2007/02/13 05:09:05 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.4 2007/02/20 12:29:32 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -254,7 +254,7 @@ EOF;
 		}
 		else
 		{
-			if (!HypCommonFunc::chech_memory4gd($org_w,$org_h))
+			if (!HypCommonFunc::check_memory4gd($org_w,$org_h))
 			{
 				// メモリー制限に引っ掛かりそう。（マージン 1MB）
 				return $o_file;
@@ -462,7 +462,7 @@ EOF;
 		return $match[0];
 	}
 	
-	function chech_memory4gd($w,$h)
+	function check_memory4gd($w,$h)
 	{
 		// GDで処理可能なメモリーサイズ
 		static $memory_limit = NULL;
@@ -470,15 +470,17 @@ EOF;
 		{
 			$memory_limit = HypCommonFunc::return_bytes(ini_get('memory_limit'));
 		}
-		// ビットマップ展開時のメモリー上のサイズ
-		$bitmap_size = $w * $h * 3 + 54;
-		
-		if ($bitmap_size > $memory_limit - memory_get_usage() - (1 * 1024 * 1024))
+		if ($memory_limit)
 		{
-			// メモリー制限に引っ掛かりそう。（マージン 1MB）
-			return false;
+			// ビットマップ展開時のメモリー上のサイズ
+			$bitmap_size = $w * $h * 3 + 54;
+			
+			if ($bitmap_size > $memory_limit - memory_get_usage() - (1 * 1024 * 1024))
+			{
+				// メモリー制限に引っ掛かりそう。（マージン 1MB）
+				return false;
+			}
 		}
-		
 		return true;
 	}
 	
@@ -563,7 +565,7 @@ EOF;
 			// GD を使用
 			
 			// メモリーチェック
-			if (!HypCommonFunc::chech_memory4gd($w,$h)) return false;
+			if (!HypCommonFunc::check_memory4gd($w,$h)) return false;
 			
 			$angle = 360 - $angle;
 			if (($in = imageCreateFromJpeg($src)) === false) {
@@ -890,19 +892,21 @@ EOF;
 	
 	// php.ini のサイズ記述をバイト値に変換
 	function return_bytes($val) {
-	   $val = trim($val);
-	   $last = strtolower($val{strlen($val)-1});
-	   switch($last) {
-	       // 'G' は、PHP 5.1.0 より有効となる
-	       case 'g':
-	           $val *= 1024;
-	       case 'm':
-	           $val *= 1024;
-	       case 'k':
-	           $val *= 1024;
-	   }
-	
-	   return $val;
+		$val = trim($val);
+		if ($val = '-1') $val = '';
+		if ($val) {
+			$last = strtolower($val{strlen($val)-1});
+			switch($last) {
+				// 'G' は、PHP 5.1.0 より有効となる
+				case 'g':
+					$val *= 1024;
+				case 'm':
+					$val *= 1024;
+				case 'k':
+					$val *= 1024;
+		   }
+		}
+		return $val;
 	}
 }
 
@@ -1228,7 +1232,8 @@ function memory_get_usage()
 	if ( substr(PHP_OS,0,3) == 'WIN')
 	{
 		exec( 'tasklist /FI "PID eq ' . getmypid() . '" /FO LIST', $output );
-		return preg_replace( '/[\D]/', '', $output[5] ) * 1024;
+		$mem = (empty($output[5]))? 0 : intval(preg_replace( '/[\D]/', '', $output[5] ));
+		$mem = $mem * 1024;
 	}
 	else
 	{
@@ -1238,9 +1243,11 @@ function memory_get_usage()
 		$pid = getmypid();
 		exec("ps -eo%mem,rss,pid | grep $pid", $output);
 		$output = explode("  ", $output[0]);
+		$mem = (empty($output[1]))? 0 : intval($output[1]);
 		//rss is given in 1024 byte units
-		return $output[1] * 1024;
+		$mem = $mem * 1024;
 	}
+	return $mem;
 }
 }
 
