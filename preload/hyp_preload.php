@@ -17,28 +17,30 @@ class XCube_ActionFilter
 
 class HypCommonPreLoadBase extends XCube_ActionFilter {
 	
-	var $use_set_query_words = 1;   // 検索ワードを定数にセット
-	var $use_words_highlight = 1;   // 検索ワードをハイライト表示
+	var $use_set_query_words;  // 検索ワードを定数にセット
+	var $use_words_highlight;  // 検索ワードをハイライト表示
 	
-	var $use_proxy_check = 1;       // POST時プロキシチェックする
-	var $no_proxy_check = '/^(127\.0\.0\.1|192\.168\.1\.)/'; // 除外IP
+	var $use_proxy_check;      // POST時プロキシチェックする
+	var $no_proxy_check;       // 除外IP
 	
-	var $use_dependence_filter = 1; // 機種依存文字フィルター
+	var $use_dependence_filter;// 機種依存文字フィルター
 	
-	var $use_post_spam_filter = 1;  // POST SPAM フィルター
-	var $use_mail_notify = 1;       // POST SPAM メール通知
-	var $post_spam_a   = 1;         // <a> タグ 1個あたりのポイント
-	var $post_spam_bb  = 1;         // BBリンク 1個あたりのポイント
-	var $post_spam_url = 1;         // URL      1個あたりのポイント
-	var $post_spam_user  = 30;      // POST SPAM 閾値: ログインユーザー
-	var $post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
-	var $post_spam_rules = array(); // コンストラクタ内で設定
+	var $use_post_spam_filter; // POST SPAM フィルター
+	var $use_mail_notify;      // POST SPAM メール通知
+	var $post_spam_a;          // <a> タグ 1個あたりのポイント
+	var $post_spam_bb;         // BBリンク 1個あたりのポイント
+	var $post_spam_url;        // URL      1個あたりのポイント
+	var $post_spam_host;       // Spam HOST の加算ポイント
+	var $post_spam_word;       // Spam Word の加算ポイント
+	var $post_spam_user;       // POST SPAM 閾値: ログインユーザー
+	var $post_spam_guest;      // POST SPAM 閾値: ゲスト
+	var $post_spam_rules;      // コンストラクタ内で設定
 
 	// 検索ワード定数名
-	var $q_word  = 'XOOPS_QUERY_WORD';         // 検索ワード
-	var $q_word2 = 'XOOPS_QUERY_WORD2';        // 検索ワード分かち書き
-	var $se_name = 'XOOPS_SEARCH_ENGINE_NAME'; // 検索元名
-	var $kakasi_cache_dir = '';   
+	var $q_word;               // 検索ワード
+	var $q_word2;              // 検索ワード分かち書き
+	var $se_name;              // 検索元名
+	var $kakasi_cache_dir;   
 	
 	// コンストラクタ
 	function HypCommonPreLoadBase (& $controller) {
@@ -80,16 +82,57 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					}
 				}
 				
+				// 無効なフィールド定義
+				if (is_array($this->ignore_fileds)) {
+					HypCommonFunc::PostSpam_filter(array('ignore_fileds' => $this->ignore_fileds), $this->post_spam_filed);
+				}
+				
 				// PukiWikiMod のスパム定義読み込み 30pt
 				$datfile = XOOPS_ROOT_PATH.'/modules/pukiwiki/cache/spamdeny.dat';
 				if (file_exists($datfile)) {
 					HypCommonFunc::PostSpam_filter("/".trim(join("",file($datfile)))."/i", 30);
 				}
 				
-				// Default スパムサイト定義読み込み 30pt
+				// Default スパムサイト定義読み込み
 				$datfile = dirname(dirname(__FILE__)) . '/spamsites.dat';
 				if (file_exists($datfile)) {
-					HypCommonFunc::PostSpam_filter("#((ht|f)tps?://(.+\.)*|@)(".str_replace(array('.',"\r","\n"),array('\.',''),trim(join("|",file($datfile)))).")#i", 30);
+					$cachefile = XOOPS_TRUST_PATH . '/cache/hyp_spamsites.dat';
+					if (filemtime($datfile) > @ filemtime($cachefile)) {
+						$regs = HypCommonFunc::get_reg_pattern(array_map('trim',file($datfile)));
+						if ($fp = @ fopen($cachefile, 'wb')) {
+							if (flock($fp, LOCK_EX)) {
+								fwrite($fp, $regs);
+								flock($fp, LOCK_UN);
+							}
+							fclose($fp);
+						}
+					} else {
+						$regs = join('', file($cachefile));
+					}
+					foreach(explode("\x08", $regs) as $reg) {
+						HypCommonFunc::PostSpam_filter('/((ht|f)tps?:\/\/(.+\.)*|@)' . $reg . '/i', $this->post_spam_host);
+					}
+				}
+
+				// Default スパムワード定義読み込み
+				$datfile = dirname(dirname(__FILE__)) . '/spamwords.dat';
+				if (file_exists($datfile)) {
+					$cachefile = XOOPS_TRUST_PATH . '/cache/hyp_spamwords.dat';
+					if (filemtime($datfile) > @ filemtime($cachefile)) {
+						$regs = HypCommonFunc::get_reg_pattern(array_map('trim',file($datfile)));
+						if ($fp = @ fopen($cachefile, 'wb')) {
+							if (flock($fp, LOCK_EX)) {
+								fwrite($fp, $regs);
+								flock($fp, LOCK_UN);
+							}
+							fclose($fp);
+						}
+					} else {
+						$regs = join('', file($cachefile));
+					}
+					foreach(explode("\x08", $regs) as $reg) {
+						HypCommonFunc::PostSpam_filter('/' . $reg . '/i', $this->post_spam_word);
+					}
 				}
 				
 				// 判定
@@ -180,6 +223,9 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_a   = 1;         // <a> タグ 1個あたりのポイント
 		$this->post_spam_bb  = 1;         // BBリンク 1個あたりのポイント
 		$this->post_spam_url = 1;         // URL      1個あたりのポイント
+		$this->post_spam_host  = 30;      // Spam HOST の加算ポイント
+		$this->post_spam_word  = 10;      // Spam Word の加算ポイント
+		$this->post_spam_filed = 15;      // Spam 無効フィールドの加算ポイント
 		$this->post_spam_user  = 30;      // POST SPAM 閾値: ログインユーザー
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
 	
@@ -199,11 +245,16 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			// 同じURLが1行に3回 11pt
 			"/((?:ht|f)tps?:\/\/[!~*'();\/?:\@&=+\$,%#\w.-]+)[^!~*'();\/?:\@&=+\$,%#\w.-]+?\\1[^!~*'();\/?:\@&=+\$,%#\w.-]+?\\1/i" => 11,
 			
-			// 100文字以上の英数文字のみで構成されている 15pt
-			'/^[\x00-\x7f\s]{100,}$/' => 15,
+			// 65文字以上の英数文字のみで構成されている 15pt
+			'/^[\x00-\x7f\s]{65,}$/' => 15,
 			
 			// 無効な文字コードがある 30pt
 			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f\xff]+/' => 30
+		);
+		
+		// 無効なフィールド
+		$this->ignore_fileds = array(
+			'url' => array('newbb/post.php', 'pukiwiki/index.php', 'comment_post.php'),
 		);
 		
 		parent::HypCommonPreLoadBase($controller);
