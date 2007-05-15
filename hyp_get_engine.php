@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_get_engine.php,v 1.1 2006/11/21 13:08:30 nao-pon Exp $
+// $Id: hyp_get_engine.php,v 1.2 2007/05/15 06:48:48 nao-pon Exp $
 // HypGetQueryWord Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -162,7 +162,7 @@ class HypGetQueryWord
 		//simplify_urls($body);
 		
 		// 外部リンクの場合 class="ext" を付加
-		$body = preg_replace("/(<a[^>]+?)(href=(\"|')?(?!https?:\/\/".$_SERVER["HTTP_HOST"].")http)/","$1class=\"ext\" $2",$body);
+		$body = preg_replace("/(<a[^>]+?href=(?:\"|')?(?!https?:\/\/".$_SERVER["HTTP_HOST"].")http[^>]+)>/","$1 class=\"ext\">",$body);
 		
 		if (!$q_word || !$body) return $body;
 		
@@ -195,8 +195,8 @@ class HypGetQueryWord
 			$s_key = htmlspecialchars($key);
 			$search_word .= " <strong class=\"word$id\">$s_key</strong>";
 			$pattern = ($s_key{0} == '&') ?
-				"/(<head.*?<\/head>|<textarea.*?<\/textarea>|<script.*?<\/script>|<[^>]*>)|($pattern)/s" :
-				"/(<head.*?<\/head>|<textarea.*?<\/textarea>|<script.*?<\/script>|<[^>]*>|&(?:#[0-9]+|#x[0-9a-f]+|[0-9a-zA-Z]+);)|($pattern)/s";
+				"/(<head.*?<\/head>|<textarea.*?<\/textarea>|<script.*?<\/script>|<[^>]*>)|($pattern)/sS" :
+				"/(<head.*?<\/head>|<textarea.*?<\/textarea>|<script.*?<\/script>|<[^>]*>|&(?:#[0-9]+|#x[0-9a-f]+|[0-9a-zA-Z]+);)|($pattern)/sS";
 			$body = preg_replace_callback($pattern,
 				create_function('$arr',
 					'return $arr[1] ? $arr[1] : "<strong class=\"word'.$id.'\">{$arr[2]}</strong>";'),$body);
