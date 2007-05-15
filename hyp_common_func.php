@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.4 2007/02/20 12:29:32 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.5 2007/05/15 06:50:28 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -761,7 +761,7 @@ EOF;
 		if (is_null($filters)) {$filters = HypCommonFunc::PostSpam_filter();}
 		$counts = array();
 		$counts[0] = $counts[1] = $counts[2] = $counts[3] = 0;
-		foreach($post as $dat)
+		foreach($post as $key => $dat)
 		{
 			$tmp = array();
 			$tmp['a'] = $tmp['bb'] = $tmp['url'] = $tmp['filter'] = 0;
@@ -785,7 +785,17 @@ EOF;
 				{
 					foreach($filters as $reg => $point)
 					{
-						$tmp['filter'] += (count(preg_split($reg,$dat)) - 1) * $point;
+						if (is_array($reg)) {
+							if (isset($reg['ignore_filters'])) {
+								foreach($reg['ignore_filters'] as $postkey => $target) {
+									if ($postkey == $key && preg_match('/'.preg_quote($target,'/').'$/',$_SERVER['PHP_SELF'])){
+										$tmp['filter'] += $point;
+									}
+								}
+							}
+						} else {
+							$tmp['filter'] += (count(preg_split($reg,$dat)) - 1) * $point;
+						}
 					}
 				}
 			}
@@ -908,6 +918,105 @@ EOF;
 		}
 		return $val;
 	}
+
+	// 配列から正規表現を得る
+	function get_reg_pattern(& $words, $minlen = 1)
+	{
+		$reg_words = array();
+
+		foreach ($words as $word)
+		{
+			if (strlen($word) >= $minlen)
+				$reg_words[] = $word;
+		}
+
+		if (count($reg_words) == 0)
+		{
+			$result = '(?!)';
+		}
+		else
+		{
+			$reg_words = array_unique($reg_words);
+			sort($reg_words, SORT_STRING);
+
+			$result = HypCommonFunc::get_reg_pattern_sub($reg_words, 0, count($reg_words), 0);
+		}
+		
+		return $result;
+	}
+
+	function get_reg_pattern_sub(& $words, $start, $end, $pos)
+	{
+		static $lev = 0;
+		
+		if ($end == 0) return '(?!)';
+		
+		$lev ++;
+		
+		$result = '';
+		$count = $i = $j = 0;
+		$x = (mb_strlen($words[$start]) <= $pos);
+		if ($x) { ++$start; }
+		
+		for ($i = $start; $i < $end; $i = $j)
+		{
+			$char = mb_substr($words[$i], $pos, 1);
+			for ($j = $i; $j < $end; $j++)
+			{
+				if (mb_substr($words[$j], $pos, 1) != $char) { break; }
+			}
+			if ($i != $start)
+			{
+				if ($lev === 1)
+				{
+					$result .= "\x08";
+				}
+				else
+				{
+					$result .= '|';
+				}
+				
+			}
+			if ($i >= ($j - 1))
+			{
+				$result .= str_replace(' ', '\\ ', preg_quote(mb_substr($words[$i], $pos), '/'));
+			}
+			else
+			{
+				$result .= str_replace(' ', '\\ ', preg_quote($char, '/')) .
+					HypCommonFunc::get_reg_pattern_sub($words, $i, $j, $pos + 1);
+			}
+			
+			++$count;
+		}
+		if ($lev === 1)
+		{
+			$limit = 1024 * 30; //マージンを持たせて 30kb で分割
+			$_result = "";
+			$size = 0;
+			foreach(explode("\x08",$result) as $key)
+			{
+				if (strlen($_result.$key) - $size > $limit)
+				{
+					$_result .= ")\x08(?:".$key;
+					$size = strlen($_result);
+				}
+				else
+				{
+					$_result .= ($_result ? "|" : "").$key;
+				}
+			}
+			$result = '(?:' . $_result . ')';
+		}
+		else
+		{
+			if ($x or $count > 1) { $result = '(?:' . $result . ')'; }
+			if ($x) { $result .= '?'; }
+		}
+		$lev --;
+		return $result;
+	}
+
 }
 
 /*
