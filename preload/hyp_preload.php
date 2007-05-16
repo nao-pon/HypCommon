@@ -84,7 +84,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				
 				// 無効なフィールド定義
 				if (is_array($this->ignore_fileds)) {
-					HypCommonFunc::PostSpam_filter(array('ignore_fileds' => $this->ignore_fileds), $this->post_spam_filed);
+					HypCommonFunc::PostSpam_filter('array_rule', array('ignore_fileds' => array($this->ignore_fileds, $this->post_spam_filed)));
 				}
 				
 				// PukiWikiMod のスパム定義読み込み 30pt
@@ -225,7 +225,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_url = 1;         // URL      1個あたりのポイント
 		$this->post_spam_host  = 30;      // Spam HOST の加算ポイント
 		$this->post_spam_word  = 10;      // Spam Word の加算ポイント
-		$this->post_spam_filed = 15;      // Spam 無効フィールドの加算ポイント
+		$this->post_spam_filed = 16;      // Spam 無効フィールドの加算ポイント
 		$this->post_spam_user  = 30;      // POST SPAM 閾値: ログインユーザー
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
 	

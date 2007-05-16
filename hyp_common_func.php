@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.5 2007/05/15 06:50:28 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.6 2007/05/16 00:04:23 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -785,11 +785,13 @@ EOF;
 				{
 					foreach($filters as $reg => $point)
 					{
-						if (is_array($reg)) {
-							if (isset($reg['ignore_filters'])) {
-								foreach($reg['ignore_filters'] as $postkey => $target) {
-									if ($postkey == $key && preg_match('/'.preg_quote($target,'/').'$/',$_SERVER['PHP_SELF'])){
-										$tmp['filter'] += $point;
+						if ($reg === 'array_rule') {
+							if (isset($point['ignore_fileds'])) {
+								foreach($point['ignore_fileds'][0] as $postkey => $targets) {
+									foreach($targets as $target) {
+										if (strtolower($postkey) === strtolower($key) && preg_match('/'.preg_quote($target,'/').'/i',$_SERVER['PHP_SELF'])){
+											$tmp['filter'] += $point['ignore_fileds'][1];
+										}
 									}
 								}
 							}
