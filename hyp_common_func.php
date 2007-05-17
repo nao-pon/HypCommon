@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.6 2007/05/16 00:04:23 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.7 2007/05/17 02:48:20 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -725,13 +725,11 @@ EOF;
 	}
 	
 	// 2ch BBQ あらしお断りシステム にリスティングされているかチェック
-	function IsBBQListed($safe_reg = '/^$/', $msg = false, $ip = NULL)
+	function IsBBQListed($safe_reg = '/^$/', $msg = true, $ip = NULL)
 	{
 		if (is_null($ip)) $ip = $_SERVER['REMOTE_ADDR'];
 		if(! preg_match($safe_reg, $ip))
 		{
-			if (!$msg) $msg = '公開プロキシ経由での投稿はできません。';
-			
 			$host = array_reverse(explode('.', $ip));
 			$addr = sprintf("%d.%d.%d.%d.niku.2ch.net",
 				$host[0],$host[1],$host[2],$host[3]);
@@ -742,11 +740,12 @@ EOF;
 	}
 	
 	// 2ch BBQ チェック用汎用関数
-	function BBQ_Check($safe_reg = "/^(127\.0\.0\.1)/", $msg = false, $ip = NULL)
+	function BBQ_Check($safe_reg = "/^(127\.0\.0\.1)/", $msg = true, $ip = NULL)
 	{
 		if ($_SERVER['REQUEST_METHOD'] == 'POST')
 		{
-			if ($_msg = HypCommonFunc::IsBBQListed($safe_reg, $msg, $ip))
+			$_msg = HypCommonFunc::IsBBQListed($safe_reg, $msg, $ip);
+			if ($_msg !== false)
 			{
 				exit ($_msg);
 			}
@@ -755,7 +754,7 @@ EOF;
 	}
 	
 	// POST SPAM Check
-	function PostSpam_Check($post)
+	function PostSpam_Check(& $post)
 	{
 		static $filters = NULL;
 		if (is_null($filters)) {$filters = HypCommonFunc::PostSpam_filter();}
@@ -787,10 +786,12 @@ EOF;
 					{
 						if ($reg === 'array_rule') {
 							if (isset($point['ignore_fileds'])) {
-								foreach($point['ignore_fileds'][0] as $postkey => $targets) {
+								foreach($point['ignore_fileds'][0] as $checkkey => $targets) {
 									foreach($targets as $target) {
-										if (strtolower($postkey) === strtolower($key) && preg_match('/'.preg_quote($target,'/').'/i',$_SERVER['PHP_SELF'])){
-											$tmp['filter'] += $point['ignore_fileds'][1];
+										if (strtolower($checkkey) === strtolower($key) && $post[$key] ){
+											if (!$target || preg_match('/'.preg_quote($target,'/').'/i',$_SERVER['PHP_SELF'])) {
+												$tmp['filter'] += $point['ignore_fileds'][1];												
+											}
 										}
 									}
 								}

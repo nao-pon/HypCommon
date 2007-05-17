@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_get_engine.php,v 1.2 2007/05/15 06:48:48 nao-pon Exp $
+// $Id: hyp_get_engine.php,v 1.3 2007/05/17 02:48:20 nao-pon Exp $
 // HypGetQueryWord Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -162,7 +162,7 @@ class HypGetQueryWord
 		//simplify_urls($body);
 		
 		// 外部リンクの場合 class="ext" を付加
-		$body = preg_replace("/(<a[^>]+?href=(?:\"|')?(?!https?:\/\/".$_SERVER["HTTP_HOST"].")http[^>]+)>/","$1 class=\"ext\">",$body);
+		$body = preg_replace("/(<a[^>]+?href=(?:\"|')?(?!https?:\/\/".$_SERVER["HTTP_HOST"].")http[^>]+)>/iS","$1 class=\"ext\">",$body);
 		
 		if (!$q_word || !$body) return $body;
 		
