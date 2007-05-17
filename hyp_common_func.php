@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.7 2007/05/17 02:48:20 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.8 2007/05/17 23:58:34 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -725,26 +725,28 @@ EOF;
 	}
 	
 	// 2ch BBQ あらしお断りシステム にリスティングされているかチェック
-	function IsBBQListed($safe_reg = '/^$/', $msg = true, $ip = NULL)
+	function IsBBQListed($safe_reg = '/^$/', $msg = true, $ip = NULL, $checker = array('list.dsbl.org', 'niku.2ch.net'))
 	{
 		if (is_null($ip)) $ip = $_SERVER['REMOTE_ADDR'];
 		if(! preg_match($safe_reg, $ip))
 		{
 			$host = array_reverse(explode('.', $ip));
-			$addr = sprintf("%d.%d.%d.%d.niku.2ch.net",
-				$host[0],$host[1],$host[2],$host[3]);
-			$addr = gethostbyname($addr);
-			if(preg_match("/^127\.0\.0/",$addr)) return $msg;
+			foreach($checker as $chk) {
+				$addr = sprintf("%d.%d.%d.%d.". $chk,
+					$host[0],$host[1],$host[2],$host[3]);
+				$addr = gethostbyname($addr);
+				if(preg_match("/^127\.0\.0/",$addr)) return $msg;
+			}
 		}
 		return false;
 	}
 	
 	// 2ch BBQ チェック用汎用関数
-	function BBQ_Check($safe_reg = "/^(127\.0\.0\.1)/", $msg = true, $ip = NULL)
+	function BBQ_Check($safe_reg = "/^(127\.0\.0\.1)/", $msg = true, $ip = NULL, $checker = array('list.dsbl.org', 'niku.2ch.net'))
 	{
 		if ($_SERVER['REQUEST_METHOD'] == 'POST')
 		{
-			$_msg = HypCommonFunc::IsBBQListed($safe_reg, $msg, $ip);
+			$_msg = HypCommonFunc::IsBBQListed($safe_reg, $msg, $ip, $checker);
 			if ($_msg !== false)
 			{
 				exit ($_msg);
@@ -754,8 +756,23 @@ EOF;
 	}
 	
 	// POST SPAM Check
-	function PostSpam_Check(& $post)
+	function PostSpam_Check($post, $encode)
 	{
+		// Key:excerpt があればトラックかも->文字コード変換
+		if (isset($post['excerpt']) && function_exists('mb_convert_variables')) {
+			if (isset($post['charset']) && $post['charset'] != '') {
+				// TrackBack Ping で指定されていることがある
+				// うまくいかない場合は自動検出に切り替え
+				if (mb_convert_variables($encode,
+				    $post['charset'], $post) !== $post['charset']) {
+					mb_convert_variables($encode, 'auto', $post);
+				}
+			} else if (! empty($post)) {
+				// 全部まとめて、自動検出／変換
+				mb_convert_variables($encode, 'auto', $post);
+			}
+		}
+		
 		static $filters = NULL;
 		if (is_null($filters)) {$filters = HypCommonFunc::PostSpam_filter();}
 		$counts = array();
@@ -790,7 +807,7 @@ EOF;
 									foreach($targets as $target) {
 										if (strtolower($checkkey) === strtolower($key) && $post[$key] ){
 											if (!$target || preg_match('/'.preg_quote($target,'/').'/i',$_SERVER['PHP_SELF'])) {
-												$tmp['filter'] += $point['ignore_fileds'][1];												
+												$tmp['filter'] += $point['ignore_fileds'][1];
 											}
 										}
 									}
@@ -819,11 +836,11 @@ EOF;
 	}
 	
 	// POST SPAM Check 汎用関数
-	function get_postspam_avr($alink=1,$bb=1,$url=1)
+	function get_postspam_avr($alink=1,$bb=1,$url=1,$encode='EUC-JP')
 	{
 		if ($_SERVER['REQUEST_METHOD'] == 'POST')
 		{
-			list($a_p,$bb_p,$url_p,$filter_p) = HypCommonFunc::PostSpam_Check($_POST);
+			list($a_p,$bb_p,$url_p,$filter_p) = HypCommonFunc::PostSpam_Check($_POST, $encode);
 			return $a_p * $alink + $bb_p * $bb + $url_p * $url + $filter_p;
 		}
 		else
@@ -1018,6 +1035,23 @@ EOF;
 		}
 		$lev --;
 		return $result;
+	}
+
+	function register_bad_ips( $ip = null )
+	{
+		if( empty( $ip ) ) $ip = $_SERVER['REMOTE_ADDR'] ;
+		if( empty( $ip ) ) return false ;
+	
+		$db = Database::getInstance() ;
+		$rs = $db->query( "SELECT conf_value FROM ".$db->prefix("config")." WHERE conf_name='bad_ips' AND conf_modid=0 AND conf_catid=1" ) ;
+		list( $bad_ips_serialized ) = $db->fetchRow( $rs ) ;
+		$bad_ips = unserialize( $bad_ips_serialized ) ;
+		$bad_ips[] = $ip ;
+	
+		$conf_value = addslashes( serialize( array_unique( $bad_ips ) ) ) ;
+		$db->queryF( "UPDATE ".$db->prefix("config")." SET conf_value='$conf_value' WHERE conf_name='bad_ips' AND conf_modid=0 AND conf_catid=1" ) ;
+	
+		return true ;
 	}
 
 }
