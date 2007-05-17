@@ -56,14 +56,19 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				ob_start(array(&$this, 'obFilter'));
 			}
 		}
+		
+		// スパムロボット用の罠を仕掛ける
+		if (! empty($this->post_spam_trap_set)) {
+			ob_start(array(&$this, 'trapFilter'));
+		}
 	}
 	
 	function postFilter() {
-		if (!empty($_POST)) {
+		if (! empty($_POST)) {
 			
 			// Proxy Check
 			if ($this->use_proxy_check) {
-				HypCommonFunc::BBQ_Check($this->no_proxy_check);
+				HypCommonFunc::BBQ_Check($this->no_proxy_check, $this->msg_proxy_check);
 			}
 			
 			// 機種依存文字フィルター
@@ -83,14 +88,17 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				}
 				
 				// 無効なフィールド定義
-				if (is_array($this->ignore_fileds)) {
+				if (! empty($this->post_spam_trap)) {
+					$this->ignore_fileds[$this->post_spam_trap] = array('');
+				}
+				if (is_array($this->ignore_fileds) && $this->ignore_fileds) {
 					HypCommonFunc::PostSpam_filter('array_rule', array('ignore_fileds' => array($this->ignore_fileds, $this->post_spam_filed)));
 				}
 				
-				// PukiWikiMod のスパム定義読み込み 30pt
+				// PukiWikiMod のスパム定義読み込み 31pt
 				$datfile = XOOPS_ROOT_PATH.'/modules/pukiwiki/cache/spamdeny.dat';
 				if (file_exists($datfile)) {
-					HypCommonFunc::PostSpam_filter("/".trim(join("",file($datfile)))."/i", 30);
+					HypCommonFunc::PostSpam_filter("/".trim(join("",file($datfile)))."/i", 31);
 				}
 				
 				// Default スパムサイト定義読み込み
@@ -145,6 +153,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 						if ($this->use_mail_notify) $this->sendMail($level);
 						//header("Location: ".XOOPS_URL."/");
 						exit();
+					} else {
+						if ($this->use_mail_notify > 1) $this->sendMail($level);
 					}
 				}
 			}
@@ -153,6 +163,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	
 	function obFilter( $s ) {
 		return HypGetQueryWord::word_highlight($s, constant($this->q_word2));
+	}
+
+	function trapFilter( $s ) {
+		return preg_replace('/<form[^>]+?method=("|\')post\\1[^>]*?>/isS' ,
+			"$0\n<input name=\"{$this->post_spam_trap}\" type=\"text\" size=\"1\" style=\"display:none;speak:none;\" />", $s);
 	}
 	
 	function sendMail ($spamlev) {
@@ -214,18 +229,23 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->use_words_highlight = 1;   // 検索ワードをハイライト表示
 		
 		$this->use_proxy_check = 1;       // POST時プロキシチェックする
-		$this->no_proxy_check = '/^(127\.0\.0\.1|192\.168\.1\.)/'; // 除外IP
+		$this->no_proxy_check  = '/^(127\.0\.0\.1|192\.168\.1\.)/'; // 除外IP
+		$this->msg_proxy_check = '公開プロキシ経由での投稿はできません。';
 		
 		$this->use_dependence_filter = 1; // 機種依存文字フィルター
 		
+		// POST SPAM
 		$this->use_post_spam_filter = 1;  // POST SPAM フィルター
-		$this->use_mail_notify = 1;       // POST SPAM メール通知
+		$this->use_mail_notify = 1;       // POST SPAM メール通知 0:なし, 1:SPAM判定のみ, 2:すべて
 		$this->post_spam_a   = 1;         // <a> タグ 1個あたりのポイント
 		$this->post_spam_bb  = 1;         // BBリンク 1個あたりのポイント
 		$this->post_spam_url = 1;         // URL      1個あたりのポイント
-		$this->post_spam_host  = 30;      // Spam HOST の加算ポイント
+		$this->post_spam_host  = 31;      // Spam HOST の加算ポイント
 		$this->post_spam_word  = 10;      // Spam Word の加算ポイント
-		$this->post_spam_filed = 16;      // Spam 無効フィールドの加算ポイント
+		$this->post_spam_filed = 31;      // Spam 無効フィールドの加算ポイント
+		$this->post_spam_trap  = '___url';// Spam 罠用無効フィールド名
+		$this->post_spam_trap_set = 1;    // 無効フィールドの罠を自動で仕掛ける
+		
 		$this->post_spam_user  = 30;      // POST SPAM 閾値: ログインユーザー
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
 	
@@ -248,13 +268,13 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			// 65文字以上の英数文字のみで構成されている 15pt
 			'/^[\x00-\x7f\s]{65,}$/' => 15,
 			
-			// 無効な文字コードがある 30pt
-			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f\xff]+/' => 30
+			// 無効な文字コードがある 31pt
+			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f\xff]+/' => 31
 		);
 		
-		// 無効なフィールド
+		// 無効なフィールド定義
 		$this->ignore_fileds = array(
-			'url' => array('newbb/post.php', 'pukiwiki/index.php', 'comment_post.php'),
+			// 'url' => array('newbb/post.php', 'comment_post.php'),
 		);
 		
 		parent::HypCommonPreLoadBase($controller);
