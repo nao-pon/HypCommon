@@ -148,13 +148,13 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				if (!$xoopsUserIsAdmin) {
 					// 閾値
 					$spamlev = (is_object($xoopsUser))? $this->post_spam_user : $this->post_spam_guest;
-					$level = HypCommonFunc::get_postspam_avr($this->post_spam_a, $this->post_spam_bb, $this->post_spam_url);
+					$level = HypCommonFunc::get_postspam_avr($this->post_spam_a, $this->post_spam_bb, $this->post_spam_url, $this->encode);
 					if ($level > $spamlev) {
-						if ($this->use_mail_notify) $this->sendMail($level);
-						//header("Location: ".XOOPS_URL."/");
+						if ($level > $this->post_spam_badip) { HypCommonFunc::register_bad_ips(); }
+						if ($this->use_mail_notify) { $this->sendMail($level); }
 						exit();
 					} else {
-						if ($this->use_mail_notify > 1) $this->sendMail($level);
+						if ($this->use_mail_notify > 1) { $this->sendMail($level); }
 					}
 				}
 			}
@@ -188,12 +188,29 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$info['REMOTE_ADDR'] = $_SERVER['REMOTE_ADDR'];
 		$info['SPAM LEVEL'] = $spamlev;
 		
-		
+		$_info = '';
 		foreach($info as $key => $value)
 			$_info .= $key . ': ' . $value . "\n";
 
 		$_info .= str_repeat('-', 30) . "\n";
-		$message = $_info . '$_POST :' . "\n" . print_r($_POST, TRUE);
+		
+		$post = $_POST;
+		// Key:excerpt があればトラックかも->文字コード変換
+		if (isset($post['excerpt']) && function_exists('mb_convert_variables')) {
+			if (isset($post['charset']) && $post['charset'] != '') {
+				// TrackBack Ping で指定されていることがある
+				// うまくいかない場合は自動検出に切り替え
+				if (mb_convert_variables($this->encode,
+				    $post['charset'], $post) !== $post['charset']) {
+					mb_convert_variables($this->encode, 'auto', $post);
+				}
+			} else if (! empty($post)) {
+				// 全部まとめて、自動検出／変換
+				mb_convert_variables($this->encode, 'auto', $post);
+			}
+		}
+		
+		$message = $_info . '$_POST :' . "\n" . print_r($post, TRUE);
 		
 		$config_handler =& xoops_gethandler('config');
 		$xoopsConfig =& $config_handler->getConfigsByCat(XOOPS_CONF);
@@ -225,6 +242,8 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 	function HypCommonPreLoad (& $controller) {
 		
 		// 各種設定
+		$this->encode = 'EUC-JP';         // XOOPSの文字エンコーディング
+		
 		$this->use_set_query_words = 1;   // 検索ワードを定数にセット
 		$this->use_words_highlight = 1;   // 検索ワードをハイライト表示
 		
@@ -242,12 +261,13 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_url = 1;         // URL      1個あたりのポイント
 		$this->post_spam_host  = 31;      // Spam HOST の加算ポイント
 		$this->post_spam_word  = 10;      // Spam Word の加算ポイント
-		$this->post_spam_filed = 31;      // Spam 無効フィールドの加算ポイント
+		$this->post_spam_filed = 51;      // Spam 無効フィールドの加算ポイント
 		$this->post_spam_trap  = '___url';// Spam 罠用無効フィールド名
 		$this->post_spam_trap_set = 1;    // 無効フィールドの罠を自動で仕掛ける
 		
 		$this->post_spam_user  = 30;      // POST SPAM 閾値: ログインユーザー
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
+		$this->post_spam_badip = 50;      // アクセス拒否リストへ登録する閾値
 	
 		// 検索ワード定数名
 		$this->q_word  = 'XOOPS_QUERY_WORD';         // 検索ワード
