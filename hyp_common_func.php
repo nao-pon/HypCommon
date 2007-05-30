@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.10 2007/05/30 05:53:00 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.11 2007/05/30 07:31:29 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -9,7 +9,7 @@ if( ! class_exists( 'HypCommonFunc' ) )
 class HypCommonFunc
 {
 	function get_version() {
-		include (dirname(__FILE__) . 'version.php');
+		include (dirname(__FILE__) . '/version.php');
 		return $version;
 	}
 	
