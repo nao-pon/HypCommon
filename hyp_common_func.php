@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.8 2007/05/17 23:58:34 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.9 2007/05/30 00:21:03 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -923,7 +923,7 @@ EOF;
 	// php.ini のサイズ記述をバイト値に変換
 	function return_bytes($val) {
 		$val = trim($val);
-		if ($val = '-1') $val = '';
+		if ($val == '-1') $val = '';
 		if ($val) {
 			$last = strtolower($val{strlen($val)-1});
 			switch($last) {
