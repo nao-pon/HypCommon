@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.11 2007/05/30 07:31:29 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.12 2007/06/12 05:30:45 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -169,8 +169,7 @@ EOF;
 		$q_word = str_replace(" ","|",preg_quote(join(' ',$words),"/"));
 		
 		$match = array();
-		if (preg_match("/$q_word/i",$text,$match))
-		{
+		if (preg_match("/$q_word/i",$text,$match)) {
 			$ret = ltrim(preg_replace('/\s+/', ' ', $text));
 			list($pre, $aft) = array_pad(preg_split("/$q_word/i", $ret, 2), 2, "");
 			$m = intval($l/2);
@@ -181,8 +180,10 @@ EOF;
 			if (strlen($aft) > $m) $ret .= " ...";
 		}
 		
-		if (!$ret)
+		if (!$ret) {
 			$ret = $strcut($text, 0, $l);
+			$ret = preg_replace('/&([^;]+)?$/', '', $ret);
+		}
 		
 		return htmlspecialchars($ret, ENT_NOQUOTES);
 	}
