@@ -17,6 +17,9 @@ class XCube_ActionFilter
 
 class HypCommonPreLoadBase extends XCube_ActionFilter {
 	
+	var $encodehint_word;      // POSTエンコーディング判定用文字
+	var $encodehint_name;      // POSTエンコーディング判定用 Filed name
+	
 	var $use_set_query_words;  // 検索ワードを定数にセット
 	var $use_words_highlight;  // 検索ワードをハイライト表示
 	
@@ -57,14 +60,21 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 		}
 		
-		// スパムロボット用の罠を仕掛ける
-		if (! empty($this->post_spam_trap_set)) {
-			ob_start(array(&$this, 'trapFilter'));
+		// <from> フィルター
+		if (! empty($this->encodehint_word) || ! empty($this->post_spam_trap_set)) {
+			ob_start(array(&$this, 'formFilter'));
 		}
 	}
 	
 	function postFilter() {
 		if (! empty($_POST)) {
+			// POST 文字列の文字エンコードを判定
+			if (isset($_POST[$this->encodehint_name]) && function_exists('mb_detect_encoding')) {
+				define ('HYP_POST_ENCODING', mb_detect_encoding($_POST[$this->encodehint_name]));
+			}
+
+			// XOOPS の表示文字コード
+			$this->encode = _CHARSET;
 			
 			// Proxy Check
 			if ($this->use_proxy_check) {
@@ -165,9 +175,19 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		return HypGetQueryWord::word_highlight($s, constant($this->q_word2));
 	}
 
-	function trapFilter( $s ) {
+	function formFilter( $s ) {
+		$insert = '';
+		// スパムロボット用の罠を仕掛ける
+		if (! empty($this->post_spam_trap_set)) {
+			$insert .= "\n<input name=\"{$this->post_spam_trap}\" type=\"text\" size=\"1\" style=\"display:none;speak:none;\" />";
+		}
+		// エンコーディング判定用ヒント文字
+		if (! empty($this->encodehint_word)) {
+			$insert .= "\n<input name=\"{$this->encodehint_name}\" type=\"hidden\" value=\"{$this->encodehint_word}\" />";
+		}
+		if ($insert) $insert = "\n".'<div>'.$insert."\n".'</div>';
 		return preg_replace('/<form[^>]+?method=("|\')post\\1[^>]*?>/isS' ,
-			"$0\n<input name=\"{$this->post_spam_trap}\" type=\"text\" size=\"1\" style=\"display:none;speak:none;\" />", $s);
+			"$0".$insert, $s);
 	}
 	
 	function sendMail ($spamlev) {
@@ -242,7 +262,8 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 	function HypCommonPreLoad (& $controller) {
 		
 		// 各種設定
-		$this->encode = 'EUC-JP';         // XOOPSの文字エンコーディング
+		$this->encodehint_word = 'ぷ';    // POSTエンコーディング判定用文字
+		$this->encodehint_name = 'HypEncHint'; // POSTエンコーディング判定用 Filed name
 		
 		$this->use_set_query_words = 1;   // 検索ワードを定数にセット
 		$this->use_words_highlight = 1;   // 検索ワードをハイライト表示
