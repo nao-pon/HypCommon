@@ -13,8 +13,9 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 	function HypCommonPreLoad (& $controller) {
 		
 		// 各種設定
-		$this->encode = 'EUC-JP';         // XOOPSの文字エンコーディング
-		
+		$this->encodehint_word = 'ぷ';    // POSTエンコーディング判定用文字
+		$this->encodehint_name = 'HypEncHint'; // POSTエンコーディング判定用 Filed name
+
 		$this->use_set_query_words = 1;   // 検索ワードを定数にセット
 		$this->use_words_highlight = 1;   // 検索ワードをハイライト表示
 		

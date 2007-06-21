@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_kakasi.php,v 1.1 2006/11/21 13:08:30 nao-pon Exp $
+// $Id: hyp_kakasi.php,v 1.2 2007/06/21 22:36:09 nao-pon Exp $
 // Hyp_KAKASI Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -10,7 +10,7 @@ class Hyp_KAKASHI
 	// 基本設定
 	var $kakasi_path = "/usr/bin/kakasi";    // KAKASI のパス
 	
-	var $encoding = "";       // 文字コード(現状はEUC-JP専用のため使用せず)
+	var $encoding;       // 文字コード
 	
 	var $tmp_dir = "";        // 分かち書き用キャッシュ保存用ディレクトリ
 	var $gc_probability = 1;  // gc処理する確率 x  x/1000の確率で処理
@@ -22,8 +22,13 @@ class Hyp_KAKASHI
 	
 	function Hyp_KAKASHI()
 	{
-		//$this->encoding = _CHARSET ;
-		//$this->tmp_dir = XOOPS_ROOT_PATH . "/cache2/kakasi/";
+		if (defined('HYP_POST_ENCODING')) {
+			$this->encoding = HYP_POST_ENCODING;
+		} else if (defined('_CHARSET')) {
+			$this->encoding = _CHARSET ;
+		} else {
+			$this->encoding = 'EUC-JP';
+		}
 	}
 	
 	function add_dict($dict)
@@ -203,6 +208,11 @@ class Hyp_KAKASHI
 		$ret = false;
 		$dic = "";
 		$cmd = " -ieuc ".$cmd;
+		// 文字コード変換
+		if ($this->encoding !== 'EUC-JP') {
+			if (! function_exists('mb_convert_encoding')) { return false; }
+			$str = mb_convert_encoding($str, 'EUC-JP', $this->encoding);
+		}
 		if (is_file($this->kakasi_path) && (function_exists('is_executable'))? is_executable($this->kakasi_path) : 1)
 		{
 			if ($this->dicts)
@@ -233,6 +243,9 @@ class Hyp_KAKASHI
 				fclose($pipes[1]);
 				proc_close($process);
 			}
+		}
+		if ($this->encoding !== 'EUC-JP') {
+			$str = mb_convert_encoding($str, $this->encoding, 'EUC-JP');
 		}
 		return $ret;
 	}

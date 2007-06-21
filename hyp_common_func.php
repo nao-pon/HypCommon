@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.12 2007/06/12 05:30:45 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.13 2007/06/21 22:36:09 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -860,6 +860,9 @@ EOF;
 	{
 		if (!isset($post) || !function_exists("mb_ereg_replace")) {return $post;}
 		
+		$post_enc = defined('HYP_POST_ENCODING')? HYP_POST_ENCODING : _CHARSET;
+		if ($post_enc !== 'EUC-JP' && $post_enc !== 'UTF-8') {return $post;}
+
 		static $bef = null;
 		static $aft = null;
 		
@@ -867,7 +870,9 @@ EOF;
 		{
 			$mac = (empty($_SERVER["HTTP_USER_AGENT"]))? FALSE : strpos(strtolower($_SERVER["HTTP_USER_AGENT"]),"mac");
 			
-			$datfile = ($mac === FALSE)? dirname(__FILE__)."/win_ext.dat" : dirname(__FILE__)."/mac_ext.dat";
+			$enc = ($post_enc === 'UTF-8')? '_utf8' : '';
+			
+			$datfile = ($mac === FALSE)? dirname(__FILE__).'/win_ext'.$enc.'.dat' : dirname(__FILE__).'/mac_ext'.$enc.'.dat';
 	
 			if (file_exists($datfile))
 			{
@@ -892,7 +897,7 @@ EOF;
 		}
 		else
 		{
-			mb_regex_encoding("EUC-JP");
+			mb_regex_encoding($post_enc);
 
 			// 半角カナを全角に
 			//$post = mb_convert_kana($post, "KV", "EUC-JP");
@@ -1411,7 +1416,6 @@ if (file_exists(dirname(__FILE__)."/execpath.inc.php"))
 }
 // ImageMagick のパスを指定 (多くは /usr/bin/ ?)
 HypCommonFunc::set_exec_path("/usr/bin/");
-
 
 }
 ?>
