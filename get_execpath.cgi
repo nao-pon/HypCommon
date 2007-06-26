@@ -3,20 +3,36 @@ $dat = $path = "";
 
 $dat .= "<?php\n";
 
-$out = array();
-exec( "whereis -b convert" , $out) ;
-if ($out)
+$image_magick_cgi = XOOPS_ROOT_PATH.'/class/hyp_common/image_magick.cgi';
+if (file_exists($image_magick_cgi)) {
+	@ chmod($image_magick_cgi, 0705);
+	$_path = str_replace(XOOPS_ROOT_PATH, XOOPS_URL, $image_magick_cgi);
+	$dat .= "define('HYP_IMAGE_MAGICK_URL', '{$_path}');\n";
+}
+
+$exec = array();
+@ exec( "whereis -b kakasi" , $exec) ;
+if ($exec)
 {
-	$path = array_pad(explode(" ",$out[0]),2,"");
+	$path = array_pad(explode(" ",$exec[0]),2,"");
+	$path = (preg_match("#^(/.+/)kakasi$#",$path[1],$match))? $match[1] : "";
+	$dat .= "define('HYP_KAKASI_PATH', '{$path}');\n";
+}
+
+$exec = array();
+@ exec( "whereis -b convert" , $exec) ;
+if ($exec)
+{
+	$path = array_pad(explode(" ",$exec[0]),2,"");
 	$path = (preg_match("#^(/.+/)convert$#",$path[1],$match))? $match[1] : "";
 	$dat .= "define('HYP_IMAGEMAGICK_PATH', '{$path}');\n";
 }
 
-$out = array();
-exec( "whereis -b jpegtran" , $out) ;
-if ($out)
+$exec = array();
+@ exec( "whereis -b jpegtran" , $exec) ;
+if ($exec)
 {
-	$path = array_pad(explode(" ",$out[0]),2,"");
+	$path = array_pad(explode(" ",$exec[0]),2,"");
 	$path = (preg_match("#^(/.+/)jpegtran$#",$path[1],$match))? $match[1] : "";
 	$dat .= "define('HYP_JPEGTRAN_PATH', '{$path}');\n";
 }
