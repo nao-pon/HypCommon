@@ -295,9 +295,6 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->q_word2 = 'XOOPS_QUERY_WORD2';        // 検索ワード分かち書き
 		$this->se_name = 'XOOPS_SEARCH_ENGINE_NAME'; // 検索元名
 	
-		// KAKASI のパスは、XOOPS_TRUST_PATH/class/hyp_common/hyp_kakasi.php で
-		// 設定する。規定値: '/usr/bin/kakasi'
-		
 		// KAKASI での分かち書き結果のキャッシュ先
 		$this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
 		

@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_kakasi.php,v 1.2 2007/06/21 22:36:09 nao-pon Exp $
+// $Id: hyp_kakasi.php,v 1.3 2007/06/26 03:06:19 nao-pon Exp $
 // Hyp_KAKASI Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -28,6 +28,9 @@ class Hyp_KAKASHI
 			$this->encoding = _CHARSET ;
 		} else {
 			$this->encoding = 'EUC-JP';
+		}
+		if (defined('HYP_KAKASI_PATH') && HYP_KAKASI_PATH) {
+			$this->kakasi_path = HYP_KAKASI_PATH . 'kakasi';
 		}
 	}
 	
@@ -208,13 +211,14 @@ class Hyp_KAKASHI
 		$ret = false;
 		$dic = "";
 		$cmd = " -ieuc ".$cmd;
-		// 文字コード変換
-		if ($this->encoding !== 'EUC-JP') {
-			if (! function_exists('mb_convert_encoding')) { return false; }
-			$str = mb_convert_encoding($str, 'EUC-JP', $this->encoding);
-		}
-		if (is_file($this->kakasi_path) && (function_exists('is_executable'))? is_executable($this->kakasi_path) : 1)
+		if (@ is_file($this->kakasi_path) && (function_exists('is_executable'))? @ is_executable($this->kakasi_path) : 1)
 		{
+			// 文字エンコーディング変換
+			if ($this->encoding !== 'EUC-JP') {
+				if (! function_exists('mb_convert_encoding')) { return false; }
+				$str = mb_convert_encoding($str, 'EUC-JP', $this->encoding);
+			}
+			// 追加辞書
 			if ($this->dicts)
 			{
 				$dic = " ".join(", ",$this->dicts);
@@ -243,9 +247,10 @@ class Hyp_KAKASHI
 				fclose($pipes[1]);
 				proc_close($process);
 			}
-		}
-		if ($this->encoding !== 'EUC-JP') {
-			$str = mb_convert_encoding($str, $this->encoding, 'EUC-JP');
+			// 文字エンコーディング戻し
+			if ($this->encoding !== 'EUC-JP') {
+				$str = mb_convert_encoding($str, $this->encoding, 'EUC-JP');
+			}
 		}
 		return $ret;
 	}
