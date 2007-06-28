@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.13 2007/06/21 22:36:09 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.14 2007/06/28 23:24:07 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -789,7 +789,7 @@ EOF;
 			$tmp['a'] = $tmp['bb'] = $tmp['url'] = $tmp['filter'] = 0;
 			if (is_array($dat))
 			{
-				list($tmp['a'],$tmp['bb'],$tmp['url'],$tmp['filter']) = HypCommonFunc::PostSpam_Check($dat);
+				list($tmp['a'],$tmp['bb'],$tmp['url'],$tmp['filter']) = HypCommonFunc::PostSpam_Check($dat, $encode);
 			}
 			else
 			{
