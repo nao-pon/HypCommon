@@ -17,6 +17,7 @@ class XCube_ActionFilter
 
 class HypCommonPreLoadBase extends XCube_ActionFilter {
 	
+	var $configEncoding;       // Configエンコーディング
 	var $encodehint_word;      // POSTエンコーディング判定用文字
 	var $encodehint_name;      // POSTエンコーディング判定用 Filed name
 	
@@ -183,7 +184,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 		// エンコーディング判定用ヒント文字
 		if (! empty($this->encodehint_word)) {
-			$insert .= "\n<input name=\"{$this->encodehint_name}\" type=\"hidden\" value=\"{$this->encodehint_word}\" />";
+			if (function_exists('mb_convert_encoding') && $this->configEncoding && $this->encode !== $this->configEncoding) {
+				$encodehint_word = mb_convert_encoding($this->encodehint_word, $this->encode, $this->configEncoding);
+			} else {
+				$encodehint_word = $this->encodehint_word;
+			}
+			$insert .= "\n<input name=\"{$this->encodehint_name}\" type=\"hidden\" value=\"{$encodehint_word}\" />";
 		}
 		if ($insert) $insert = "\n".'<div>'.$insert."\n".'</div>';
 		return preg_replace('/<form[^>]+?method=("|\')post\\1[^>]*?>/isS' ,
@@ -262,6 +268,8 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 	function HypCommonPreLoad (& $controller) {
 		
 		// 各種設定
+		$this->configEncoding = 'EUC-JP'; // このファイルの文字コード
+		
 		$this->encodehint_word = 'ぷ';    // POSTエンコーディング判定用文字
 		$this->encodehint_name = 'HypEncHint'; // POSTエンコーディング判定用 Filed name
 		
@@ -270,7 +278,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		
 		$this->use_proxy_check = 1;       // POST時プロキシチェックする
 		$this->no_proxy_check  = '/^(127\.0\.0\.1|192\.168\.1\.)/'; // 除外IP
-		$this->msg_proxy_check = '公開プロキシ経由での投稿はできません。';
+		$this->msg_proxy_check = 'Can not post from public proxy.';
 		
 		$this->use_dependence_filter = 1; // 機種依存文字フィルター
 		
@@ -304,7 +312,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			"/((?:ht|f)tps?:\/\/[!~*'();\/?:\@&=+\$,%#\w.-]+)[^!~*'();\/?:\@&=+\$,%#\w.-]+?\\1[^!~*'();\/?:\@&=+\$,%#\w.-]+?\\1/i" => 11,
 			
 			// 65文字以上の英数文字のみで構成されている 15pt
-			'/^[\x00-\x7f\s]{65,}$/' => 15,
+			// '/^[\x00-\x7f\s]{65,}$/' => 15,
 			
 			// 無効な文字コードがある 31pt
 			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f\xff]+/' => 31
