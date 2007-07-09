@@ -178,6 +178,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 	function formFilter( $s ) {
 		$insert = '';
+		$this->encode = _CHARSET;
+		
 		// スパムロボット用の罠を仕掛ける
 		if (! empty($this->post_spam_trap_set)) {
 			$insert .= "\n<input name=\"{$this->post_spam_trap}\" type=\"text\" size=\"1\" style=\"display:none;speak:none;\" />";
