@@ -18,6 +18,7 @@ class XCube_ActionFilter
 class HypCommonPreLoadBase extends XCube_ActionFilter {
 	
 	var $configEncoding;       // Configエンコーディング
+
 	var $encodehint_word;      // POSTエンコーディング判定用文字
 	var $encodehint_name;      // POSTエンコーディング判定用 Filed name
 	
@@ -26,6 +27,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	
 	var $use_proxy_check;      // POST時プロキシチェックする
 	var $no_proxy_check;       // 除外IP
+	var $msg_proxy_check; 
 	
 	var $use_dependence_filter;// 機種依存文字フィルター
 	
@@ -36,6 +38,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	var $post_spam_url;        // URL      1個あたりのポイント
 	var $post_spam_host;       // Spam HOST の加算ポイント
 	var $post_spam_word;       // Spam Word の加算ポイント
+	var $post_spam_filed;      // Spam 無効フィールドの加算ポイント
+	var $post_spam_trap;       // Spam 罠用無効フィールド名
+	var $post_spam_trap_set;   // 無効フィールドの罠を自動で仕掛ける
+		
 	var $post_spam_user;       // POST SPAM 閾値: ログインユーザー
 	var $post_spam_guest;      // POST SPAM 閾値: ゲスト
 	var $post_spam_rules;      // コンストラクタ内で設定
@@ -159,7 +165,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				if (!$xoopsUserIsAdmin) {
 					// 閾値
 					$spamlev = (is_object($xoopsUser))? $this->post_spam_user : $this->post_spam_guest;
-					$level = HypCommonFunc::get_postspam_avr($this->post_spam_a, $this->post_spam_bb, $this->post_spam_url, $this->encode);
+					$level = HypCommonFunc::get_postspam_avr($this->post_spam_a, $this->post_spam_bb, $this->post_spam_url, $this->encode, $this->encodehint_name);
 					if ($level > $spamlev) {
 						if ($level > $this->post_spam_badip) { HypCommonFunc::register_bad_ips(); }
 						if ($this->use_mail_notify) { $this->sendMail($level); }
