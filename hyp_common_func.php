@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.14 2007/06/28 23:24:07 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.15 2007/07/11 01:31:01 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -762,20 +762,30 @@ EOF;
 	}
 	
 	// POST SPAM Check
-	function PostSpam_Check($post, $encode)
+	function PostSpam_Check($post, $encode = '', $encodehint = '')
 	{
-		// Key:excerpt があればトラックかも->文字コード変換
-		if (isset($post['excerpt']) && function_exists('mb_convert_variables')) {
-			if (isset($post['charset']) && $post['charset'] != '') {
-				// TrackBack Ping で指定されていることがある
-				// うまくいかない場合は自動検出に切り替え
-				if (mb_convert_variables($encode,
-				    $post['charset'], $post) !== $post['charset']) {
-					mb_convert_variables($encode, 'auto', $post);
+		if (function_exists('mb_convert_variables') && $encode) {
+			// 文字エンコード変換
+			if ($encodehint) {
+				$post_enc = mb_detect_encoding($post[$encodehint]);
+				if ($encode !== $post_enc) {
+					mb_convert_variables($encode, mb_detect_encoding($post[$encodehint]), $post);
 				}
-			} else if (! empty($post)) {
-				// 全部まとめて、自動検出／変換
-				mb_convert_variables($encode, 'auto', $post);
+			} else {
+				// Key:url, excerpt があればトラックバックかも->文字コード変換
+				if (isset($post['url']) && isset($post['excerpt']) && function_exists('mb_convert_variables')) {
+					if (isset($post['charset']) && $post['charset'] != '') {
+						// TrackBack Ping で指定されていることがある
+						// うまくいかない場合は自動検出に切り替え
+						if (mb_convert_variables($encode,
+						    $post['charset'], $post) !== $post['charset']) {
+							mb_convert_variables($encode, 'auto', $post);
+						}
+					} else if (! empty($post)) {
+						// 全部まとめて、自動検出／変換
+						mb_convert_variables($encode, 'auto', $post);
+					}
+				}
 			}
 		}
 		
@@ -789,7 +799,7 @@ EOF;
 			$tmp['a'] = $tmp['bb'] = $tmp['url'] = $tmp['filter'] = 0;
 			if (is_array($dat))
 			{
-				list($tmp['a'],$tmp['bb'],$tmp['url'],$tmp['filter']) = HypCommonFunc::PostSpam_Check($dat, $encode);
+				list($tmp['a'],$tmp['bb'],$tmp['url'],$tmp['filter']) = HypCommonFunc::PostSpam_Check($dat);
 			}
 			else
 			{
@@ -842,11 +852,11 @@ EOF;
 	}
 	
 	// POST SPAM Check 汎用関数
-	function get_postspam_avr($alink=1,$bb=1,$url=1,$encode='EUC-JP')
+	function get_postspam_avr($alink=1,$bb=1,$url=1,$encode='EUC-JP',$encodehint='')
 	{
 		if ($_SERVER['REQUEST_METHOD'] == 'POST')
 		{
-			list($a_p,$bb_p,$url_p,$filter_p) = HypCommonFunc::PostSpam_Check($_POST, $encode);
+			list($a_p,$bb_p,$url_p,$filter_p) = HypCommonFunc::PostSpam_Check($_POST, $encode, $encodehint);
 			return $a_p * $alink + $bb_p * $bb + $url_p * $url + $filter_p;
 		}
 		else
