@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.15 2007/07/11 01:31:01 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.16 2007/08/08 05:15:36 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -313,7 +313,7 @@ EOF;
 						// 透過色なし
 						$dst_im = $imagecreate($width,$height);
 						$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
-						imagetruecolortopalette ($dst_im,imagecolorstotal ($src_im));
+						if (function_exists('imagetruecolortopalette')) imagetruecolortopalette ($dst_im, false, imagecolorstotal($src_im));
 					}
 					touch($s_file);
 					if ($s_ext == "jpg")
@@ -362,7 +362,7 @@ EOF;
 						// 透過色なし
 						$dst_im = $imagecreate($width,$height);
 						$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
-						imagetruecolortopalette ($dst_im,imagecolorstotal ($src_im));
+						if (function_exists('imagetruecolortopalette')) imagetruecolortopalette ($dst_im, false, imagecolorstotal($src_im));
 					}
 				}
 				else
