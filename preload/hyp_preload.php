@@ -61,7 +61,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		
 		// Set Query Words
 		if ($this->use_set_query_words) {
-			HypCommonFunc::set_query_words($this->q_word, $this->q_word2, $this->se_name, $this->kakasi_cache_dir);
+			HypCommonFunc::set_query_words($this->q_word, $this->q_word2, $this->se_name, $this->kakasi_cache_dir, $this->encode);
 			if ($this->use_words_highlight) {
 				ob_start(array(&$this, 'obFilter'));
 			}
@@ -76,8 +76,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	function postFilter() {
 		if (! empty($_POST)) {
 			// POST 文字列の文字エンコードを判定
-			if (isset($_POST[$this->encodehint_name]) && function_exists('mb_detect_encoding')) {
-				define ('HYP_POST_ENCODING', mb_detect_encoding($_POST[$this->encodehint_name]));
+			$enchint = (isset($_POST[$this->encodehint_name]))? $_POST[$this->encodehint_name] : ((isset($_POST['encode_hint']))? $_POST['encode_hint'] : '');
+			if ($enchint && function_exists('mb_detect_encoding')) {
+				define ('HYP_POST_ENCODING', mb_detect_encoding($enchint));
 			}
 
 			// XOOPS の表示文字コード

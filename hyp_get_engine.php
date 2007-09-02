@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_get_engine.php,v 1.3 2007/05/17 02:48:20 nao-pon Exp $
+// $Id: hyp_get_engine.php,v 1.4 2007/09/02 02:28:53 nao-pon Exp $
 // HypGetQueryWord Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -10,15 +10,17 @@ include_once(dirname(__FILE__)."/hyp_common_func.php");
 
 class HypGetQueryWord
 {
-	function set_constants($qw="HYP_QUERY_WORD",$qw2="HYP_QUERY_WORD2",$en="HYP_SEARCH_ENGINE_NAME",$tmpdir="")
+	var $encode = 'EUC-JP';
+	function set_constants($qw='HYP_QUERY_WORD',$qw2='HYP_QUERY_WORD2',$en='HYP_SEARCH_ENGINE_NAME',$tmpdir='',$encode='EUC-JP')
 	{
+		$this->encode = $encode;
 		list($getengine_name,$getengine_query,$getengine_query2) = HypGetQueryWord::se_getengine($tmpdir);
 		define($qw , $getengine_query);
 		define($qw2, $getengine_query2);
 		define($en , $getengine_name);
 	}
 
-	function se_getengine($tmpdir="")
+	function se_getengine($tmpdir='')
 	{
 		$_query = array_merge($_POST,$_GET);
 		$_query = HypCommonFunc::stripslashes_gpc($_query);
@@ -81,7 +83,7 @@ class HypGetQueryWord
 		//Googleのキャッシュからの場合
 		$query = preg_replace("/^cache\:[^ ]+ /",'',$query);
 		
-		if (function_exists('mb_convert_kana')) $query = mb_convert_kana($query,"KVas",'EUC-JP');
+		if (function_exists('mb_convert_kana')) $query = mb_convert_kana($query,"KVas",$this->encode);
 		
 		//$query = preg_replace("/( |\+|,|、|・)+/"," ",$query);
 		
@@ -139,7 +141,7 @@ class HypGetQueryWord
 		$eucstr = "";
 		
 		while(eregi("(.*)(%u[0-9A-F][0-9A-F][0-9A-F][0-9A-F])(.*)$", $escunistr, $fragment)) {
-			$eucstr = mb_convert_encoding(HypGetQueryWord::uni2utf8($fragment[2]).$fragment[3], 'EUC-JP', 'UTF-8').$eucstr;
+			$eucstr = mb_convert_encoding(HypGetQueryWord::uni2utf8($fragment[2]).$fragment[3], $this->encode, 'UTF-8').$eucstr;
 			$escunistr = $fragment[1];
 		}
 		return $fragment[1].$eucstr;
@@ -147,11 +149,15 @@ class HypGetQueryWord
 
 	// 日本語(EUC-JP)対応のurldecode by nao-pon
 	function se_urldecode_euc($str,$enc="AUTO"){
-		if (eregi("%u[0-9A-F][0-9A-F][0-9A-F][0-9A-F]",$str)){
-			$query = HypGetQueryWord::se_escuni2euc(urldecode($str));//for IE unicode+urlencoding
+		if (function_exists('mb_convert_encoding')) {
+			if (eregi("%u[0-9A-F][0-9A-F][0-9A-F][0-9A-F]",$str)){
+				$query = HypGetQueryWord::se_escuni2euc(urldecode($str));//for IE unicode+urlencoding
+			} else {
+				$query = urldecode($str);
+				$query = mb_convert_encoding($query,$this->encode,$enc);
+			}
 		} else {
 			$query = urldecode($str);
-			$query = mb_convert_encoding($query,"EUC-JP",$enc);
 		}
 		return $query;
 	}
@@ -162,7 +168,12 @@ class HypGetQueryWord
 		//simplify_urls($body);
 		
 		// 外部リンクの場合 class="ext" を付加
-		$body = preg_replace("/(<a[^>]+?href=(?:\"|')?(?!https?:\/\/".$_SERVER["HTTP_HOST"].")http[^>]+)>/iS","$1 class=\"ext\">",$body);
+		//$body = preg_replace("/(<a[^>]+?href=(?:\"|')?(?!https?:\/\/".$_SERVER["HTTP_HOST"].")http[^>]+)>/iS","$1 class=\"ext\">",$body);
+		$body = preg_replace_callback(
+					'/(<script.*?<\/script>)|(<a[^>]+?href=(?:"|\')?(?!https?:\/\/'.$_SERVER['HTTP_HOST'].')http[^>]+)>/isS' ,
+					create_function('$arr', 'return $arr[1] ? $arr[1] : "$arr[2] class=\"ext\">";') ,
+					$body
+				);
 		
 		if (!$q_word || !$body) return $body;
 		
