@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.16 2007/08/08 05:15:36 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.17 2007/09/02 15:45:09 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -766,7 +766,7 @@ EOF;
 	{
 		if (function_exists('mb_convert_variables') && $encode) {
 			// 文字エンコード変換
-			if ($encodehint) {
+			if ($encodehint && isset($post[$encodehint])) {
 				$post_enc = mb_detect_encoding($post[$encodehint]);
 				if ($encode !== $post_enc) {
 					mb_convert_variables($encode, mb_detect_encoding($post[$encodehint]), $post);
