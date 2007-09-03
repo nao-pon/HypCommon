@@ -24,6 +24,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	
 	var $use_set_query_words;  // 検索ワードを定数にセット
 	var $use_words_highlight;  // 検索ワードをハイライト表示
+	var $msg_words_highlight;  // ハイライトキーワードメッセージ
 	
 	var $use_proxy_check;      // POST時プロキシチェックする
 	var $no_proxy_check;       // 除外IP
@@ -58,15 +59,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 	
 	function preFilter() {
-		
-		// Set Query Words
-		if ($this->use_set_query_words) {
-			HypCommonFunc::set_query_words($this->q_word, $this->q_word2, $this->se_name, $this->kakasi_cache_dir, $this->encode);
-			if ($this->use_words_highlight) {
-				ob_start(array(&$this, 'obFilter'));
-			}
-		}
-		
 		// <from> フィルター
 		if (! empty($this->encodehint_word) || ! empty($this->post_spam_trap_set)) {
 			ob_start(array(&$this, 'formFilter'));
@@ -74,6 +66,17 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 	
 	function postFilter() {
+		// XOOPS の表示文字コード
+		$this->encode = _CHARSET;
+
+		// Set Query Words
+		if ($this->use_set_query_words) {
+			HypCommonFunc::set_query_words($this->q_word, $this->q_word2, $this->se_name, $this->kakasi_cache_dir, $this->encode);
+			if ($this->use_words_highlight) {
+				ob_start(array(&$this, 'obFilter'));
+			}
+		}
+
 		if (! empty($_POST)) {
 			// POST 文字列の文字エンコードを判定
 			$enchint = (isset($_POST[$this->encodehint_name]))? $_POST[$this->encodehint_name] : ((isset($_POST['encode_hint']))? $_POST['encode_hint'] : '');
@@ -81,9 +84,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				define ('HYP_POST_ENCODING', mb_detect_encoding($enchint));
 			}
 
-			// XOOPS の表示文字コード
-			$this->encode = _CHARSET;
-			
 			// Proxy Check
 			if ($this->use_proxy_check) {
 				HypCommonFunc::BBQ_Check($this->no_proxy_check, $this->msg_proxy_check);
@@ -180,7 +180,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 	
 	function obFilter( $s ) {
-		return HypGetQueryWord::word_highlight($s, constant($this->q_word2));
+		return HypGetQueryWord::word_highlight($s, constant($this->q_word2), _CHARSET, $this->msg_words_highlight);
 	}
 
 	function formFilter( $s ) {
@@ -284,6 +284,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		
 		$this->use_set_query_words = 1;   // 検索ワードを定数にセット
 		$this->use_words_highlight = 1;   // 検索ワードをハイライト表示
+		$this->msg_words_highlight = 'これらのキーワードがハイライトされています'; 
 		
 		$this->use_proxy_check = 1;       // POST時プロキシチェックする
 		$this->no_proxy_check  = '/^(127\.0\.0\.1|192\.168\.1\.)/'; // 除外IP
