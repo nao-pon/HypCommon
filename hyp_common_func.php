@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.17 2007/09/02 15:45:09 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.18 2007/09/03 05:46:48 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -923,14 +923,14 @@ EOF;
 	}
 	
 	// リファラーから検索語と検索エンジンを取得し定数に定義する
-	function set_query_words($qw="HYP_QUERY_WORD",$qw2="HYP_QUERY_WORD2",$en="HYP_SEARCH_ENGINE_NAME",$tmpdir="")
+	function set_query_words($qw="HYP_QUERY_WORD",$qw2="HYP_QUERY_WORD2",$en="HYP_SEARCH_ENGINE_NAME",$tmpdir="",$enc='EUC-JP')
 	{
 		if (!defined($qw))
 		{
 			if (file_exists(dirname(__FILE__)."/hyp_get_engine.php"))
 			{
 				include_once(dirname(__FILE__)."/hyp_get_engine.php");
-				HypGetQueryWord::set_constants($qw,$qw2,$en,$tmpdir);
+				HypGetQueryWord::set_constants($qw,$qw2,$en,$tmpdir,$enc);
 			}
 			else
 			{

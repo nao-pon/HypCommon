@@ -20,6 +20,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		
 		$this->use_set_query_words = 1;   // 検索ワードを定数にセット
 		$this->use_words_highlight = 1;   // 検索ワードをハイライト表示
+		$this->msg_words_highlight = 'これらのキーワードがハイライトされています'; 
 		
 		$this->use_proxy_check = 1;       // POST時プロキシチェックする
 		$this->no_proxy_check  = '/^(127\.0\.0\.1|192\.168\.1\.)/'; // 除外IP
