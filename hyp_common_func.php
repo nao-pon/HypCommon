@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.18 2007/09/03 05:46:48 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.19 2007/09/25 23:46:58 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1108,7 +1108,10 @@ class Hyp_HTTP_Request
 	var $connect_timeout=30;
 	// 通信時タイムアウト
 	var $read_timeout=10;
+	// POST文字エンコード
+	var $content_charset='';
 	
+	var $network_reg = '/^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
 	
 	// プロキシ使用？
 	var $use_proxy=0;
@@ -1166,7 +1169,7 @@ class Hyp_HTTP_Request
 		$arr = parse_url($this->url);
 		if (!$this->connect_try) $this->connect_try = 1;
 		
-		$via_proxy = $this->use_proxy and via_proxy($arr['host']);
+		$via_proxy = $this->use_proxy ? ! $this->in_the_net($this->no_proxy, $arr['host']) : FALSE;
 		
 		// query
 		$arr['query'] = isset($arr['query']) ? '?'.$arr['query'] : '';
@@ -1211,7 +1214,16 @@ class Hyp_HTTP_Request
 					$_send[] = $name.'='.urlencode($val);
 				}
 				$data = join('&',$_send);
-				$query .= "Content-Type: application/x-www-form-urlencoded\r\n";
+				
+				if (preg_match('/^[a-zA-Z0-9_-]+$/', $this->content_charset)) {
+					// Legacy but simple
+					$query .= 'Content-Type: application/x-www-form-urlencoded' . "\r\n";
+				} else {
+					// With charset (NOTE: Some implementation may hate this)
+					$query .= 'Content-Type: application/x-www-form-urlencoded' .
+						'; charset=' . strtolower($this->content_charset) . "\r\n";
+				}
+
 				$query .= 'Content-Length: '.strlen($data)."\r\n";
 				$query .= "\r\n";
 				$query .= $data;
@@ -1233,6 +1245,11 @@ class Hyp_HTTP_Request
 		while( !$fp && $connect_try_count < $this->connect_try )
 		{
 			@set_time_limit($this->connect_timeout + $max_execution_time);
+			
+			if ($now_execution_time = ini_get('max_execution_time')) {
+				$this->connect_timeout = min($this->connect_timeout, $now_execution_time - 10);
+			}
+			
 			$errno = 0;
 			$errstr = "";
 			$fp = fsockopen(
@@ -1326,43 +1343,44 @@ class Hyp_HTTP_Request
 		$this->data = $resp[1];   // Data
 		return;
 	}
+
 	// プロキシを経由する必要があるかどうか判定
-	function via_proxy($host)
+	// Check if the $host is in the specified network(s)
+	function in_the_net($networks = array(), $host = '')
 	{
-		static $ip_pattern = '/^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?:\/(.+))?$/';
-		
-		if (!$this->use_proxy)
-		{
-			return FALSE;
+		if (empty($networks) || $host == '') return FALSE;
+		if (! is_array($networks)) $networks = array($networks);
+	
+		$matches = array();
+	
+		if (preg_match($this->network_reg, $host, $matches)) {
+			$ip = $matches[1];
+		} else {
+			$ip = gethostbyname($host); // May heavy
 		}
-		$ip = gethostbyname($host);
 		$l_ip = ip2long($ip);
-		$valid = (is_long($l_ip) and long2ip($l_ip) == $ip); // valid ip address
-		
-		foreach ($this->no_proxy as $network)
-		{
-			$matches = array();
-			if ($valid and preg_match($ip_pattern,$network,$matches))
-			{
-				$l_net = ip2long($matches[1]);
-				$mask = array_key_exists(2,$matches) ? $matches[2] : 32;
-				$mask = is_numeric($mask) ?
-					pow(2,32) - pow(2,32 - $mask) : // "10.0.0.0/8"
-					ip2long($mask);                 // "10.0.0.0/255.0.0.0"
-				if (($l_ip & $mask) == $l_net)
-				{
-					return FALSE;
-				}
-			}
-			else
-			{
-				if (preg_match('/'.preg_quote($network,'/').'/',$host))
-				{
-					return FALSE;
-				}
+	
+		foreach ($networks as $network) {
+			if (preg_match($this->network_reg, $network, $matches) &&
+			    is_long($l_ip) && long2ip($l_ip) == $ip) {
+				// $host seems valid IPv4 address
+				// Sample: '10.0.0.0/8' or '10.0.0.0/255.0.0.0'
+				$l_net = ip2long($matches[1]); // '10.0.0.0'
+				$mask  = isset($matches[2]) ? $matches[2] : 32; // '8' or '255.0.0.0'
+				$mask  = is_numeric($mask) ?
+					pow(2, 32) - pow(2, 32 - $mask) : // '8' means '8-bit mask'
+					ip2long($mask);                   // '255.0.0.0' (the same)
+	
+				if (($l_ip & $mask) == $l_net) return TRUE;
+			} else {
+				// $host seems not IPv4 address. May be a DNS name like 'foobar.example.com'?
+				foreach ($networks as $network)
+					if (preg_match('/\.?\b' . preg_quote($network, '/') . '$/', $host))
+						return TRUE;
 			}
 		}
-		return TRUE;
+	
+		return FALSE; // Not found
 	}
 }
 }
