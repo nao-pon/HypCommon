@@ -35,7 +35,7 @@ foreach(explode('&',$_SERVER['QUERY_STRING']) as $prm)
 }
 
 // リサイズ
-if ($m == "r")
+if ($m == 'r')
 {
 	// 必要なパラメーターがあるかどうか
 	$needs = array("p","z","q","o","s");
@@ -88,8 +88,67 @@ if ($m == "r")
 	exit($ret);
 }
 
+// Round Corner
+else if ($m == 'ro')
+{
+	// 必要なパラメーターがあるかどうか
+	$needs = array("p","z","q","o","s");
+	foreach($needs as $key)
+	{
+		if (empty($$key)) exit($ret);
+	}
+
+	$edge = intval($q);
+	$corner = intval($z);
+	$p = escapeshellcmd($p);
+	
+	// ディレクトリ遡りパターン検出
+	if (preg_match("/([\|\s]|\.\.\/)/",$p.$o.$s)) exit($ret);
+	
+	// コマンドと元ファイルの存在確認
+	if (!file_exists($p."convert") || !file_exists($o)) exit($ret);
+	
+	// イメージファイルか？
+	$size = @getimagesize($o);
+	if (!$size) exit($ret); //画像ファイルではない
+
+	// 元画像のサイズ
+	$imw = $size[0];
+	$imh = $size[1];
+	$im_half = floor((min($imw, $imh)/2));
+
+	// check value
+	$edge = min($edge, $im_half);
+	$corner = min($corner, $im_half);
+	
+	$tmpfile = $s . '_tmp.png';
+	
+	$out = array();
+	$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -channel RGBA -fill white -draw "roundrectangle '.max(0,($edge-1)).','.max(1,($edge-1)).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" '.$o.' -compose src_in -composite '.$tmpfile;
+	exec( $p . $cmd, $out ) ;
+	if ($out) $ret = "ERROR: 1";
+	
+	if (!$out && $edge) {
+		$out = array();
+		$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -fill none -stroke white -strokewidth '.$edge.' -draw "roundrectangle '.($edge-1).','.($edge-1).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" -shade 135x25 -blur 0x1 -normalize '.$tmpfile.' -compose overlay -composite '.$tmpfile;		
+		exec( $p . $cmd, $out ) ;
+		if ($out) $ret = "ERROR: 1";
+	}
+	
+	if (!$out) {
+		if (file_exists($s)) unlink($s);
+		copy ($tmpfile, $s);
+		unlink($tmpfile);
+		@chmod($s, 0606);
+		$ret = "ERROR: 0";
+	}
+
+	// 完了
+	exit($ret);
+}
+
 // 回転
-else if ($m == "rj" || $m == "ri")
+else if ($m == 'rj' || $m == 'ri')
 {
 	// 必要なパラメーターがあるかどうか
 	$needs = array("p","z","q","s");

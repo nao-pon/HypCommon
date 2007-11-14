@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.19 2007/09/25 23:46:58 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.21 2007/11/14 07:49:41 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -400,7 +400,7 @@ EOF;
 
 		$ro_file = realpath($o_file);
 		$rs_file = realpath(dirname($s_file))."/".basename($s_file);
-		
+
 		// Make Thumb and check success
 		if ( ini_get('safe_mode') != "1" )
 		{
@@ -427,6 +427,101 @@ EOF;
 			return $o_file;
 		}
 		return $s_file;
+	}
+
+	// 画像をリサイズする
+	function ImageResize($img, $isize='', $quality=75) {
+		
+		$size = @getimagesize($img);
+		if (!$size) return false;//画像ファイルではない
+		
+		$img = realpath($img);
+		
+		if (!preg_match('/^([\d]+)?x([\d]+)?|([\d]+)%?$/i', trim($isize), $arg)) return false;
+		
+		if (!empty($arg[3])) {
+			$zoom = round($arg[3] / 100);
+		} else {
+			$w = (empty($arg[1]))? $size[0] : $arg[1];
+			$h = (empty($arg[2]))? $size[1] : $arg[2];
+			$zoom_w = $w / $size[0];
+			$zoom_h = $h / $size[1];
+			$zoom = min($zoom_w, $zoom_h);
+		}
+		$w = round($size[0] * $zoom);
+		$h = round($size[1] * $zoom);
+		
+		$tmp = $img . '.tmp';
+		$done = HypCommonFunc::make_thumb($img, $tmp, $w, $h, '1,99', TRUE, $quality);
+		
+		if ($done === $img) return false;
+		
+		unlink($img);
+		copy($tmp, $img);
+		unlink($tmp);
+		
+		return true;
+	}
+	
+	// 画像を角丸にする
+	function ImageMagickRoundCorner($o_file, $s_file = '', $corner = 10, $edge = 0, $refresh = FALSE) {
+		
+		if (!defined('HYP_IMAGEMAGICK_PATH') || !HYP_IMAGEMAGICK_PATH) return $o_file;
+		
+		// すでに作成済み
+		if (!$refresh && $s_file && $o_file !== $s_file && file_exists($s_file)) return $s_file;
+		
+		if (!$s_file) {
+			$s_file = $o_file;
+		}
+
+		$size = @getimagesize($o_file);
+		if (!$size) return $o_file;//画像ファイルではない
+		
+		$ro_file = realpath($o_file);
+		$rs_file = realpath(dirname($s_file))."/".basename($s_file);
+
+		// Make Thumb and check success
+		if ( ini_get('safe_mode') != "1" ) {
+			// 元画像のサイズ
+			$imw = $size[0];
+			$imh = $size[1];
+			$im_half = floor((min($imw, $imh)/2));
+		
+			// check value
+			$edge = min($edge, $im_half);
+			$corner = min($corner, $im_half);
+	
+			$tmpfile = $rs_file . '_tmp.png';
+	
+			$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -channel RGBA -fill white -draw "roundrectangle '.max(0,($edge-1)).','.max(1,($edge-1)).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" '.$ro_file.' -compose src_in -composite '.$tmpfile;
+			exec( HYP_IMAGEMAGICK_PATH . $cmd ) ;
+	
+			if ($edge) {
+				$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -fill none -stroke white -strokewidth '.$edge.' -draw "roundrectangle '.($edge-1).','.($edge-1).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" -shade 135x25 -blur 0x1 -normalize '.$tmpfile.' -compose overlay -composite '.$tmpfile;		
+				exec( HYP_IMAGEMAGICK_PATH . $cmd ) ;
+			}
+			if (file_exists($rs_file)) unlink($rs_file);
+			copy ($tmpfile, $rs_file);
+			unlink($tmpfile);
+		} else {
+			// safeモードの場合は、CGIを起動して取得してみる
+			
+			$cmds = "?m=ro".
+					"&p=".rawurlencode(HYP_IMAGEMAGICK_PATH).
+					"&z=".$corner.
+					"&q=".$edge.
+					"&o=".rawurlencode($ro_file).
+					"&s=".rawurlencode($rs_file);
+			
+			HypCommonFunc::exec_image_magick_cgi($cmds);
+		}
+		
+		if( ! is_readable( $rs_file ) ) {
+			return $ro_file;
+		}
+
+		return $rs_file;
 	}
 	
 	// GD のバージョンを取得
@@ -871,7 +966,8 @@ EOF;
 		if (!isset($post) || !function_exists("mb_ereg_replace")) {return $post;}
 		
 		$post_enc = defined('HYP_POST_ENCODING')? HYP_POST_ENCODING : _CHARSET;
-		if ($post_enc !== 'EUC-JP' && $post_enc !== 'UTF-8') {return $post;}
+		//if ($post_enc !== 'EUC-JP' && $post_enc !== 'UTF-8') {return $post;}
+		if ($post_enc !== 'EUC-JP') {return $post;}
 
 		static $bef = null;
 		static $aft = null;
