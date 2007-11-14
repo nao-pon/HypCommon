@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.21 2007/11/14 07:49:41 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.20 2007/11/14 07:49:14 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
