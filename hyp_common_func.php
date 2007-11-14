@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.20 2007/11/14 07:49:14 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.22 2007/11/14 08:49:49 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -468,11 +468,16 @@ EOF;
 		
 		if (!defined('HYP_IMAGEMAGICK_PATH') || !HYP_IMAGEMAGICK_PATH) return $o_file;
 		
-		// すでに作成済み
-		if (!$refresh && $s_file && $o_file !== $s_file && file_exists($s_file)) return $s_file;
+		if ($o_file === $s_file) $s_file = '';
 		
+		// すでに作成済み
+		if (!$refresh && $s_file && file_exists($s_file)) return $s_file;
+		
+		$is_own = FALSE;
 		if (!$s_file) {
-			$s_file = $o_file;
+			// CGI を直接叩かれて悪戯されないように一時ファイルを利用
+			$s_file = $o_file . '.tmp';
+			$is_own = TRUE;
 		}
 
 		$size = @getimagesize($o_file);
@@ -480,7 +485,9 @@ EOF;
 		
 		$ro_file = realpath($o_file);
 		$rs_file = realpath(dirname($s_file))."/".basename($s_file);
-
+		
+		if (file_exists($rs_file)) unlink($rs_file);
+		
 		// Make Thumb and check success
 		if ( ini_get('safe_mode') != "1" ) {
 			// 元画像のサイズ
@@ -501,7 +508,6 @@ EOF;
 				$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -fill none -stroke white -strokewidth '.$edge.' -draw "roundrectangle '.($edge-1).','.($edge-1).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" -shade 135x25 -blur 0x1 -normalize '.$tmpfile.' -compose overlay -composite '.$tmpfile;		
 				exec( HYP_IMAGEMAGICK_PATH . $cmd ) ;
 			}
-			if (file_exists($rs_file)) unlink($rs_file);
 			copy ($tmpfile, $rs_file);
 			unlink($tmpfile);
 		} else {
@@ -518,9 +524,16 @@ EOF;
 		}
 		
 		if( ! is_readable( $rs_file ) ) {
+			if (file_exists($rs_file)) unlink($rs_file);
 			return $ro_file;
 		}
-
+		
+		if ($is_own) {
+			unlink($ro_file);
+			copy($rs_file, $ro_file);
+			unlink($rs_file);
+		}
+		
 		return $rs_file;
 	}
 	

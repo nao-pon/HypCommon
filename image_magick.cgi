@@ -108,6 +108,9 @@ else if ($m == 'ro')
 	// コマンドと元ファイルの存在確認
 	if (!file_exists($p."convert") || !file_exists($o)) exit($ret);
 	
+	// 出力ファイルが存在する(CGIを直接叩かれてる?)
+	if (file_exists($s)) exit($ret);
+	
 	// イメージファイルか？
 	$size = @getimagesize($o);
 	if (!$size) exit($ret); //画像ファイルではない
@@ -136,7 +139,6 @@ else if ($m == 'ro')
 	}
 	
 	if (!$out) {
-		if (file_exists($s)) unlink($s);
 		copy ($tmpfile, $s);
 		unlink($tmpfile);
 		@chmod($s, 0606);
