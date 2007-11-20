@@ -1,5 +1,10 @@
 <?php
 
+//// mbstring ////
+if (! extension_loaded('mbstring')) {
+	include_once dirname(dirname(__FILE__)) . '/mbemulator/mb-emulator.php';
+}
+
 include_once dirname(dirname(__FILE__)) . '/hyp_common_func.php';
 
 // For not cube.
