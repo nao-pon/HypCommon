@@ -5,7 +5,7 @@
  * 
  * license based on GPL(GNU General Public License)
  *
- * $Id: mb-emulator.php,v 1.3 2007/11/21 06:34:42 nao-pon Exp $
+ * $Id: mb-emulator.php,v 1.4 2007/11/22 02:15:35 nao-pon Exp $
  */
 
 if (!class_exists('HypMBString'))
@@ -231,7 +231,12 @@ Class HypMBString
 	
 	function HypMBString()
 	{
-		$this->load_table('convert');
+		if (extension_loaded('iconv')) {
+			$this->use_iconv = TRUE;
+		} else {
+			$this->use_iconv = FALSE;
+			$this->load_table('convert');
+		}
 
 		$this->mbemu_internals['ini_file'] = parse_ini_file(dirname(__FILE__).'/mb-emulator.ini');
 
@@ -242,22 +247,73 @@ Class HypMBString
 			);
 
 		$this->mbemu_internals['encoding'] = array (
-			'AUTO' => 0xFF,
-			'ASCII' => 0,
-			'EUC-JP' => 1,
-			'EUC' => 1,
-			'EUCJP-WIN' => 1,
-			'SJIS' => 2,
-			'SHIFT-JIS' => 2,
-			'SHIFT_JIS' => 2,
-			'SJIS-WIN' => 2,
-			'JIS' => 3,
-			'ISO-2022-JP' => 3,
-			'UTF-8' => 4,
-			'UTF8' => 4,
-			'UTF-16'=>5,
-			'ISO-8859-1' => 6
-			);
+			'AUTO'        => 0XFF,
+
+			'ASCII'           => 0,
+			'ANSI_X3.4-1968'  => 0,
+			'ISO-IR-6'        => 0,
+			'ANSI_X3.4-1986'  => 0,
+			'ISO_646.IRV:1991'=> 0,
+			'US-ASCII'        => 0,
+			'ISO646-US'       => 0,
+			'US'              => 0,
+			'IBM367'          => 0,
+			'CP367'           => 0,
+			'CSASCII'         => 0,
+
+			'EUC-JP'      => 1,
+			'EUC'         => 1,
+			'EUC_JP'      => 1,
+			'EUCJP'       => 1,
+			'X-EUC-JP'    => 1,
+			'EUCJP-WIN'   => 1,
+			'EUCJP-MS'    => 1,
+			'EUCJP-OPEN'  => 1,
+
+			'SHIFT_JIS'   => 2,
+			'SJIS'        => 2,
+			'SHIFT-JIS'   => 2,
+			'SJIS-WIN'    => 2,
+			'SJIS-OPEN'   => 2,
+			'CP932'       => 2,
+			'WINDOWS-31J' => 2,
+			'MS_KANJI'    => 2,
+
+			'ISO-2022-JP'   => 3,
+			'JIS'           => 3,
+			'ISO2022JPMS'   => 3,
+			'ISO-2022-JP-MS'=> 3,
+
+			'UTF-8'       => 4,
+			'UTF8'        => 4,
+
+			'UTF-16'      => 5,
+			'UTF16'       => 5,
+
+			'ISO-8859-1'  => 6,
+			'ISO_8859-1'  => 6,
+			'LATIN1'      => 6,
+
+			'BIG5'        => 10,
+			'BIG-5'       => 10,
+			'CN-BIG5'     => 10,
+			'BIG-FIVE'    => 10,
+			'BIGFIVE'     => 10,
+			'CP950'       => 10,
+
+			'EUC-CN'      => 11,
+			'GB2312'      => 11,
+			'CN-GB'       => 11,
+			'EUC_CN'      => 11,
+			'EUCCN'       => 11,
+			'X-EUC-CN'    => 11,
+
+			'EUC-KR'      => 12,
+			'EUC_KR'      => 12,
+			'EUCKR'       => 12,
+			'X-EUC-KR'    => 12,
+
+		);
 		
 		if (!($this->mb_detect_order($this->mbemu_internals['ini_file']['detect_order'])))
 			$this->mbemu_internals['detect_order'] = array ("ASCII", "JIS", "UTF-8", "EUC-JP", "SJIS");
@@ -271,7 +327,11 @@ Class HypMBString
 			3 => "(?:^|\x1B\(\x42)([\x01-\x1A,\x1C-\x7F]*)|(?:\x1B\\$\x42([\x01-\x1A,\x1C-\x7F]*))|(?:\x1B\(I([\x01-\x1A,\x1C-\x7F]*))", // for JIS
 			4 => "[\x01-\x7F]|[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF][\x80-\xBF]|[\xF0-\xF7][\x80-\xBF][\x80-\xBF][x\80-\xBF]", // for UTF-8
 			5 => "..", // for UTF-16
-			6 => "." // for ISO-8859-1
+			6 => ".", // for ISO-8859-1
+			// For with iconv
+			10 => "[\xA1-\xFE][\x40-\x7E\xA1-\xFE]|[\x01-\x7F]", // for Big5
+			11 => "[\xA1-\xF7][\xA1-\xFE]|[\x01-\x7F]", // EUC-CN
+			12 => "[\xA1-\xC8\xCA-\xFD][\xA1-\xFE]|[\x01-\x7F]", // EUC-KR
 			);
 		
 		$loaded = array();
@@ -328,6 +388,9 @@ Class HypMBString
 
 	function mb_regularize_encoding($encoding = '') {
 		if ($encoding && is_string($encoding)) {
+			if ($this->use_iconv) {
+				return $encoding;
+			}
 			$encoding = strtoupper($encoding);
 			if (array_key_exists($encoding, $this->mbemu_internals['encoding'])) {
 				return $encoding;
@@ -369,10 +432,10 @@ Class HypMBString
 
 	function mb_language($language='')
 	{
-	  if ($language =='') {
-	    if ($this->mbemu_internals['language'] == '') return FALSE;
-	    else return $this->mbemu_internals['language'];
-	  } else {
+		if ($language =='') {
+			if ($this->mbemu_internals['language'] == '') return FALSE;
+			else return $this->mbemu_internals['language'];
+		} else {
 		foreach ($this->mbemu_internals['lang_array'] as $element) {
 			if (strtolower($element) == strtolower($language)) {
 				$this->mbemu_internals['language'] = $element;
@@ -386,13 +449,21 @@ Class HypMBString
 
 	function mb_internal_encoding($encoding = '')
 	{
-	  if ($encoding =='') {
-	    if ($this->mbemu_internals['internal_encoding'] == '') return FALSE;
-	    else return $this->mbemu_internals['internal_encoding'];
-	  } else {
-			$this->mbemu_internals['internal_encoding'] = strtoupper($encoding);
-			return TRUE;
-	  }
+		if ($encoding =='') {
+			if ($this->use_iconv) {
+				return iconv_get_encoding('internal_encoding');
+			} else {
+				return $this->mbemu_internals['internal_encoding'];
+			}
+		} else {
+			$encoding = strtoupper($encoding);
+			if ($this->use_iconv) {
+				$this->mbemu_internals['internal_encoding'] = (iconv_set_encoding('internal_encoding', $encoding))? $encoding : '';
+			} else {
+				$this->mbemu_internals['internal_encoding'] = $this->mb_regularize_encoding($encoding);
+			}
+			return ($this->mbemu_internals['internal_encoding'])? TRUE : FALSE;
+		}
 	}
 
 	function mb_get_info($type = 'all')
@@ -433,6 +504,11 @@ Class HypMBString
 
 	function mb_convert_encoding( $str, $to_encoding, $from_encoding = '')
 	{
+		if (!$str) {
+			echo 'hoge';
+			return '';
+		}
+		
 		if (is_array($str)) {
 			foreach ($str as $key=>$value) {
 				$str[$key] = $this->mb_convert_encoding($value, $to_encoding, $from_encoding);
@@ -442,118 +518,128 @@ Class HypMBString
 		$to_encoding = strtoupper($to_encoding);
 		$from_encoding = $this->mb_detect_encoding($str, $from_encoding);
 		
-		switch (@$this->mbemu_internals['encoding'][$from_encoding]) {
-			case 1: //euc-jp
-				switch(@$this->mbemu_internals['encoding'][$to_encoding]) {
-					case 2: //sjis
-						return $this->_euctosjis($str);
-					case 3: //jis
-						$str = $this->_euctosjis($str);
-						return $this->_sjistojis($str);
-					case 4: //utf8
-						return $this->_euctoutf8($str);
-					case 5: //utf16
-						$str = $this->_euctoutf8($str);
-						return $this->_utf8toutf16($str);
-					case 6: //iso-8859-1
-						return utf8_decode($this->_euctoutf8($str));
-					default:
-						return $str;
-				}
-			case 2: //sjis
-				switch(@$this->mbemu_internals['encoding'][$to_encoding]) {
-					case 1: //euc-jp
-						return $this->_sjistoeuc($str);
-					case 3: //jis
-						return $this->_sjistojis($str);
-					case 4: //utf8
-						return $this->_sjistoutf8($str);
-					case 5: //utf16
-						$str = $this->_sjistoutf8($str);
-						return $this->_utf8toutf16($str);
-					case 6: //iso-8859-1
-						return utf8_decode($this->_sjistoutf8($str));
-					default:
-						return $str;
-				}
-			case 3: //jis
-				switch(@$this->mbemu_internals['encoding'][$to_encoding]) {
-					case 1: //euc-jp
-						$str = $this->_jistosjis($str);
-						return $this->_sjistoeuc($str);
-					case 2: //sjis
-						return $this->_jistosjis($str);
-					case 4: //utf8
-						$str = $this->_jistosjis($str);
-						return $this->_sjistoutf8($str);
-					case 5: //utf16
-						$str = $this->_jistosjis($str);
-						$str = $this->_sjistoutf8($str);
-						return $this->_utf8toutf16($str);
-					case 6: //iso-8859-1
-						$str = $this->_jistosjis($str);
-						return utf8_decode($this->_sjistoutf8($str));
-					default:
-						return $str;
-				}
-			case 4: //utf8
-				switch(@$this->mbemu_internals['encoding'][$to_encoding]) {
-					case 1: //euc-jp
-						return $this->_utf8toeuc($str);
-					case 2: //sjis
-						return $this->_utf8tosjis($str);
-					case 3: //jis
-						$str = $this->_utf8tosjis($str);
-						return $this->_sjistojis($str);
-					case 5: //utf16
-						return $this->_utf8toutf16($str);
-					case 6: //iso-8859-1
-						return utf8_decode($str);
-					default:
-						return $str;
-				}
-			case 5: //utf16
-				switch(@$this->mbemu_internals['encoding'][$to_encoding]) {
-					case 1: //euc-jp
-						$str = $this->_utf16toutf8($str);
-						return $this->_utf8toeuc($str);
-					case 2: //sjis
-						$str = $this->_utf16toutf8($str);
-						return $this->_utf8tosjis($str);
-					case 3: //jis
-						$str = $this->_utf16toutf8($str);
-						$str = $this->_utf8tosjis($str);
-						return $this->_sjistojis($str);
-					case 4: //utf8
-						return $str = $this->_utf16toutf8($str);;
-					case 6: //iso-8859-1
-						$str = $this->_utf16toutf8($str);
-						return utf8_decode($str);
-					default:
-						return $str;
-				}
-			case 6: //iso-8859-1
-				switch(@$this->mbemu_internals['encoding'][$to_encoding]) {
-					case 1: //euc-jp
-						$str = utf8_encode($str);
-						return $this->_utf8toeuc($str);
-					case 2: //sjis
-						$str = utf8_encode($str);
-						return $this->_utf8tosjis($str);
-					case 3: //jis
-						$str = utf8_encode($str);
-						$str = $this->_utf8tosjis($str);
-						return $this->_sjistojis($str);
-					case 4: //utf8
-						return $str = utf8_encode($str);;
-					case 5: //utf16
-						$str = utf8_encode($str);
-						return $this->_utf8toutf16($str);
-					default:
-						return $str;
-				}
-			default:
-				return $str;
+		if ($this->use_iconv && $from_encoding !== 'AUTO') {
+			if (isset($this->mbemu_internals['encoding'][$to_encoding])) {
+				$to_encoding = array_search($this->mbemu_internals['encoding'][$to_encoding], $this->mbemu_internals['encoding']);
+			}
+			if (isset($this->mbemu_internals['encoding'][$from_encoding])) {
+				$from_encoding = array_search($this->mbemu_internals['encoding'][$from_encoding], $this->mbemu_internals['encoding']);
+			}
+			return iconv($from_encoding, $to_encoding, $str);
+		} else {
+			switch (@$this->mbemu_internals['encoding'][$from_encoding]) {
+				case 1: //euc-jp
+					switch(@$this->mbemu_internals['encoding'][$to_encoding]) {
+						case 2: //sjis
+							return $this->_euctosjis($str);
+						case 3: //jis
+							$str = $this->_euctosjis($str);
+							return $this->_sjistojis($str);
+						case 4: //utf8
+							return $this->_euctoutf8($str);
+						case 5: //utf16
+							$str = $this->_euctoutf8($str);
+							return $this->_utf8toutf16($str);
+						case 6: //iso-8859-1
+							return utf8_decode($this->_euctoutf8($str));
+						default:
+							return $str;
+					}
+				case 2: //sjis
+					switch(@$this->mbemu_internals['encoding'][$to_encoding]) {
+						case 1: //euc-jp
+							return $this->_sjistoeuc($str);
+						case 3: //jis
+							return $this->_sjistojis($str);
+						case 4: //utf8
+							return $this->_sjistoutf8($str);
+						case 5: //utf16
+							$str = $this->_sjistoutf8($str);
+							return $this->_utf8toutf16($str);
+						case 6: //iso-8859-1
+							return utf8_decode($this->_sjistoutf8($str));
+						default:
+							return $str;
+					}
+				case 3: //jis
+					switch(@$this->mbemu_internals['encoding'][$to_encoding]) {
+						case 1: //euc-jp
+							$str = $this->_jistosjis($str);
+							return $this->_sjistoeuc($str);
+						case 2: //sjis
+							return $this->_jistosjis($str);
+						case 4: //utf8
+							$str = $this->_jistosjis($str);
+							return $this->_sjistoutf8($str);
+						case 5: //utf16
+							$str = $this->_jistosjis($str);
+							$str = $this->_sjistoutf8($str);
+							return $this->_utf8toutf16($str);
+						case 6: //iso-8859-1
+							$str = $this->_jistosjis($str);
+							return utf8_decode($this->_sjistoutf8($str));
+						default:
+							return $str;
+					}
+				case 4: //utf8
+					switch(@$this->mbemu_internals['encoding'][$to_encoding]) {
+						case 1: //euc-jp
+							return $this->_utf8toeuc($str);
+						case 2: //sjis
+							return $this->_utf8tosjis($str);
+						case 3: //jis
+							$str = $this->_utf8tosjis($str);
+							return $this->_sjistojis($str);
+						case 5: //utf16
+							return $this->_utf8toutf16($str);
+						case 6: //iso-8859-1
+							return utf8_decode($str);
+						default:
+							return $str;
+					}
+				case 5: //utf16
+					switch(@$this->mbemu_internals['encoding'][$to_encoding]) {
+						case 1: //euc-jp
+							$str = $this->_utf16toutf8($str);
+							return $this->_utf8toeuc($str);
+						case 2: //sjis
+							$str = $this->_utf16toutf8($str);
+							return $this->_utf8tosjis($str);
+						case 3: //jis
+							$str = $this->_utf16toutf8($str);
+							$str = $this->_utf8tosjis($str);
+							return $this->_sjistojis($str);
+						case 4: //utf8
+							return $str = $this->_utf16toutf8($str);;
+						case 6: //iso-8859-1
+							$str = $this->_utf16toutf8($str);
+							return utf8_decode($str);
+						default:
+							return $str;
+					}
+				case 6: //iso-8859-1
+					switch(@$this->mbemu_internals['encoding'][$to_encoding]) {
+						case 1: //euc-jp
+							$str = utf8_encode($str);
+							return $this->_utf8toeuc($str);
+						case 2: //sjis
+							$str = utf8_encode($str);
+							return $this->_utf8tosjis($str);
+						case 3: //jis
+							$str = utf8_encode($str);
+							$str = $this->_utf8tosjis($str);
+							return $this->_sjistojis($str);
+						case 4: //utf8
+							return $str = utf8_encode($str);;
+						case 5: //utf16
+							$str = utf8_encode($str);
+							return $this->_utf8toutf16($str);
+						default:
+							return $str;
+					}
+				default:
+					return $str;
+			}
 		}
 	}
 
@@ -1083,6 +1169,16 @@ Class HypMBString
 		}
 		foreach($encoding_list as $encode) {
 			$encode = strtoupper($encode);
+			
+			if ($this->use_iconv) {
+				$encode = $this->mb_regularize_encoding($encode);
+				$this->error = 0;
+				$_error_handler = set_error_handler(array(&$this, 'iconvErrorHandler'));
+				iconv($encode, 'UTF-8', $str);
+				set_error_handler($_error_handler);
+				if ($this->error) continue;
+			} 
+			
 			if (isset($this->mbemu_internals['encoding'][$encode]) && $this->_check_encoding($str, $this->mbemu_internals['encoding'][$encode])) {
 				return $encode;
 			}
@@ -1090,29 +1186,39 @@ Class HypMBString
 		return (count($encoding_list) === 1)? $encoding_list[0] : 'AUTO';
 	}
 
-	function mb_strlen ( $str , $encoding='')
+	function mb_strlen ($str ,$encoding='')
 	{
 		$encoding = $this->mb_regularize_encoding($encoding);
-		switch ($e = $this->mbemu_internals['encoding'][$encoding]) {
-			case 1 : //euc-jp
-			case 2 : //shift-jis
-			case 4 : //utf-8
-				return preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $str, $arr);
-			case 5 : //utf-16
-				return strlen($str) >> 1;
-			case 3 : //jis
-				$str = $this->mb_convert_encoding($str, 'SJIS', 'JIS');
-				return preg_match_all('/'.$this->mbemu_internals['regex'][2].'/', $str, $arr);
-			case 0 : //ascii
-			case 6 : //iso8859-1
-			default:
-				return strlen($str);
+		if ($this->use_iconv) {
+			return iconv_strlen($str ,$encoding);
+		} else {
+			switch ($e = $this->mbemu_internals['encoding'][$encoding]) {
+				case 1 : //euc-jp
+				case 2 : //shift-jis
+				case 4 : //utf-8
+					return preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $str, $arr);
+				case 5 : //utf-16
+					return strlen($str) >> 1;
+				case 3 : //jis
+					$str = $this->mb_convert_encoding($str, 'SJIS', 'JIS');
+					return preg_match_all('/'.$this->mbemu_internals['regex'][2].'/', $str, $arr);
+				case 0 : //ascii
+				case 6 : //iso8859-1
+				default:
+					return strlen($str);
+			}
 		}
 	}
 
 	function mb_strwidth( $str, $encoding='')
 	{
 		$encoding = $this->mb_regularize_encoding($encoding);
+
+		if ($this->use_iconv && $encoding !== 'ASCII' && $encoding !== 'ISO-8859-1') {
+			$str = mb_convert_encoding($str, 'UTF-8', $encoding);
+			$encoding = 'UTF-8';
+		}
+
 		switch ($e = $this->mbemu_internals['encoding'][$encoding]) {
 			case 4 : //utf-8
 				$max = $len = preg_match_all('/'.$this->mbemu_internals['regex'][4].'/', $str, $arr);
@@ -1159,6 +1265,15 @@ Class HypMBString
 		$trimwidth = $this->mb_strwidth($trimmarker,$encoding);
 		$width -= $trimwidth;
 		if ($width <= 0) return $trimmarker;
+
+		$iconv_conv = FALSE;
+		if ($this->use_iconv && $encoding !== 'ASCII' && $encoding !== 'ISO-8859-1') {
+			$str = mb_convert_encoding($str, 'UTF-8', $encoding);
+			if ($encoding !== 'UTF-8') {
+				$iconv_conv = $encoding;
+				$encoding = 'UTF-8';
+			}
+		}
 		
 		switch ($e = $this->mbemu_internals['encoding'][$encoding]) {
 			case 4 : //utf-8
@@ -1174,7 +1289,11 @@ Class HypMBString
 					++$i;
 				}
 				$arr[0] = array_slice($arr[0], 0, $i);
-				return implode("", $arr[0]).$trimmarker;
+				$ret = implode("", $arr[0]).$trimmarker;
+				if ($iconv_conv) {
+					$ret = $this->mb_convert_encoding($ret, $iconv_conv, 'UTF-8');
+				}
+				return $ret;
 			case 5 : //utf-16
 				$arr = unpack("n*", $str);
 				$i = 0;
@@ -1228,33 +1347,40 @@ Class HypMBString
 	function mb_substr ( $str, $start , $length='notnumber' , $encoding='')
 	{
 		$encoding = $this->mb_regularize_encoding($encoding);
-		$arr = array();
-		switch ($e = $this->mbemu_internals['encoding'][$encoding]) {
-			case 1 : //euc-jp
-			case 2 : //shift-jis
-			case 4 : //utf-8
-			case 5 : //utf-16
-				preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $str, $arr);
-				break;
-			case 3 : //jis
-				$str = $this->mb_convert_encoding($str, 'SJIS', 'JIS');
-				preg_match_all('/'.$this->mbemu_internals['regex'][2].'/', $str, $arr);
-			case 0 : //ascii
-			case 6 : //iso-8859-1
-			default:
-				if (is_int($length))
-					return substr($str, $start , $length);
-				else
-					return substr($str, $start);
+		if ($this->use_iconv) {
+			if (!is_int($length)) {
+				$length = iconv_strlen($str, $encoding);
+			}
+			return iconv_substr($str, $start, $length ,$encoding);
+		} else {
+			$arr = array();
+			switch ($e = $this->mbemu_internals['encoding'][$encoding]) {
+				case 1 : //euc-jp
+				case 2 : //shift-jis
+				case 4 : //utf-8
+				case 5 : //utf-16
+					preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $str, $arr);
+					break;
+				case 3 : //jis
+					$str = $this->mb_convert_encoding($str, 'SJIS', 'JIS');
+					preg_match_all('/'.$this->mbemu_internals['regex'][2].'/', $str, $arr);
+				case 0 : //ascii
+				case 6 : //iso-8859-1
+				default:
+					if (is_int($length))
+						return substr($str, $start , $length);
+					else
+						return substr($str, $start);
+			}
+			if (is_int($length))
+				$arr[0] = array_slice($arr[0], $start, $length);
+			else
+				$arr[0] = array_slice($arr[0], $start);
+			$str = implode("", $arr[0]);
+			if ($this->mbemu_internals['encoding'][$encoding] == 3)
+				$str = $this->mb_convert_encoding($str, 'JIS', 'SJIS');
+			return $str;
 		}
-		if (is_int($length))
-			$arr[0] = array_slice($arr[0], $start, $length);
-		else
-			$arr[0] = array_slice($arr[0], $start);
-		$str = implode("", $arr[0]);
-		if ($this->mbemu_internals['encoding'][$encoding] == 3)
-			$str = $this->mb_convert_encoding($str, 'JIS', 'SJIS');
-		return $str;
 	}
 
 	function _sub_strcut($arr, $start, $length) {
@@ -1283,13 +1409,27 @@ Class HypMBString
 	function mb_strcut ( $str, $start , $length=0, $encoding = '')
 	{
 		$encoding = $this->mb_regularize_encoding($encoding);
+
+		$iconv_conv = FALSE;
+		if ($this->use_iconv && $encoding !== 'ASCII' && $encoding !== 'ISO-8859-1') {
+			$str = mb_convert_encoding($str, 'UTF-8', $encoding);
+			if ($encoding !== 'UTF-8') {
+				$iconv_conv = $encoding;
+				$encoding = 'UTF-8';
+			}
+		}
+		
 		switch ($e = $this->mbemu_internals['encoding'][$encoding]) {
 			case 1 : //euc-jp
 			case 2 : //shift-jis
 			case 4 : //utf-8
 			case 5 : //utf-16
 				preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $str, $arr);
-				return $this->_sub_strcut($arr, $start, $length);
+				$ret = $this->_sub_strcut($arr, $start, $length);
+				if ($iconv_conv) {
+					$ret = $this->mb_convert_encoding($ret, $iconv_conv, 'UTF-8');
+				}				
+				return $ret;
 			case 3 : //jis
 				$str = $this->mb_convert_encoding($str, 'SJIS', 'JIS');
 				preg_match_all('/'.$this->mbemu_internals['regex'][2].'/', $str, $arr);
@@ -1326,24 +1466,29 @@ Class HypMBString
 	function mb_strrpos ( $haystack, $needle , $encoding = '')
 	{
 		$encoding = $this->mb_regularize_encoding($encoding);
-		switch ($e = $this->mbemu_internals['encoding'][$encoding]) {
-			case 1 : //euc-jp
-			case 2 : //shift-jis
-			case 4 : //utf-8
-			case 5 : //utf-16
-				preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $haystack, $ar_h);
-				preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $needle, $ar_n);
-				return $this->_sub_strrpos($ar_h[0], $ar_n[0]);
-			case 3 : //jis
-				$haystack = $this->mb_convert_encoding($haystack, 'SJIS', 'JIS');
-				$needle = $this->mb_convert_encoding($needle, 'SJIS', 'JIS');
-				preg_match_all('/'.$this->mbemu_internals['regex'][2].'/', $haystack, $ar_h);
-				preg_match_all('/'.$this->mbemu_internals['regex'][2].'/', $needle, $ar_n);
-				return $this->_sub_strrpos($ar_h[0], $ar_n[0]);
-			case 0 : //ascii
-			case 6 : //iso-8859-1
-			default:
-				return strrpos($haystack, $needle);
+
+		if ($this->use_iconv) {
+			return iconv_strrpos($haystack, $needle , $encoding);
+		} else {
+			switch ($e = $this->mbemu_internals['encoding'][$encoding]) {
+				case 1 : //euc-jp
+				case 2 : //shift-jis
+				case 4 : //utf-8
+				case 5 : //utf-16
+					preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $haystack, $ar_h);
+					preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $needle, $ar_n);
+					return $this->_sub_strrpos($ar_h[0], $ar_n[0]);
+				case 3 : //jis
+					$haystack = $this->mb_convert_encoding($haystack, 'SJIS', 'JIS');
+					$needle = $this->mb_convert_encoding($needle, 'SJIS', 'JIS');
+					preg_match_all('/'.$this->mbemu_internals['regex'][2].'/', $haystack, $ar_h);
+					preg_match_all('/'.$this->mbemu_internals['regex'][2].'/', $needle, $ar_n);
+					return $this->_sub_strrpos($ar_h[0], $ar_n[0]);
+				case 0 : //ascii
+				case 6 : //iso-8859-1
+				default:
+					return strrpos($haystack, $needle);
+			}
 		}
 	}
 
@@ -1367,24 +1512,29 @@ Class HypMBString
 	function mb_strpos ( $haystack, $needle , $offset = 0, $encoding = '')
 	{
 		$encoding = $this->mb_regularize_encoding($encoding);
-		switch ($e = $this->mbemu_internals['encoding'][$encoding]) {
-			case 1 : //euc-jp
-			case 2 : //shift-jis
-			case 4 : //utf-8
-			case 5 : //utf-16
-				preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $haystack, $ar_h);
-				preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $needle, $ar_n);
-				return $this->_sub_strpos($ar_h[0], $ar_n[0], $offset);
-			case 3 : //jis
-				$haystack = $this->mb_convert_encoding($haystack, 'SJIS', 'JIS');
-				$needle = $this->mb_convert_encoding($needle, 'SJIS', 'JIS');
-				preg_match_all('/'.$this->mbemu_internals['regex'][2].'/', $haystack, $ar_h);
-				preg_match_all('/'.$this->mbemu_internals['regex'][2].'/', $needle, $ar_n);
-				return $this->_sub_strpos($ar_h[0], $ar_n[0], $offset);
-			case 0 : //ascii
-			case 6 : //iso-8859-1
-			default:
-				return strpos($haystack, $needle , $offset);
+
+		if ($this->use_iconv) {
+			return iconv_strpos($haystack, $needle ,$offset, $encoding);
+		} else {
+			switch ($e = $this->mbemu_internals['encoding'][$encoding]) {
+				case 1 : //euc-jp
+				case 2 : //shift-jis
+				case 4 : //utf-8
+				case 5 : //utf-16
+					preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $haystack, $ar_h);
+					preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $needle, $ar_n);
+					return $this->_sub_strpos($ar_h[0], $ar_n[0], $offset);
+				case 3 : //jis
+					$haystack = $this->mb_convert_encoding($haystack, 'SJIS', 'JIS');
+					$needle = $this->mb_convert_encoding($needle, 'SJIS', 'JIS');
+					preg_match_all('/'.$this->mbemu_internals['regex'][2].'/', $haystack, $ar_h);
+					preg_match_all('/'.$this->mbemu_internals['regex'][2].'/', $needle, $ar_n);
+					return $this->_sub_strpos($ar_h[0], $ar_n[0], $offset);
+				case 0 : //ascii
+				case 6 : //iso-8859-1
+				default:
+					return strpos($haystack, $needle , $offset);
+			}
 		}
 	}
 
@@ -1409,6 +1559,12 @@ Class HypMBString
 	function mb_substr_count($haystack, $needle , $encoding = '')
 	{
 		$encoding = $this->mb_regularize_encoding($encoding);
+
+		if ($this->use_iconv && $encoding !== 'ASCII' && $encoding !== 'ISO-8859-1') {
+			$haystack = mb_convert_encoding($haystack, 'UTF-8', $encoding);
+			$encoding = 'UTF-8';
+		}
+
 		switch ($e = $this->mbemu_internals['encoding'][$encoding]) {
 			case 1 : //euc-jp
 			case 2 : //shift-jis
@@ -1430,51 +1586,14 @@ Class HypMBString
 		}
 	}
 
-
-	/******************
-	mb_convert_variables
-	*******************/
-/*
-	if (!$this->mbemu_internals['ini_file']['convert_variables_arrayonly']) {
-		function mb_convert_variables($to_encoding, $from_encoding, $s1, $s2='',$s3='',$s4='',$s5='',$s6='',$s7='', $s8='',$s9='', $s10='')
-		{
-			if (is_array($s1)) {
-				$st = '';
-				foreach($s1 as $s) $st .= $s;
-				if (!($encode = mb_detect_encoding($st, $from_encoding)))
-					return FALSE;
-				reset($s1);
-				while (list ($key, $val) = each ($s1)) {
-					$s1[$key] = mb_convert_encoding($val, $to_encoding, $encode);
-				}
-				return $encode;
-			}
-		    $st = $s1.$s2.$s3.$s4.$s5.$s6.$s7.$s8.$s9.$s10;
-		    if (!($encode = mb_detect_encoding($st, $from_encoding)))
-		        return FALSE;
-		    $s1 = mb_convert_encoding($s1, $to_encoding, $encode);
-		    $s2 = mb_convert_encoding($s2, $to_encoding, $encode);
-		    $s3 = mb_convert_encoding($s3, $to_encoding, $encode);
-		    $s4 = mb_convert_encoding($s4, $to_encoding, $encode);
-		    $s5 = mb_convert_encoding($s5, $to_encoding, $encode);
-		    $s6 = mb_convert_encoding($s6, $to_encoding, $encode);
-		    $s7 = mb_convert_encoding($s7, $to_encoding, $encode);
-		    $s8 = mb_convert_encoding($s8, $to_encoding, $encode);
-		    $s9 = mb_convert_encoding($s9, $to_encoding, $encode);
-		    $s10 = mb_convert_encoding($s10, $to_encoding, $encode);
-		    return $encode;
+	function mb_convert_variables($to_encoding, $from_encoding, &$arr)
+	{
+		if (!($encode = $this->mb_detect_encoding($this->mb_convert_variables_join_array(' ', $arr), $from_encoding))) {
+			return FALSE;
 		}
-	} else {
-*/
-		function mb_convert_variables($to_encoding, $from_encoding, &$arr)
-		{
-			if (!($encode = $this->mb_detect_encoding($this->mb_convert_variables_join_array(' ', $arr), $from_encoding))) {
-				return FALSE;
-			}
-			$arr = $this->mb_convert_encoding($arr, $to_encoding, $encode);
-			return $encode;
-		}
-//	}
+		$arr = $this->mb_convert_encoding($arr, $to_encoding, $encode);
+		return $encode;
+	}
 
 	function mb_preferred_mime_name ($encoding)
 	{
@@ -1938,6 +2057,13 @@ Class HypMBString
 				}
 				return $this->mb_convert_encoding($newst, $encoding, 'UTF-8');
 		}
+	}
+
+	function iconvErrorHandler($errno, $errstr, $errfile, $errline)
+	{
+		$this->error = $errno;
+	    /* PHP の内部エラーハンドラを実行しません */
+	    return true;
 	}
 
 	function _print_str($str) {
