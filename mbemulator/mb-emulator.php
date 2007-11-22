@@ -5,7 +5,7 @@
  * 
  * license based on GPL(GNU General Public License)
  *
- * $Id: mb-emulator.php,v 1.4 2007/11/22 02:15:35 nao-pon Exp $
+ * $Id: mb-emulator.php,v 1.5 2007/11/22 08:41:15 nao-pon Exp $
  */
 
 if (!class_exists('HypMBString'))
@@ -328,7 +328,7 @@ Class HypMBString
 			4 => "[\x01-\x7F]|[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF][\x80-\xBF]|[\xF0-\xF7][\x80-\xBF][\x80-\xBF][x\80-\xBF]", // for UTF-8
 			5 => "..", // for UTF-16
 			6 => ".", // for ISO-8859-1
-			// For with iconv
+
 			10 => "[\xA1-\xFE][\x40-\x7E\xA1-\xFE]|[\x01-\x7F]", // for Big5
 			11 => "[\xA1-\xF7][\xA1-\xFE]|[\x01-\x7F]", // EUC-CN
 			12 => "[\xA1-\xC8\xCA-\xFD][\xA1-\xFE]|[\x01-\x7F]", // EUC-KR
@@ -374,25 +374,26 @@ Class HypMBString
 		include dirname(__FILE__).'/unitosjis.table';
 	}
 
-	function mb_convert_variables_join_array($glue, $pieces)
+	function convert_variables_join_array($glue, $pieces)
 	{
 		$arr = array();
 		if (!is_array($pieces)) {
 			$pieces = array($pieces);
 		}
 		foreach ($pieces as $piece) {
-			$arr[] = is_array($piece) ? $this->mb_convert_variables_join_array($glue, $piece) : $piece;
+			$arr[] = is_array($piece) ? $this->convert_variables_join_array($glue, $piece) : $piece;
 		}
 		return join($glue, $arr);
 	}
 
-	function mb_regularize_encoding($encoding = '') {
+	function regularize_encoding($encoding = '') {
 		if ($encoding && is_string($encoding)) {
-			if ($this->use_iconv) {
+			$encoding = strtoupper($encoding);
+			if (isset($this->mbemu_internals['encoding'][$encoding])) {
+				$encoding = array_search($this->mbemu_internals['encoding'][$encoding], $this->mbemu_internals['encoding']);
 				return $encoding;
 			}
-			$encoding = strtoupper($encoding);
-			if (array_key_exists($encoding, $this->mbemu_internals['encoding'])) {
+			if ($this->use_iconv) {
 				return $encoding;
 			}
 		}
@@ -456,11 +457,11 @@ Class HypMBString
 				return $this->mbemu_internals['internal_encoding'];
 			}
 		} else {
-			$encoding = strtoupper($encoding);
+			$encoding = $this->regularize_encoding($encoding);
 			if ($this->use_iconv) {
 				$this->mbemu_internals['internal_encoding'] = (iconv_set_encoding('internal_encoding', $encoding))? $encoding : '';
 			} else {
-				$this->mbemu_internals['internal_encoding'] = $this->mb_regularize_encoding($encoding);
+				$this->mbemu_internals['internal_encoding'] = $this->regularize_encoding($encoding);
 			}
 			return ($this->mbemu_internals['internal_encoding'])? TRUE : FALSE;
 		}
@@ -505,7 +506,6 @@ Class HypMBString
 	function mb_convert_encoding( $str, $to_encoding, $from_encoding = '')
 	{
 		if (!$str) {
-			echo 'hoge';
 			return '';
 		}
 		
@@ -515,17 +515,14 @@ Class HypMBString
 			}
 			return $str;
 		}
+		
 		$to_encoding = strtoupper($to_encoding);
 		$from_encoding = $this->mb_detect_encoding($str, $from_encoding);
 		
 		if ($this->use_iconv && $from_encoding !== 'AUTO') {
-			if (isset($this->mbemu_internals['encoding'][$to_encoding])) {
-				$to_encoding = array_search($this->mbemu_internals['encoding'][$to_encoding], $this->mbemu_internals['encoding']);
-			}
-			if (isset($this->mbemu_internals['encoding'][$from_encoding])) {
-				$from_encoding = array_search($this->mbemu_internals['encoding'][$from_encoding], $this->mbemu_internals['encoding']);
-			}
-			return iconv($from_encoding, $to_encoding, $str);
+			$to_encoding = $this->regularize_encoding($to_encoding);
+			$from_encoding = $this->regularize_encoding($from_encoding);
+			return iconv($from_encoding, $to_encoding . '//TRANSLIT', $str);
 		} else {
 			switch (@$this->mbemu_internals['encoding'][$from_encoding]) {
 				case 1: //euc-jp
@@ -1069,7 +1066,7 @@ Class HypMBString
 
 	function mb_convert_kana( $str, $option='KV', $encoding = '')
 	{
-		$encoding = $this->mb_regularize_encoding($encoding);
+		$encoding = $this->regularize_encoding($encoding);
 		$str = $this->mb_convert_encoding($str, 'EUC-JP', $encoding);
 
 		if (strstr($option, "r")) $this->alpha_zenhan_EUC($str);
@@ -1168,19 +1165,22 @@ Class HypMBString
 			}
 		}
 		foreach($encoding_list as $encode) {
-			$encode = strtoupper($encode);
-			
+			$encode = $this->regularize_encoding($encode);
+			if (!$encode) continue;
 			if ($this->use_iconv) {
-				$encode = $this->mb_regularize_encoding($encode);
 				$this->error = 0;
-				$_error_handler = set_error_handler(array(&$this, 'iconvErrorHandler'));
+				set_error_handler(array(&$this, 'iconvErrorHandler'));
 				iconv($encode, 'UTF-8', $str);
-				set_error_handler($_error_handler);
-				if ($this->error) continue;
-			} 
-			
-			if (isset($this->mbemu_internals['encoding'][$encode]) && $this->_check_encoding($str, $this->mbemu_internals['encoding'][$encode])) {
-				return $encode;
+				restore_error_handler();
+				if ($this->error) {
+					continue;
+				} else {
+					return $encode;
+				}
+			} else { 
+				if (isset($this->mbemu_internals['encoding'][$encode]) && $this->_check_encoding($str, $this->mbemu_internals['encoding'][$encode])) {
+					return $encode;
+				}
 			}
 		}
 		return (count($encoding_list) === 1)? $encoding_list[0] : 'AUTO';
@@ -1188,7 +1188,7 @@ Class HypMBString
 
 	function mb_strlen ($str ,$encoding='')
 	{
-		$encoding = $this->mb_regularize_encoding($encoding);
+		$encoding = $this->regularize_encoding($encoding);
 		if ($this->use_iconv) {
 			return iconv_strlen($str ,$encoding);
 		} else {
@@ -1212,7 +1212,7 @@ Class HypMBString
 
 	function mb_strwidth( $str, $encoding='')
 	{
-		$encoding = $this->mb_regularize_encoding($encoding);
+		$encoding = $this->regularize_encoding($encoding);
 
 		if ($this->use_iconv && $encoding !== 'ASCII' && $encoding !== 'ISO-8859-1') {
 			$str = mb_convert_encoding($str, 'UTF-8', $encoding);
@@ -1257,7 +1257,7 @@ Class HypMBString
 
 	function mb_strimwidth( $str, $start, $width, $trimmarker , $encoding = '')
 	{
-		$encoding = $this->mb_regularize_encoding($encoding);
+		$encoding = $this->regularize_encoding($encoding);
 
 		$str = $this->mb_substr($str, $start, 'notnumber', $encoding);
 		if (($len = $this->mb_strwidth($str,$encoding)) <= $width)
@@ -1268,8 +1268,8 @@ Class HypMBString
 
 		$iconv_conv = FALSE;
 		if ($this->use_iconv && $encoding !== 'ASCII' && $encoding !== 'ISO-8859-1') {
-			$str = mb_convert_encoding($str, 'UTF-8', $encoding);
 			if ($encoding !== 'UTF-8') {
+				$str = mb_convert_encoding($str, 'UTF-8', $encoding);
 				$iconv_conv = $encoding;
 				$encoding = 'UTF-8';
 			}
@@ -1346,7 +1346,7 @@ Class HypMBString
 
 	function mb_substr ( $str, $start , $length='notnumber' , $encoding='')
 	{
-		$encoding = $this->mb_regularize_encoding($encoding);
+		$encoding = $this->regularize_encoding($encoding);
 		if ($this->use_iconv) {
 			if (!is_int($length)) {
 				$length = iconv_strlen($str, $encoding);
@@ -1408,7 +1408,7 @@ Class HypMBString
 
 	function mb_strcut ( $str, $start , $length=0, $encoding = '')
 	{
-		$encoding = $this->mb_regularize_encoding($encoding);
+		$encoding = $this->regularize_encoding($encoding);
 
 		$iconv_conv = FALSE;
 		if ($this->use_iconv && $encoding !== 'ASCII' && $encoding !== 'ISO-8859-1') {
@@ -1465,7 +1465,7 @@ Class HypMBString
 
 	function mb_strrpos ( $haystack, $needle , $encoding = '')
 	{
-		$encoding = $this->mb_regularize_encoding($encoding);
+		$encoding = $this->regularize_encoding($encoding);
 
 		if ($this->use_iconv) {
 			return iconv_strrpos($haystack, $needle , $encoding);
@@ -1511,7 +1511,7 @@ Class HypMBString
 
 	function mb_strpos ( $haystack, $needle , $offset = 0, $encoding = '')
 	{
-		$encoding = $this->mb_regularize_encoding($encoding);
+		$encoding = $this->regularize_encoding($encoding);
 
 		if ($this->use_iconv) {
 			return iconv_strpos($haystack, $needle ,$offset, $encoding);
@@ -1558,7 +1558,7 @@ Class HypMBString
 
 	function mb_substr_count($haystack, $needle , $encoding = '')
 	{
-		$encoding = $this->mb_regularize_encoding($encoding);
+		$encoding = $this->regularize_encoding($encoding);
 
 		if ($this->use_iconv && $encoding !== 'ASCII' && $encoding !== 'ISO-8859-1') {
 			$haystack = mb_convert_encoding($haystack, 'UTF-8', $encoding);
@@ -1588,7 +1588,7 @@ Class HypMBString
 
 	function mb_convert_variables($to_encoding, $from_encoding, &$arr)
 	{
-		if (!($encode = $this->mb_detect_encoding($this->mb_convert_variables_join_array(' ', $arr), $from_encoding))) {
+		if (!($encode = $this->mb_detect_encoding($this->convert_variables_join_array(' ', $arr), $from_encoding))) {
 			return FALSE;
 		}
 		$arr = $this->mb_convert_encoding($arr, $to_encoding, $encode);
@@ -1916,7 +1916,7 @@ Class HypMBString
 
 	function mb_encode_numericentity($str, $convmap, $encoding="")
 	{
-		$encoding = $this->mb_regularize_encoding($encoding);
+		$encoding = $this->regularize_encoding($encoding);
 		$str = $this->mb_convert_encoding($str, "utf-16", $encoding);
 		$ar = unpack("n*", $str);
 		$s = "";
@@ -1937,7 +1937,7 @@ Class HypMBString
 
 	function mb_decode_numericentity ($str, $convmap, $encoding="")
 	{
-		$encoding = $this->mb_regularize_encoding($encoding);
+		$encoding = $this->regularize_encoding($encoding);
 		$ar = preg_split('/(&#[0-9]+;)/', $str, -1, PREG_SPLIT_DELIM_CAPTURE);
 		$s = '';
 		$max = count($convmap);
@@ -1963,7 +1963,7 @@ Class HypMBString
 	{
 		$this->load_table('upper');
 
-		$encoding = $this->mb_regularize_encoding($encoding);
+		$encoding = $this->regularize_encoding($encoding);
 		$str = $this->mb_convert_encoding($str, 'UTF-8', $encoding);
 
 		$max = preg_match_all('/'.$this->mbemu_internals['regex'][4].'/', $str, $allchars);  // make array of chars
@@ -1986,7 +1986,7 @@ Class HypMBString
 	{
 		$this->load_table('lower');
 
-		$encoding = $this->mb_regularize_encoding($encoding);
+		$encoding = $this->regularize_encoding($encoding);
 		$str = $this->mb_convert_encoding($str, 'UTF-8', $encoding);
 
 		$max = preg_match_all('/'.$this->mbemu_internals['regex'][4].'/', $str, $allchars);  // make array of chars
@@ -2015,7 +2015,7 @@ Class HypMBString
 			case MB_CASE_TITLE :
 				$this->load_table('upper');
 				$this->load_table('lower');
-				$encoding = $this->mb_regularize_encoding($encoding);
+				$encoding = $this->regularize_encoding($encoding);
 				$str = $this->mb_convert_encoding($str, 'UTF-8', $encoding);
 
 				$max = preg_match_all('/'.$this->mbemu_internals['regex'][4].'/', $str, $allchars);  // make array of chars
@@ -2061,9 +2061,11 @@ Class HypMBString
 
 	function iconvErrorHandler($errno, $errstr, $errfile, $errline)
 	{
-		$this->error = $errno;
-	    /* PHP の内部エラーハンドラを実行しません */
-	    return true;
+		if ($errno === 8) {
+			$this->error = $errno;
+		    return true;
+		}
+	    return false;
 	}
 
 	function _print_str($str) {
