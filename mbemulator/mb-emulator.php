@@ -5,7 +5,7 @@
  * 
  * license based on GPL(GNU General Public License)
  *
- * $Id: mb-emulator.php,v 1.5 2007/11/22 08:41:15 nao-pon Exp $
+ * $Id: mb-emulator.php,v 1.6 2007/11/22 08:58:22 nao-pon Exp $
  */
 
 if (!class_exists('HypMBString'))
@@ -273,11 +273,6 @@ Class HypMBString
 			'SHIFT_JIS'   => 2,
 			'SJIS'        => 2,
 			'SHIFT-JIS'   => 2,
-			'SJIS-WIN'    => 2,
-			'SJIS-OPEN'   => 2,
-			'CP932'       => 2,
-			'WINDOWS-31J' => 2,
-			'MS_KANJI'    => 2,
 
 			'ISO-2022-JP'   => 3,
 			'JIS'           => 3,
@@ -293,6 +288,12 @@ Class HypMBString
 			'ISO-8859-1'  => 6,
 			'ISO_8859-1'  => 6,
 			'LATIN1'      => 6,
+
+			'CP932'       => 7,
+			'SJIS-WIN'    => 7,
+			'SJIS-OPEN'   => 7,
+			'WINDOWS-31J' => 7,
+			'MS_KANJI'    => 7,
 
 			'BIG5'        => 10,
 			'BIG-5'       => 10,
@@ -328,6 +329,7 @@ Class HypMBString
 			4 => "[\x01-\x7F]|[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF][\x80-\xBF]|[\xF0-\xF7][\x80-\xBF][\x80-\xBF][x\80-\xBF]", // for UTF-8
 			5 => "..", // for UTF-16
 			6 => ".", // for ISO-8859-1
+			7 => "[\x81-\x9F\xE0-\xFC]([\x40-\xFC])|[\x01-\x7F]|[\xA0-\xDF]", // for SJIS_WIN
 
 			10 => "[\xA1-\xFE][\x40-\x7E\xA1-\xFE]|[\x01-\x7F]", // for Big5
 			11 => "[\xA1-\xF7][\xA1-\xFE]|[\x01-\x7F]", // EUC-CN
