@@ -5,7 +5,7 @@
  * 
  * license based on GPL(GNU General Public License)
  *
- * $Id: mb-emulator.php,v 1.6 2007/11/22 08:58:22 nao-pon Exp $
+ * $Id: mb-emulator.php,v 1.7 2007/11/23 23:51:47 nao-pon Exp $
  */
 
 if (!class_exists('HypMBString'))
@@ -17,203 +17,208 @@ if (!defined('MB_CASE_TITLE')) define('MB_CASE_TITLE', 2);
 
 if (! function_exists('mb_detect_order')) {
 function mb_detect_order($encoding_list = '') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_detect_order($encoding_list);
 }
 }
 
 if (! function_exists('mb_language')) {
 function mb_language($language='') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_language($language);
 }
 }
 
 if (! function_exists('mb_internal_encoding')) {
 function mb_internal_encoding($encoding = '') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_internal_encoding($encoding);
 }
 }
 
 if (! function_exists('mb_get_info')) {
 function mb_get_info($type = 'all') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_get_info($type);
 }
 }
 
 if (! function_exists('mb_substitute_character')) {
 function mb_substitute_character($subchar='') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_substitute_character($subchar);
 }
 }
 
 if (! function_exists('mb_convert_encoding')) {
 function mb_convert_encoding($str, $to_encoding, $from_encoding = '') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_convert_encoding($str, $to_encoding, $from_encoding);
 }
 }
 
 if (! function_exists('mb_convert_kana')) {
 function mb_convert_kana($str, $option='KV', $encoding = '') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_convert_kana($str, $option, $encoding);
 }
 }
 
 if (! function_exists('mb_send_mail')) {
 function mb_send_mail($to, $subject, $message , $additional_headers='', $additional_parameter='') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_send_mail($to, $subject, $message , $additional_headers, $additional_parameter);
 }
 }
 
 if (! function_exists('mb_detect_encoding')) {
 function mb_detect_encoding($str , $encoding_list = '') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_detect_encoding($str , $encoding_list);
 }
 }
 
 if (! function_exists('mb_strlen')) {
 function mb_strlen($str , $encoding='') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_strlen($str , $encoding);
 }
 }
 
 if (! function_exists('mb_strwidth')) {
 function mb_strwidth($str, $encoding='') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_strwidth($str, $encoding);
 }
 }
 
 if (! function_exists('mb_strimwidth')) {
 function mb_strimwidth($str, $start, $width, $trimmarker , $encoding = '') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_strimwidth($str, $start, $width, $trimmarker , $encoding);
 }
 }
 
 if (! function_exists('mb_substr')) {
 function mb_substr($str, $start, $length='notnumber', $encoding='') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_substr($str, $start, $length, $encoding);
 }
 }
 
 if (! function_exists('mb_strcut')) {
 function mb_strcut($str, $start , $length=0 , $encoding = '') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_strcut($str, $start , $length, $encoding);
 }
 }
 
 if (! function_exists('mb_strrpos')) {
 function mb_strrpos($haystack, $needle , $encoding='') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_strrpos($haystack, $needle , $encoding);
 }
 }
 
 if (! function_exists('mb_strpos')) {
 function mb_strpos($haystack, $needle , $offset=0, $encoding='') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_strpos($haystack, $needle, $offset, $encoding);
 }
 }
 
 if (! function_exists('mb_substr_count')) {
 function mb_substr_count($haystack, $needle, $encoding='') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_substr_count($haystack, $needle, $encoding);
 }
 }
 
 if (! function_exists('mb_convert_variables')) {
-function mb_convert_variables($to_encoding, $from_encoding, &$var, $s1='',$s2='',$s3='',$s4='',$s5='',$s6='',$s7='', $s8='',$s9='', $s10='') {
-	$mb = HypMBString::getInstance();
-	return $mb->mb_convert_variables($to_encoding, $from_encoding, $var);
+function mb_convert_variables($to_encoding, $from_encoding, &$var, $s1='',$s2='',$s3='',$s4='',$s5='',$s6='',$s7='',$s8='',$s9='',$s10='') {
+	$mb =& HypMBString::getInstance();
+	if ( $s1 || $s2 || $s3 || $s4 || $s5 || $s6 || $s7 || $s8 || $s9 || $s10) {
+		$arr = array(&$var, &$s1, &$s2, &$s3, &$s4, &$s5, &$s6, &$s7, &$s8, &$s9, &$s10);
+ 		return $mb->mb_convert_variables($to_encoding, $from_encoding, $arr);
+	} else {
+		return $mb->mb_convert_variables($to_encoding, $from_encoding, $var);
+	}
 }
 }
 
 if (! function_exists('mb_preferred_mime_name')) {
 function mb_preferred_mime_name($encoding) {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_preferred_mime_name($encoding);
 }
 }
 
 if (! function_exists('mb_decode_mimeheader')) {
 function mb_decode_mimeheader($str) {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_decode_mimeheader($str);
 }
 }
 
 if (! function_exists('mb_encode_mimeheader')) {
 function mb_encode_mimeheader($str, $encoding = "ISO-2022-JP", $transfer_encoding = "B", $linefeed = "\r\n") {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_encode_mimeheader($str, $encoding, $transfer_encoding, $linefeed);
 }
 }
 
 if (! function_exists('mb_http_input')) {
 function mb_http_input($type = '') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_http_input($type);
 }
 }
 
 if (! function_exists('mb_http_output')) {
 function mb_http_output($encoding = '') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_http_output($encoding);
 }
 }
 
 if (! function_exists('mb_output_handler')) {
 function mb_output_handler($buffer, $status='') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_output_handler($buffer, $status);
 }
 }
 
 if (! function_exists('mb_encode_numericentity')) {
 function mb_encode_numericentity($str, $convmap, $encoding='') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_encode_numericentity($str, $convmap, $encoding);
 }
 }
 
 if (! function_exists('mb_decode_numericentity')) {
 function mb_decode_numericentity($str, $convmap, $encoding='') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_decode_numericentity($str, $convmap, $encoding);
 }
 }
 
 if (! function_exists('mb_strtoupper')) {
 function mb_strtoupper($str, $encoding='') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_strtoupper($str, $encoding);
 }
 }
 
 if (! function_exists('mb_strtolower')) {
 function mb_strtolower($str, $encoding='') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_strtolower($str, $encoding);
 }
 }
 
 if (! function_exists('mb_convert_case')) {
 function mb_convert_case($str, $case, $encoding='') {
-	$mb = HypMBString::getInstance();
+	$mb =& HypMBString::getInstance();
 	return $mb->mb_convert_case($str, $case, $encoding);
 }
 }
