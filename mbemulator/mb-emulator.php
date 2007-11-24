@@ -5,7 +5,7 @@
  * 
  * license based on GPL(GNU General Public License)
  *
- * $Id: mb-emulator.php,v 1.7 2007/11/23 23:51:47 nao-pon Exp $
+ * $Id: mb-emulator.php,v 1.8 2007/11/24 00:12:50 nao-pon Exp $
  */
 
 if (!class_exists('HypMBString'))
@@ -242,7 +242,7 @@ Class HypMBString
 			$this->use_iconv = FALSE;
 			$this->load_table('convert');
 		}
-
+		
 		$this->mbemu_internals['ini_file'] = parse_ini_file(dirname(__FILE__).'/mb-emulator.ini');
 
 		$this->mbemu_internals['language'] = $this->mbemu_internals['ini_file']['language'];
@@ -363,6 +363,10 @@ Class HypMBString
 
 	function _load_table_convert() {
 		include dirname(__FILE__).'/convert.table';
+	}
+
+	function _load_table_convert_kana() {
+		include dirname(__FILE__).'/convert_kana.table';
 	}
 
 	function _load_table_lower() {
@@ -1073,6 +1077,8 @@ Class HypMBString
 
 	function mb_convert_kana( $str, $option='KV', $encoding = '')
 	{
+		$this->load_table('convert_kana');
+		
 		$encoding = $this->regularize_encoding($encoding);
 		$str = $this->mb_convert_encoding($str, 'EUC-JP', $encoding);
 
