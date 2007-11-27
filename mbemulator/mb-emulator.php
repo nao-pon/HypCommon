@@ -5,7 +5,7 @@
  * 
  * license based on GPL(GNU General Public License)
  *
- * $Id: mb-emulator.php,v 1.8 2007/11/24 00:12:50 nao-pon Exp $
+ * $Id: mb-emulator.php,v 1.9 2007/11/27 02:33:15 nao-pon Exp $
  */
 
 if (!class_exists('HypMBString'))
@@ -1228,7 +1228,7 @@ Class HypMBString
 		$encoding = $this->regularize_encoding($encoding);
 
 		if ($this->use_iconv && $encoding !== 'ASCII' && $encoding !== 'ISO-8859-1') {
-			$str = mb_convert_encoding($str, 'UTF-8', $encoding);
+			$str = $this->mb_convert_encoding($str, 'UTF-8', $encoding);
 			$encoding = 'UTF-8';
 		}
 
@@ -1282,7 +1282,7 @@ Class HypMBString
 		$iconv_conv = FALSE;
 		if ($this->use_iconv && $encoding !== 'ASCII' && $encoding !== 'ISO-8859-1') {
 			if ($encoding !== 'UTF-8') {
-				$str = mb_convert_encoding($str, 'UTF-8', $encoding);
+				$str = $this->mb_convert_encoding($str, 'UTF-8', $encoding);
 				$iconv_conv = $encoding;
 				$encoding = 'UTF-8';
 			}
@@ -1377,6 +1377,7 @@ Class HypMBString
 				case 3 : //jis
 					$str = $this->mb_convert_encoding($str, 'SJIS', 'JIS');
 					preg_match_all('/'.$this->mbemu_internals['regex'][2].'/', $str, $arr);
+					break;
 				case 0 : //ascii
 				case 6 : //iso-8859-1
 				default:
@@ -1418,14 +1419,13 @@ Class HypMBString
 		return $s;
 	}
 
-
 	function mb_strcut ( $str, $start , $length=0, $encoding = '')
 	{
 		$encoding = $this->regularize_encoding($encoding);
 
 		$iconv_conv = FALSE;
 		if ($this->use_iconv && $encoding !== 'ASCII' && $encoding !== 'ISO-8859-1') {
-			$str = mb_convert_encoding($str, 'UTF-8', $encoding);
+			$str = $this->mb_convert_encoding($str, 'UTF-8', $encoding);
 			if ($encoding !== 'UTF-8') {
 				$iconv_conv = $encoding;
 				$encoding = 'UTF-8';
@@ -1438,10 +1438,10 @@ Class HypMBString
 			case 4 : //utf-8
 			case 5 : //utf-16
 				preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $str, $arr);
-				$ret = $this->_sub_strcut($arr, $start, $length);
 				if ($iconv_conv) {
-					$ret = $this->mb_convert_encoding($ret, $iconv_conv, 'UTF-8');
-				}				
+					$this->mb_convert_variables($iconv_conv, $encoding, $arr);
+				}
+				$ret = $this->_sub_strcut($arr, $start, $length);
 				return $ret;
 			case 3 : //jis
 				$str = $this->mb_convert_encoding($str, 'SJIS', 'JIS');
@@ -1574,7 +1574,7 @@ Class HypMBString
 		$encoding = $this->regularize_encoding($encoding);
 
 		if ($this->use_iconv && $encoding !== 'ASCII' && $encoding !== 'ISO-8859-1') {
-			$haystack = mb_convert_encoding($haystack, 'UTF-8', $encoding);
+			$haystack = $this->mb_convert_encoding($haystack, 'UTF-8', $encoding);
 			$encoding = 'UTF-8';
 		}
 
