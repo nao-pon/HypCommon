@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.22 2007/11/14 08:49:49 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.23 2007/11/29 23:19:32 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -978,9 +978,9 @@ EOF;
 	{
 		if (!isset($post) || !function_exists("mb_ereg_replace")) {return $post;}
 		
-		$post_enc = defined('HYP_POST_ENCODING')? HYP_POST_ENCODING : _CHARSET;
+		//$post_enc = defined('HYP_POST_ENCODING')? HYP_POST_ENCODING : _CHARSET;
 		//if ($post_enc !== 'EUC-JP' && $post_enc !== 'UTF-8') {return $post;}
-		if ($post_enc !== 'EUC-JP') {return $post;}
+		if (!defined('HYP_POST_ENCODING') || (HYP_POST_ENCODING !== 'EUC-JP' && HYP_POST_ENCODING !== 'UTF-8')) {return $post;}
 
 		static $bef = null;
 		static $aft = null;
@@ -989,7 +989,9 @@ EOF;
 		{
 			$mac = (empty($_SERVER["HTTP_USER_AGENT"]))? FALSE : strpos(strtolower($_SERVER["HTTP_USER_AGENT"]),"mac");
 			
-			$enc = ($post_enc === 'UTF-8')? '_utf8' : '';
+			if ($mac && HYP_POST_ENCODING !== 'UTF-8') {return $post;}
+			
+			$enc = (HYP_POST_ENCODING === 'UTF-8')? '_utf8' : '';
 			
 			$datfile = ($mac === FALSE)? dirname(__FILE__).'/win_ext'.$enc.'.dat' : dirname(__FILE__).'/mac_ext'.$enc.'.dat';
 	
@@ -1006,7 +1008,6 @@ EOF;
 			}
 		}
 		
-		//$post = str_replace($bef,$aft,$post);
 		if (is_array($post))
 		{
 			foreach ($post as $_key=>$_val)
@@ -1016,7 +1017,7 @@ EOF;
 		}
 		else
 		{
-			mb_regex_encoding($post_enc);
+			mb_regex_encoding(HYP_POST_ENCODING);
 
 			// 半角カナを全角に
 			//$post = mb_convert_kana($post, "KV", "EUC-JP");
@@ -1029,6 +1030,35 @@ EOF;
 		}
 
 		return $post;
+	}
+	
+	// 文字エンコード変換前に範囲外の文字を実体参照値に変換する
+	function encode_numericentity(& $arg, $toencode, $fromencode, $keys = array()) {
+		if (strtoupper($fromencode) === strtoupper($toencode)) return;
+		if (is_array($arg)) {
+			foreach (array_keys($arg) as $key) {
+				if (!$keys || in_array($key, $keys)) {
+					HypCommonFunc::encode_numericentity($arg[$key], $toencode, $fromencode, $keys);
+				}
+			}
+		} else {
+			if ($arg === mb_convert_encoding(mb_convert_encoding($arg, $toencode, $fromencode), $fromencode, $toencode)) {
+				return;
+			}
+			$str = '';
+			$max = mb_strlen($arg, $fromencode);
+			$convmap = array(0x0080, 0x10FFFF, 0, 0xFFFFFF);
+			for ($i = 0; $i < $max; $i++) {
+				$org = mb_substr($arg, $i, 1, $fromencode);
+				if ($org === mb_convert_encoding(mb_convert_encoding($org, $toencode, $fromencode), $fromencode, $toencode)) {
+					$str .= $org;
+				} else {
+					$str .= mb_encode_numericentity($org, $convmap, $fromencode);
+				} 
+			}
+			$arg = $str;
+		}
+		return;
 	}
 	
 	// リファラーから検索語と検索エンジンを取得し定数に定義する
