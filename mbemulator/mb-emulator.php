@@ -5,7 +5,7 @@
  * 
  * license based on GPL(GNU General Public License)
  *
- * $Id: mb-emulator.php,v 1.9 2007/11/27 02:33:15 nao-pon Exp $
+ * $Id: mb-emulator.php,v 1.10 2007/11/29 23:15:17 nao-pon Exp $
  */
 
 if (!class_exists('HypMBString'))
@@ -1605,7 +1605,7 @@ Class HypMBString
 			return FALSE;
 		}
 		$arr = $this->mb_convert_encoding($arr, $to_encoding, $encode);
-		return $encode;
+		return ($this->mbemu_internals['encoding'][$encode] === @$this->mbemu_internals['encoding'][$from_encoding])? $from_encoding : $encode;
 	}
 
 	function mb_preferred_mime_name ($encoding)
@@ -1930,7 +1930,7 @@ Class HypMBString
 	function mb_encode_numericentity($str, $convmap, $encoding="")
 	{
 		$encoding = $this->regularize_encoding($encoding);
-		$str = $this->mb_convert_encoding($str, "utf-16", $encoding);
+		$str = $this->mb_convert_encoding($str, 'UTF-16', $encoding);
 		$ar = unpack("n*", $str);
 		$s = "";
 		foreach($ar as $char) {
