@@ -71,9 +71,14 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 	
 	function postFilter() {
-		// XOOPS の表示文字コード
-		$this->encode = _CHARSET;
-
+		// XOOPS の表示文字エンコーディング
+		$this->encode = strtoupper(_CHARSET);
+		
+		// 設定ファイルのエンコーディングを検査
+		if ($this->encode !== strtoupper($this->configEncoding)) {
+			$this->encodehint_word = '';
+		}
+		
 		// Set Query Words
 		if ($this->use_set_query_words) {
 			HypCommonFunc::set_query_words($this->q_word, $this->q_word2, $this->se_name, $this->kakasi_cache_dir, $this->encode);
@@ -86,16 +91,21 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			// POST 文字列の文字エンコードを判定
 			$enchint = (isset($_POST[$this->encodehint_name]))? $_POST[$this->encodehint_name] : ((isset($_POST['encode_hint']))? $_POST['encode_hint'] : '');
 			if ($enchint && function_exists('mb_detect_encoding')) {
-				define ('HYP_POST_ENCODING', mb_detect_encoding($enchint));
+				define ('HYP_POST_ENCODING', strtoupper(mb_detect_encoding($enchint)));
+			} else if (isset($_POST['charset'])) {
+				define ('HYP_POST_ENCODING', strtoupper($_POST['charset']));
 			}
 
 			// Proxy Check
-			if ($this->use_proxy_check) {
+			if (defined('HYP_POST_ENCODING') && $this->use_proxy_check) {
 				HypCommonFunc::BBQ_Check($this->no_proxy_check, $this->msg_proxy_check);
 			}
 			
+			// 文字エンコーディング外の文字を数値エンティティに変換
+			//$_POST = HypCommonFunc::encode_numericentity($_POST, _CHARSET, HYP_POST_ENCODING);
+
 			// 機種依存文字フィルター
-			if ($this->use_dependence_filter) {
+			if ($this->encode === 'EUC-JP' && $this->use_dependence_filter) {
 				$_POST = HypCommonFunc::dependence_filter($_POST);
 			}
 			
