@@ -5,7 +5,7 @@
  * 
  * license based on GPL(GNU General Public License)
  *
- * $Id: mb-emulator.php,v 1.10 2007/11/29 23:15:17 nao-pon Exp $
+ * $Id: mb-emulator.php,v 1.11 2007/11/30 02:09:28 nao-pon Exp $
  */
 
 if (!class_exists('HypMBString'))
@@ -300,6 +300,9 @@ Class HypMBString
 			'WINDOWS-31J' => 7,
 			'MS_KANJI'    => 7,
 
+			'UTF-16BE'    => 8,
+			'UTF16BE'     => 8,
+
 			'BIG5'        => 10,
 			'BIG-5'       => 10,
 			'CN-BIG5'     => 10,
@@ -335,7 +338,8 @@ Class HypMBString
 			5 => "..", // for UTF-16
 			6 => ".", // for ISO-8859-1
 			7 => "[\x81-\x9F\xE0-\xFC]([\x40-\xFC])|[\x01-\x7F]|[\xA0-\xDF]", // for SJIS_WIN
-
+			8 => "..", // for UTF-16BE
+			
 			10 => "[\xA1-\xFE][\x40-\x7E\xA1-\xFE]|[\x01-\x7F]", // for Big5
 			11 => "[\xA1-\xF7][\xA1-\xFE]|[\x01-\x7F]", // EUC-CN
 			12 => "[\xA1-\xC8\xCA-\xFD][\xA1-\xFE]|[\x01-\x7F]", // EUC-KR
@@ -546,6 +550,7 @@ Class HypMBString
 						case 4: //utf8
 							return $this->_euctoutf8($str);
 						case 5: //utf16
+						case 8: //utf16BE
 							$str = $this->_euctoutf8($str);
 							return $this->_utf8toutf16($str);
 						case 6: //iso-8859-1
@@ -562,6 +567,7 @@ Class HypMBString
 						case 4: //utf8
 							return $this->_sjistoutf8($str);
 						case 5: //utf16
+						case 8: //utf16BE
 							$str = $this->_sjistoutf8($str);
 							return $this->_utf8toutf16($str);
 						case 6: //iso-8859-1
@@ -580,6 +586,7 @@ Class HypMBString
 							$str = $this->_jistosjis($str);
 							return $this->_sjistoutf8($str);
 						case 5: //utf16
+						case 8: //utf16BE
 							$str = $this->_jistosjis($str);
 							$str = $this->_sjistoutf8($str);
 							return $this->_utf8toutf16($str);
@@ -599,6 +606,7 @@ Class HypMBString
 							$str = $this->_utf8tosjis($str);
 							return $this->_sjistojis($str);
 						case 5: //utf16
+						case 8: //utf16BE
 							return $this->_utf8toutf16($str);
 						case 6: //iso-8859-1
 							return utf8_decode($str);
@@ -606,6 +614,7 @@ Class HypMBString
 							return $str;
 					}
 				case 5: //utf16
+				case 8: //utf16BE
 					switch(@$this->mbemu_internals['encoding'][$to_encoding]) {
 						case 1: //euc-jp
 							$str = $this->_utf16toutf8($str);
@@ -640,6 +649,7 @@ Class HypMBString
 						case 4: //utf8
 							return $str = utf8_encode($str);;
 						case 5: //utf16
+						case 8: //utf16BE
 							$str = utf8_encode($str);
 							return $this->_utf8toutf16($str);
 						default:
@@ -1211,6 +1221,7 @@ Class HypMBString
 				case 4 : //utf-8
 					return preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $str, $arr);
 				case 5 : //utf-16
+				case 8 : //utf16BE
 					return strlen($str) >> 1;
 				case 3 : //jis
 					$str = $this->mb_convert_encoding($str, 'SJIS', 'JIS');
@@ -1248,6 +1259,7 @@ Class HypMBString
 					if ($arr[1][$i]) ++$len;
 				return $len;
 			case 5 : //utf-16
+			case 8 : //utf16BE
 				$max = $len = preg_match_all('/'.$this->mbemu_internals['regex'][5].'/', $str, $arr);
 				for ($i=0; $i < $max; ++$i) {
 					$ucs2 = (ord($arr[0][$i]) << 8) | ord(substr($arr[0][$i],1,1));
@@ -1308,6 +1320,7 @@ Class HypMBString
 				}
 				return $ret;
 			case 5 : //utf-16
+			case 8 : //utf16BE
 				$arr = unpack("n*", $str);
 				$i = 0;
 				foreach($arr as $ucs2) {
@@ -1372,6 +1385,7 @@ Class HypMBString
 				case 2 : //shift-jis
 				case 4 : //utf-8
 				case 5 : //utf-16
+				case 8 : //utf16BE
 					preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $str, $arr);
 					break;
 				case 3 : //jis
@@ -1437,6 +1451,7 @@ Class HypMBString
 			case 2 : //shift-jis
 			case 4 : //utf-8
 			case 5 : //utf-16
+			case 8 : //utf16BE
 				preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $str, $arr);
 				if ($iconv_conv) {
 					$this->mb_convert_variables($iconv_conv, $encoding, $arr);
@@ -1488,6 +1503,7 @@ Class HypMBString
 				case 2 : //shift-jis
 				case 4 : //utf-8
 				case 5 : //utf-16
+				case 8 : //utf16BE
 					preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $haystack, $ar_h);
 					preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $needle, $ar_n);
 					return $this->_sub_strrpos($ar_h[0], $ar_n[0]);
@@ -1534,6 +1550,7 @@ Class HypMBString
 				case 2 : //shift-jis
 				case 4 : //utf-8
 				case 5 : //utf-16
+				case 8 : //utf16BE
 					preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $haystack, $ar_h);
 					preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $needle, $ar_n);
 					return $this->_sub_strpos($ar_h[0], $ar_n[0], $offset);
@@ -1583,6 +1600,7 @@ Class HypMBString
 			case 2 : //shift-jis
 			case 4 : //utf-8
 			case 5 : //utf-16
+			case 8 : //utf16BE
 				preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $haystack, $ar_h);
 				preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $needle, $ar_n);
 				return $this->_sub_substr_count($ar_h[0], $ar_n[0]);
@@ -1627,6 +1645,8 @@ Class HypMBString
 				return 'UTF-16';
 			case 6 :
 				return 'ISO-8859-1';
+			case 8 : //utf16BE
+				return 'UTF-16BE';
 		}
 	}
 
@@ -1778,6 +1798,7 @@ Class HypMBString
 			case 2 : //shift-jis
 			case 4 : //utf-8
 			case 5 : //utf-16
+			case 8 : //utf16BE
 				$max = preg_match_all('/'.$this->mbemu_internals['regex'][$e].'/', $str, $allchars);
 				break;
 			case 3 : //jis
@@ -1930,7 +1951,7 @@ Class HypMBString
 	function mb_encode_numericentity($str, $convmap, $encoding="")
 	{
 		$encoding = $this->regularize_encoding($encoding);
-		$str = $this->mb_convert_encoding($str, 'UTF-16', $encoding);
+		$str = $this->mb_convert_encoding($str, 'UTF-16BE', $encoding);
 		$ar = unpack("n*", $str);
 		$s = "";
 		foreach($ar as $char) {
@@ -1960,7 +1981,7 @@ Class HypMBString
 					$num = $match[1] - $convmap[$i+2];
 					if (($convmap[$i] <= $num) && ($num <= $convmap[$i+1])) {
 						$ucs2 = pack('n*', $num);
-						$s .= $this->mb_convert_encoding($ucs2, $encoding, 'UTF-16');
+						$s .= $this->mb_convert_encoding($ucs2, $encoding, 'UTF-16BE');
 						break;
 					}
 				}
