@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.23 2007/11/29 23:19:32 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.24 2007/12/05 12:12:45 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -771,7 +771,7 @@ EOF;
 		if (defined('HYP_IMAGEMAGICK_PATH')) return;
 		
 		if (substr($dir, -1) != "/") $dir .= "/"; 
-		if (file_exists($dir."convert"))
+		if (is_executable($dir."convert"))
 		{
 			define ('HYP_IMAGEMAGICK_PATH', $dir);
 		}
@@ -784,7 +784,7 @@ EOF;
 		// すでに設定済み
 		if (defined('HYP_JPEGTRAN_PATH')) return;
 		if (substr($dir, -1) != "/") $dir .= "/"; 
-		if (file_exists($dir."jpegtran"))
+		if (is_executable($dir."jpegtran"))
 		{
 			define ('HYP_JPEGTRAN_PATH', $dir);
 		}
