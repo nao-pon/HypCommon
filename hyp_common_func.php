@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.25 2007/12/06 04:08:03 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.26 2007/12/17 08:53:48 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -297,23 +297,84 @@ EOF;
 			case "1": //gif形式
 				if (function_exists ("imagecreatefromgif"))
 				{
-					$src_im = imagecreatefromgif($o_file);
-					$colortransparent = imagecolortransparent($src_im);
-					if ($s_ext != "jpg" && $colortransparent > -1)
+					$src_im = @ imagecreatefromgif($o_file);
+					if ($src_im) {
+						$colortransparent = imagecolortransparent($src_im);
+						if ($s_ext != "jpg" && $colortransparent > -1)
+						{
+							// 透過色あり
+							$dst_im = imagecreate($width,$height);
+							imagepalettecopy ($dst_im, $src_im);
+							imagefill($dst_im,0,0,$colortransparent);
+							imagecolortransparent($dst_im, $colortransparent);
+							imagecopyresized($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
+						}
+						else
+						{
+							// 透過色なし
+							$dst_im = $imagecreate($width,$height);
+							$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
+							if (function_exists('imagetruecolortopalette')) imagetruecolortopalette ($dst_im, false, imagecolorstotal($src_im));
+						}
+						touch($s_file);
+						if ($s_ext == "jpg")
+						{
+							imagejpeg($dst_im,$s_file,$quality);
+						}
+						else
+						{
+							if (function_exists("imagegif"))
+							{
+								imagegif($dst_im,$s_file);
+							}
+							else
+							{
+								imagepng($dst_im,$s_file);
+							}
+						}
+						$o_file = $s_file;
+					}
+				}
+				break;
+			case "2": //jpg形式
+				$src_im = @ imagecreatefromjpeg($o_file);
+				if ($src_im) {
+					$dst_im = $imagecreate($width,$height);
+					$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
+					touch($s_file);
+					imagejpeg($dst_im,$s_file,$quality);
+					$o_file = $s_file;
+				}
+				break;
+			case "3": //png形式
+				$src_im = @ imagecreatefrompng($o_file);
+				if ($src_im) {
+					if (imagecolorstotal($src_im))
 					{
-						// 透過色あり
-						$dst_im = imagecreate($width,$height);
-						imagepalettecopy ($dst_im, $src_im);
-						imagefill($dst_im,0,0,$colortransparent);
-						imagecolortransparent($dst_im, $colortransparent);
-						imagecopyresized($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
+						// PaletteColor
+						$colortransparent = imagecolortransparent($src_im);
+						if ($s_ext != "jpg" && $colortransparent > -1)
+						{
+							// 透過色あり
+							$dst_im = imagecreate($width,$height);
+							imagepalettecopy ($dst_im, $src_im);
+							imagefill($dst_im,0,0,$colortransparent);
+							imagecolortransparent($dst_im, $colortransparent);
+							imagecopyresized($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
+						}
+						else
+						{
+							// 透過色なし
+							$dst_im = $imagecreate($width,$height);
+							$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
+							if (function_exists('imagetruecolortopalette')) imagetruecolortopalette ($dst_im, false, imagecolorstotal($src_im));
+						}
 					}
 					else
 					{
-						// 透過色なし
+						// TrueColor
 						$dst_im = $imagecreate($width,$height);
 						$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
-						if (function_exists('imagetruecolortopalette')) imagetruecolortopalette ($dst_im, false, imagecolorstotal($src_im));
 					}
 					touch($s_file);
 					if ($s_ext == "jpg")
@@ -322,65 +383,10 @@ EOF;
 					}
 					else
 					{
-						if (function_exists("imagegif"))
-						{
-							imagegif($dst_im,$s_file);
-						}
-						else
-						{
-							imagepng($dst_im,$s_file);
-						}
+						imagepng($dst_im,$s_file);
 					}
 					$o_file = $s_file;
 				}
-				break;
-			case "2": //jpg形式
-				$src_im = imagecreatefromjpeg($o_file);
-				$dst_im = $imagecreate($width,$height);
-				$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
-				touch($s_file);
-				imagejpeg($dst_im,$s_file,$quality);
-				$o_file = $s_file;
-				break;
-			case "3": //png形式
-				$src_im = imagecreatefrompng($o_file);
-				if (imagecolorstotal($src_im))
-				{
-					// PaletteColor
-					$colortransparent = imagecolortransparent($src_im);
-					if ($s_ext != "jpg" && $colortransparent > -1)
-					{
-						// 透過色あり
-						$dst_im = imagecreate($width,$height);
-						imagepalettecopy ($dst_im, $src_im);
-						imagefill($dst_im,0,0,$colortransparent);
-						imagecolortransparent($dst_im, $colortransparent);
-						imagecopyresized($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
-					}
-					else
-					{
-						// 透過色なし
-						$dst_im = $imagecreate($width,$height);
-						$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
-						if (function_exists('imagetruecolortopalette')) imagetruecolortopalette ($dst_im, false, imagecolorstotal($src_im));
-					}
-				}
-				else
-				{
-					// TrueColor
-					$dst_im = $imagecreate($width,$height);
-					$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
-				}
-				touch($s_file);
-				if ($s_ext == "jpg")
-				{
-					imagejpeg($dst_im,$s_file,$quality);
-				}
-				else
-				{
-					imagepng($dst_im,$s_file);
-				}
-				$o_file = $s_file;
 				break;
 			default:
 				break;
@@ -589,7 +595,11 @@ EOF;
 			// ビットマップ展開時のメモリー上のサイズ
 			$bitmap_size = $w * $h * 3 + 54;
 			
-			if ($bitmap_size > $memory_limit - memory_get_usage() - (1 * 1024 * 1024))
+			$now_use_mem = intval(memory_get_usage());
+			if (!$now_use_mem) {
+				$now_use_mem = 2 * 1024 * 1024;
+			}
+			if ($bitmap_size > ($memory_limit - $now_use_mem - (1 * 1024 * 1024)))
 			{
 				// メモリー制限に引っ掛かりそう。（マージン 1MB）
 				return false;
@@ -1082,8 +1092,8 @@ EOF;
 	
 	// php.ini のサイズ記述をバイト値に変換
 	function return_bytes($val) {
-		$val = trim($val);
-		if ($val == '-1') $val = '';
+		$val = trim(strval($val));
+		if ($val === '-1') $val = '';
 		if ($val) {
 			$last = strtolower($val{strlen($val)-1});
 			switch($last) {
