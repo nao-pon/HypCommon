@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.26 2007/12/17 08:53:48 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.27 2008/01/30 00:03:55 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -925,9 +925,9 @@ EOF;
 				$dat = str_replace("\0", '', $dat);
 				
 				// <a> タグの個数
-				$tmp['a'] = count(preg_split("/<a.+?\/a>/i",$dat)) - 1;
+				$tmp['a'] = count(preg_split("/<a.+?\/a>/is",$dat)) - 1;
 				// [url] タグの個数
-				$tmp['bb'] = count(preg_split("/\[url=.+?\/url\]/i",$dat)) - 1;
+				$tmp['bb'] = count(preg_split("/\[url=.+?\/url\]/is",$dat)) - 1;
 				// URL の個数
 				$tmp['url'] = count(preg_split("/(ht|f)tps?:\/\/[^\s]+/i",$dat)) - 1;
 				// フィルター
