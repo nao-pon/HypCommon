@@ -1,0 +1,10 @@
+<?php
+/*
+ * Created on 2008/02/16 by nao-pon http://hypweb.net/
+ * $Id: conf.php, v 1.0 2008/02/16 9:01:39 nao-pon Exp $
+ */
+
+define('FAVICON_DEFAULT_IMAGE', FAVICON_TRUST_PATH . '/images/world_go.png');
+define('FAVICON_ERROR_IMAGE',   FAVICON_TRUST_PATH . '/images/link_break.png');
+define('FAVICON_CACHE_DIR',     FAVICON_TRUST_PATH . '/cache/');
+define('FAVICON_CACHE_TTL',     2592000);  // 60 * 60 * 24 * 30 [sec.]
