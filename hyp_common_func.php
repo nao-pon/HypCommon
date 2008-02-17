@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.28 2008/02/05 01:04:20 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.29 2008/02/17 13:14:46 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1224,6 +1224,12 @@ EOF;
 		return true ;
 	}
 
+	function html_wordwrap(& $html, $num = 36, $sep = '&#8203;') {
+		$html = preg_replace_callback('/(<(script|textarea|style|option|pre).*?<\/\\2>|<[^>]*>)|((?:&#?[a-z0-9]+;|[!=\x23-\x3b\x3f-\x7e]){'.$num.'})/isS',
+		create_function('$arg',
+			'if ($arg[1]) { return $arg[1]; } else { return $arg[3] . "'.$sep.'";}'
+		),$html);
+	}
 }
 
 /*
@@ -1285,11 +1291,11 @@ class Hyp_HTTP_Request
 	var $proxy_auth_pass='';
 
 	// result
-	var $query = '';   // Query String
-	var $rc = '';      // Response Code
-	var $header = '';  // Header
-	var $data = '';    // Data
-	
+	var $query = '';     // Query String
+	var $rc = '';        // Response Code
+	var $header = '';    // Header
+	var $data = '';      // Data
+	var $getSize = null; // Get size
 	function Hyp_HTTP_Request()
 	{
 		$this->ua="PHP/".PHP_VERSION;
@@ -1297,11 +1303,12 @@ class Hyp_HTTP_Request
 		
 	function init()
 	{
-		$this->url='';
-		$this->method='GET';
-		$this->headers='';
-		$this->post=array();
-		$this->ua="PHP/".PHP_VERSION;
+		$this->url     = '';
+		$this->method  = 'GET';
+		$this->headers = '';
+		$this->post    = array();
+		$this->ua      = "PHP/".PHP_VERSION;
+		$this->getSize = null;
 		
 		// result
 		$this->query = '';   // Query String
@@ -1335,6 +1342,7 @@ class Hyp_HTTP_Request
 		$query = $method.' '.$this->uri." HTTP/1.0\r\n";
 		$query .= "Host: ".$arr['host']."\r\n";
 		if (!empty($this->ua)) $query .= "User-Agent: ".$this->ua."\r\n";
+		if (!is_null($this->getSize)) $query .= 'Range: bytes=0-' . ($this->getSize - 1) . "\r\n";
 		
 		// proxy¤ÎBasicÇ§¾Ú 
 		if ($this->need_proxy_auth and isset($this->proxy_auth_user) and isset($this->proxy_auth_pass)) 
@@ -1432,7 +1440,10 @@ class Hyp_HTTP_Request
 		}
 		
 		$response = '';
-		while (!feof($fp) && ($this->method != 'HEAD' || strpos($response,"\r\n\r\n") === FALSE))
+		while (!feof($fp)
+			&& ($this->method != 'HEAD' || strpos($response,"\r\n\r\n") === FALSE)
+			&& (is_null($this->getSize) || strlen($response) < $this->getSize)
+		)
 		{
 			if ($this->read_timeout)
 			{
@@ -1464,6 +1475,7 @@ class Hyp_HTTP_Request
 		// Redirect
 		switch ($rc)
 		{
+			case 307: // Temporary Redirect
 			case 303: // See Other
 			case 302: // Moved Temporarily
 			case 301: // Moved Permanently
