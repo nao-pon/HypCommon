@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/02/11 by nao-pon http://hypweb.net/
- * $Id: favicon.php,v 1.1 2008/02/17 13:37:41 nao-pon Exp $
+ * $Id: favicon.php,v 1.2 2008/02/25 01:43:07 nao-pon Exp $
  */
 
 /**
@@ -23,7 +23,7 @@ if (file_exists(FAVICON_TRUST_PATH . '/conf.php')) {
 	define('FAVICON_DEFAULT_IMAGE', FAVICON_TRUST_PATH . '/images/world_go.png');
 	define('FAVICON_ERROR_IMAGE',   FAVICON_TRUST_PATH . '/images/link_break.png');
 	define('FAVICON_CACHE_DIR',     FAVICON_TRUST_PATH . '/cache/');
-	define('FAVICON_CACHE_TTL',     2592000);  // 60 * 60 * 24 * 30 [sec.]
+	define('FAVICON_CACHE_TTL',     2592000);  // 60 * 60 * 24 * 30 [sec.] (1 month)
 }
 
 function get_favicon_url($url)
@@ -180,7 +180,7 @@ function update_cache($url)
 
 function http_get_contents(& $url, $size = 0)
 {
-    file_put_contents(get_url_filename($url), FAVICON_DEFAULT_IMAGE);
+    file_put_contents(get_url_filename($url), 'DefaultIcon');
 
 	include_once dirname(dirname(__FILE__)) . '/hyp_common_func.php';
 	
