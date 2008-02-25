@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_simplexml.php,v 1.1 2006/11/21 13:08:30 nao-pon Exp $
+// $Id: hyp_simplexml.php,v 1.2 2008/02/25 01:46:58 nao-pon Exp $
 // HypSimpleXML Class by nao-pon http://hypweb.net
 // Based on SimpleXML
 // added function 'XMLstr_in()'
@@ -476,7 +476,7 @@ class HypXMLData
 					$this->child[$name][$index] = $cdata;
 				else
 				{
-					if ($this->child[$name][$index][$contentkey])
+					if (@ $this->child[$name][$index][$contentkey])
 					{
 						
 						$temp = $this->child[$name][$index][$contentkey];
@@ -509,7 +509,7 @@ class HypXMLData
 					$this->child[$name] = $cdata;
 				else
 				{
-					if ($this->child[$name][$contentkey])
+					if (@ $this->child[$name][$contentkey])
 					{
 						
 						$temp = $this->child[$name][$contentkey];
