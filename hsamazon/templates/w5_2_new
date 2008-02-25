@@ -1,0 +1,16 @@
+<div style="word-break:break-all;"><_EACH_><div style="clear: both;"></div></div>
+
+<!--EACH(10)-->
+<_count!=6_><div style="float:left;width:19%;padding: 0px 1px;"><_/count_>
+<_count=6_><div style="float:left;width:19%;padding: 0px 1px;clear:left;"><_/count_>
+<_LINKED_SIMG_><br />
+<a href="<_URL_>" target="_blank"><font face="Arial" size="-2" color="3366FF"><_TITLE_></font></a><font face="Arial" size="-2"> (<_CATEGORY_>)</font><br />
+<font face="Arial" size="-2" color="336633"><_PRESENTER_></font><br />
+<font face="Arial" size="-1" color="990000"><_PRICE_FORMATTED_></font>
+<a href="<_ADDCARTURL_>" target="_blank"><img src="http://xoops.hypweb.net/download/tocart_s.gif" width="30" height="18" value="ショッピングカートに入れる" style="border:none;" border="0" alt="ショッピングカートに入れる" title="ショッピングカートに入れる" /></a>
+</div>
+<!--/EACH-->
+
+<!--IMG-->
+<a href="<_URL_>" title="<_TITLE_>" target="_blank"><img src="<_IMGSRC_>" alt="<_TITLE_>"<_IMGSIZE_> border="0" vspace="2" hspace="2" /></a>
+<!--/IMG-->
