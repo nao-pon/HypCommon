@@ -5,7 +5,7 @@
  * 
  * license based on GPL(GNU General Public License)
  *
- * $Id: mb-emulator.php,v 1.11 2007/11/30 02:09:28 nao-pon Exp $
+ * $Id: mb-emulator.php,v 1.12 2008/02/27 08:20:23 nao-pon Exp $
  */
 
 if (!class_exists('HypMBString'))
@@ -537,9 +537,9 @@ Class HypMBString
 		if ($this->use_iconv && $from_encoding !== 'AUTO') {
 			$to_encoding = $this->regularize_encoding($to_encoding);
 			$from_encoding = $this->regularize_encoding($from_encoding);
-			return iconv($from_encoding, $to_encoding . '//TRANSLIT', $str);
+			return @ iconv($from_encoding, $to_encoding . '//TRANSLIT', $str);
 		} else {
-			switch (@$this->mbemu_internals['encoding'][$from_encoding]) {
+			switch (@ $this->mbemu_internals['encoding'][$from_encoding]) {
 				case 1: //euc-jp
 					switch(@$this->mbemu_internals['encoding'][$to_encoding]) {
 						case 2: //sjis
