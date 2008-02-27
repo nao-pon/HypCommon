@@ -1,15 +1,17 @@
 <?php
-// $Id: hyp_common_func.php,v 1.29 2008/02/17 13:14:46 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.30 2008/02/27 08:20:23 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
 if( ! class_exists( 'HypCommonFunc' ) )
 {
-
 class HypCommonFunc
 {
 	function get_version() {
-		include (dirname(__FILE__) . '/version.php');
+		static $version = FALSE;
+		if (! $version) {
+			include (dirname(__FILE__) . '/version.php');
+		}
 		return $version;
 	}
 	
@@ -1044,7 +1046,10 @@ EOF;
 	
 	// 文字エンコード変換前に範囲外の文字を実体参照値に変換する
 	function encode_numericentity(& $arg, $toencode, $fromencode, $keys = array()) {
-		if (strtoupper($fromencode) === strtoupper($toencode)) return;
+		$fromencode = strtoupper($fromencode);
+		$toencode = strtoupper($toencode);
+		if ($fromencode === $toencode) return;
+		if ($toencode === 'EUC-JP') $toencode = 'eucJP-win';
 		if (is_array($arg)) {
 			foreach (array_keys($arg) as $key) {
 				if (!$keys || in_array($key, $keys)) {
@@ -1055,18 +1060,30 @@ EOF;
 			if ($arg === mb_convert_encoding(mb_convert_encoding($arg, $toencode, $fromencode), $fromencode, $toencode)) {
 				return;
 			}
-			$str = '';
-			$max = mb_strlen($arg, $fromencode);
-			$convmap = array(0x0080, 0x10FFFF, 0, 0xFFFFFF);
-			for ($i = 0; $i < $max; $i++) {
-				$org = mb_substr($arg, $i, 1, $fromencode);
-				if ($org === mb_convert_encoding(mb_convert_encoding($org, $toencode, $fromencode), $fromencode, $toencode)) {
-					$str .= $org;
-				} else {
-					$str .= mb_encode_numericentity($org, $convmap, $fromencode);
-				} 
+			if (extension_loaded('mbstring')) {
+				$_sub = mb_substitute_character();
+				mb_substitute_character('long');
+				$arg = preg_replace('/U\+([0-9A-F]{4})/', "\x08$1", $arg);
+				if ($fromencode !== 'UTF-8') $arg = mb_convert_encoding($arg, 'UTF-8', $fromencode);
+				$arg = mb_convert_encoding($arg, $toencode, 'UTF-8');
+				$arg = preg_replace('/U\+([0-9A-F]{4})/e', '"&#".base_convert("$1",16,10).";"', $arg);
+				$arg = preg_replace('/\x08([0-9A-F]{4})/', 'U+$1', $arg);
+				mb_substitute_character($_sub);
+				$arg = mb_convert_encoding($arg, $fromencode, $toencode);
+			} else {
+				$str = '';
+				$max = mb_strlen($arg, $fromencode);
+				$convmap = array(0x0080, 0x10FFFF, 0, 0xFFFFFF);
+				for ($i = 0; $i < $max; $i++) {
+					$org = mb_substr($arg, $i, 1, $fromencode);
+					if ($org === mb_convert_encoding(mb_convert_encoding($org, $toencode, $fromencode), $fromencode, $toencode)) {
+						$str .= $org;
+					} else {
+						$str .= mb_encode_numericentity($org, $convmap, $fromencode);
+					} 
+				}
+				$arg = $str;
 			}
-			$arg = $str;
 		}
 		return;
 	}
@@ -1230,6 +1247,91 @@ EOF;
 			'if ($arg[1]) { return $arg[1]; } else { return $arg[3] . "'.$sep.'";}'
 		),$html);
 	}
+	
+	// IDN ( Internationalized Domain Name ) encoder & decoder
+	function convertIDN ($host, $mode = 'auto', $encode = '') {
+		static $converted = array(); // For convert cache
+		static $idn; // idna_convert object
+		
+		// build object
+		if (! is_object($idn)) {
+			if (!function_exists('mb_convert_encoding')) {
+				include_once dirname(__FILE__) . '/mbemulator/mb-emulator.php';
+			}
+			require_once dirname(__FILE__) . '/idna/idna_convert.class.php';
+			$idn = new idna_convert();
+		}
+		
+		if (! $encode) {
+			$encode = mb_internal_encoding();
+		}
+		
+		if ($mode !== 'encode' && $mode !== 'decode') {
+			if (preg_match('/[^A-Za-z0-9.-]/', $host)) {
+				if (! $encode) {
+					$encode = mb_detect_encoding($host);
+				}
+				$mode = 'encode';
+			} else if (strtolower(substr($host, 0, 4)) === 'xn--') {
+				$mode = 'decode';
+			} else {
+				$mode = 'pass';
+			}
+		}
+		
+		if ($mode === 'encode') {
+			// Check cache
+			if (isset($converted[$encode][$host])) {
+				return $converted[$encode][$host];
+			}
+			// Do encode
+			$encoded = mb_convert_encoding($host, 'UTF-8', $encode);
+			//echo $encoded;
+			if (strpos($encoded, '&') !== FALSE) {
+				$convmap = array(0x0, 0x10000, 0, 0xfffff);
+				//$convmap = array(0x0080, 0x10FFFF, 0, 0xFFFFFF);
+				$encoded = mb_decode_numericentity($encoded, $convmap, 'UTF-8');
+			}
+			//exit( $encoded);
+			$encoded = $idn->encode($encoded);
+			$converted[$encode][$host] = $encoded;
+			return $encoded;
+		} else if ($encode && $mode === 'decode') {
+			$encoded = strtolower($host);
+			// Check cache
+			if (isset($converted[$encode]) && $decoded = array_search($encoded, $converted[$encode])) {
+				return $decoded;
+			}
+			// Do decode
+			$decoded = $idn->decode($encoded);
+			HypCommonFunc::encode_numericentity($decoded, $encode, 'UTF-8');
+			$decoded = mb_convert_encoding($decoded, $encode, 'UTF-8');
+			$converted[$encode][$decoded] = $encoded;
+			return $decoded;
+		}
+		
+		return $host;
+	}
+	
+	// parse_url for IDN (simple version)
+	function i18n_parse_url ($url) {
+		$reg = '#^([A-Za-z0-9]+)://([^/"<>:]+):?([\d]*)([^?]*)\??([^\#]*)\#?(.*)$#';
+		if (preg_match($reg, $url, $match)) {
+			$ret = array();
+			if (! empty($match[1])) $ret['scheme'] = $match[1];
+			if (! empty($match[2])) $ret['host'] = $match[2];
+			if (! empty($match[3])) $ret['port'] = $match[3];
+			if (! empty($match[4])) $ret['path'] = $match[4];
+			if (! empty($match[5])) $ret['query'] = $match[5];
+			if (! empty($match[6])) $ret['fragment'] = $match[6];
+			if (preg_match('/[^A-Za-z0-9.-]/', $ret['host'])) {
+				$ret['host'] = HypCommonFunc::convertIDN($ret['host'], 'encode');
+			}
+			return $ret;
+		} else {
+			return FALSE;
+		}
+	}
 }
 
 /*
@@ -1322,7 +1424,16 @@ class Hyp_HTTP_Request
 		$max_execution_time = ($max_execution_time)? $max_execution_time : 30;
 		
 		$rc = array();
-		$arr = parse_url($this->url);
+		$arr = HypCommonFunc::i18n_parse_url($this->url);
+		if (!$arr)
+		{
+			$this->query  = $this->url;
+			$this->rc     = 400;
+			$this->header = '';
+			$this->data   = 'Bad Request';
+			return;
+		}
+				
 		if (!$this->connect_try) $this->connect_try = 1;
 		
 		$via_proxy = $this->use_proxy ? ! $this->in_the_net($this->no_proxy, $arr['host']) : FALSE;
@@ -1409,7 +1520,7 @@ class Hyp_HTTP_Request
 			
 			$errno = 0;
 			$errstr = "";
-			$fp = fsockopen(
+			$fp = @ fsockopen(
 				$via_proxy ? $this->proxy_host : $arr['host'],
 				$via_proxy ? $this->proxy_port : $arr['port'],
 				$errno,$errstr,$this->connect_timeout);
@@ -1607,4 +1718,28 @@ if (file_exists(dirname(__FILE__)."/execpath.inc.php"))
 HypCommonFunc::set_exec_path("/usr/bin/");
 
 }
-?>
+
+// file_get_contents -- Reads entire file into a string
+// (PHP 4 >= 4.3.0, PHP 5)
+if (! function_exists('file_get_contents')) {
+	function file_get_contents($filename, $incpath = false, $resource_context = null)
+	{
+		if (false === $fh = fopen($filename, 'rb', $incpath)) {
+			trigger_error('file_get_contents() failed to open stream: No such file or directory', E_USER_WARNING);
+			return false;
+		}
+ 
+		clearstatcache();
+		if ($fsize = @filesize($filename)) {
+			$data = fread($fh, $fsize);
+		} else {
+			$data = '';
+			while (!feof($fh)) {
+				$data .= fread($fh, 8192);
+			}
+		}
+ 
+		fclose($fh);
+		return $data;
+	}
+}
