@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.30 2008/02/27 08:20:23 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.31 2008/02/27 23:47:34 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1242,7 +1242,7 @@ EOF;
 	}
 
 	function html_wordwrap(& $html, $num = 36, $sep = '&#8203;') {
-		$html = preg_replace_callback('/(<(script|textarea|style|option|pre).*?<\/\\2>|<[^>]*>)|((?:&#?[a-z0-9]+;|[!=\x23-\x3b\x3f-\x7e]){'.$num.'})/isS',
+		$html = preg_replace_callback('/(<(script|textarea|style|option|pre).*?<\/\\2>|<[^>]*>)|((?>&#?[a-z0-9]+;|[!=\x23-\x3b\x3f-\x7e]){'.$num.'})/isS',
 		create_function('$arg',
 			'if ($arg[1]) { return $arg[1]; } else { return $arg[3] . "'.$sep.'";}'
 		),$html);
