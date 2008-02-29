@@ -19,6 +19,16 @@ class HypSimpleAmazon
 	var $error = '';
 	var $CompactArrayRemoveAdult = FALSE;
 	
+	var $configs = array(
+		'makeLinkSearch' => array(
+			'Attributes'  => array(
+				'target'   => '_blank',
+				'class'    => 'searchAmazon',
+				'title'    => 'Lookup: %s',
+			),
+		),
+	);
+	
 	function HypSimpleAmazon ($AssociateTag = '') {
 		
 		$this->myDirectory = dirname(__FILE__);
@@ -137,9 +147,10 @@ class HypSimpleAmazon
 	
 	function getTemplates () {
 	    $templates = array();
-	    if ($dh = opendir(dirname(__FILE__) . '/templates/')) {
+	    $base = dirname(__FILE__) . '/templates/';
+	    if ($dh = opendir($base)) {
 			while (($file = readdir($dh)) !== false) {
-				if ($file[0] !== '.') {
+				if ($file[0] !== '.' && is_file($base . $file)) {
 					$templates[] = $file;
 				}
 			}
@@ -249,7 +260,19 @@ class HypSimpleAmazon
 		//if ($category) $url .= '&amp;rs=&amp;rh=i%3Aaps%2Ck%3A'.rawurlencode($e_key).'%2Ci%3A'.strtolower($category);
 		
 		$s_key = htmlspecialchars($key);
-		return '<a href="' . $url . '" title="Lookup: ' . $s_key . '" class="searchAmazon">' . $alias . '</a>';
+		$attrs = '';
+		if ($attr = $this->configs['makeLinkSearch']['Attributes']) {
+			if (isset($attr['title'])) {
+				$attr['title'] = sprintf($attr['title'], $s_key);  
+			}
+			$attrs = array();
+			foreach ($attr as $key => $val) {
+				$attrs[] = $key . '="' . $val . '"';
+			}
+			$attrs = ' ' . join(' ', $attrs);
+		}
+		
+		return '<a href="' . $url . '"' . $attrs . '>' . $alias . '</a>';
 	}
 	
 	function toCompactArray() {
