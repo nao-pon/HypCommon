@@ -4,7 +4,8 @@
 
 <!--EACH(5)-->
 <_LINKED_SIMG_><br />
-<a href="<_URL_>" target="_blank"><font face="Arial" size="-2" color="3366FF"><_TITLE_></font></a><font face="Arial" size="-2"> (<_CATEGORY_>)</font>
+<a href="<_URL_>" target="_blank"><span style="font-size:90%;color:#3366FF;"><_TITLE_></span></a><span style="font-size:90%;"> (<_CATEGORY_>)</span><br />
+<span style="font-size:90%;color:#990000;"><_PRICE_FORMATTED_></span>
 <hr />
 <!--/EACH-->
 
