@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.32 2008/02/29 23:29:45 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.33 2008/03/14 06:07:28 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1515,7 +1515,7 @@ class Hyp_HTTP_Request
 			@set_time_limit($this->connect_timeout + $max_execution_time);
 			
 			if ($now_execution_time = ini_get('max_execution_time')) {
-				$this->connect_timeout = min($this->connect_timeout, $now_execution_time - 10);
+				$this->connect_timeout = min($this->connect_timeout, max(5, $now_execution_time - 10));
 			}
 			
 			$errno = 0;
