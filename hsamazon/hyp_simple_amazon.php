@@ -495,7 +495,7 @@ class HypSimpleAmazon
 			$height =$img['Height']['content'];
 			$width = $img['Width']['content'];
 
-			$to['title'] = $item['ItemAttributes']['Title'];
+			$to['title'] = htmlspecialchars($item['ItemAttributes']['Title']);
 			$to['url'] = $item['DetailPageURL'];
 			$to['imgsrc'] = $img['URL'];
 			$to['imgsize'] = 'height="' . $height . '" width="' . $width . '"';
