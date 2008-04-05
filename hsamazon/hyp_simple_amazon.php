@@ -36,7 +36,7 @@ class HypSimpleAmazon
 		include_once dirname($this->myDirectory) . '/hyp_common_func.php';
 		include_once dirname($this->myDirectory) . '/hyp_simplexml.php';
 		
-		$this->AssociateTag = $AssociateTag;
+		$this->AssociateTag = $AssociateTag? $AssociateTag : 'hypweb-22';
 		
 		$this->loadSearchIndexes();
 		
@@ -129,7 +129,7 @@ class HypSimpleAmazon
 	}
 	
 	function loadTemplate ($file) {
-		if ($template = file_get_contents(dirname(__FILE__) . '/templates/' . $file)) {
+		if ($template = @ file_get_contents(dirname(__FILE__) . '/templates/' . $file)) {
 			$this->addTemplateSet(basename($file), $template);
 			return TRUE;
 		} else {
@@ -138,7 +138,7 @@ class HypSimpleAmazon
 	}
 	
 	function getTemplateSource ($file) {
-		if ($template = file_get_contents(dirname(__FILE__) . '/templates/' . $file)) {
+		if ($template = @ file_get_contents(dirname(__FILE__) . '/templates/' . $file)) {
 			return $template;
 		} else {
 			return '';
