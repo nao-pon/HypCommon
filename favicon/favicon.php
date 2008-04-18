@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/02/11 by nao-pon http://hypweb.net/
- * $Id: favicon.php,v 1.2 2008/02/25 01:43:07 nao-pon Exp $
+ * $Id: favicon.php,v 1.3 2008/04/18 06:22:06 nao-pon Exp $
  */
 
 /**
@@ -53,11 +53,6 @@ function get_url_filename($url)
     static $filename;
 
     if (empty($filename)) {
-//        $url  = parse_url($url);
-//        $base = $url['host'];
-//        $url  = $base . (isset($url['path']) ? preg_replace('/[^\/]*$/', '', $url['path']) : '');
-//
-//        $url      = rtrim($url, '/');
         $url      = preg_replace('/^https?:\/\//', '', $url);
         $url      = preg_replace('/index\.[a-z]+/i', '', $url);
         $url      = rtrim($url, '/');
@@ -255,16 +250,16 @@ function redirect_icon($url)
 	exit();
 }
 
-function output_icon($url) {
+function output_icon($icon) {
 
-	$time = get_timestamp($url);
+	$time = filemtime(get_image_filename($icon));
 
 	if ($time <= if_modified_since()) {
 	    header('HTTP/1.1 304 Not Modified');
 	    exit;
 	}
 
-	output_image($url, $time);
+	output_image($icon, $time);
 }
 
 if (!function_exists('file_put_contents')) {
