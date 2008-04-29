@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/02/11 by nao-pon http://hypweb.net/
- * $Id: favicon.php,v 1.3 2008/04/18 06:22:06 nao-pon Exp $
+ * $Id: favicon.php,v 1.4 2008/04/29 11:22:38 nao-pon Exp $
  */
 
 /**
@@ -13,6 +13,7 @@
  * @link        http://www.revulo.com/PukiWiki/Plugin/Favicon.html
  */
 
+ignore_user_abort(FALSE);
 error_reporting(0);
 
 define('FAVICON_TRUST_PATH' , dirname(__FILE__));
@@ -53,10 +54,10 @@ function get_url_filename($url)
     static $filename;
 
     if (empty($filename)) {
-        $url      = preg_replace('/^https?:\/\//', '', $url);
-        $url      = preg_replace('/index\.[a-z]+/i', '', $url);
-        $url      = rtrim($url, '/');
-        $filename = FAVICON_CACHE_DIR . rawurlencode($url) . '.url';
+        $url = preg_replace('/^https?:\/\//', '', $url);
+        $url = preg_replace('/index\.[a-z]+/i', '', $url);
+        $url = rtrim($url, '/');
+        $filename = FAVICON_CACHE_DIR . substr(rawurlencode($url), 0, 250) . '.url';
     }
     return $filename;
 }
@@ -72,7 +73,7 @@ function get_image_filename($url)
         	$filename = FAVICON_ERROR_IMAGE;
         } else {
             $url      = preg_replace('/^https?:\/\//', '', $url);
-            $filename = FAVICON_CACHE_DIR . rawurlencode($url);
+            $filename = FAVICON_CACHE_DIR . substr(rawurlencode($url), 0, 254);
         }
     }
     return $filename;
@@ -246,16 +247,22 @@ function redirect_icon($url)
 	$p_url  = parse_url(XOOPS_URL);
     $base = $p_url['scheme'] . '://' . $p_url['host'] . (isset($p_url['port']) ? ':' . $p_url['port'] : '');
 	$uri = preg_replace('/url=[^&]+/', 'icon=' . rawurlencode($url), $_SERVER['REQUEST_URI']);
+	header('Cache-Control: public, max-age=' . FAVICON_CACHE_TTL );
 	header('Location: '.$base . $uri);
 	exit();
 }
 
 function output_icon($icon) {
 
-	$time = filemtime(get_image_filename($icon));
+	if (in_array($icon, array('DefaultIcon', 'ErrorIcon'))) {
+		$time = time();
+	} else {
+		$time = filemtime(get_image_filename($icon));
+	}
 
 	if ($time <= if_modified_since()) {
 	    header('HTTP/1.1 304 Not Modified');
+	    header('Cache-Control: public, max-age=' . FAVICON_CACHE_TTL );
 	    exit;
 	}
 
