@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.33 2008/03/14 06:07:28 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.34 2008/04/29 11:21:52 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1526,7 +1526,8 @@ class Hyp_HTTP_Request
 				$errno,$errstr,$this->connect_timeout);
 			if ($fp) break;
 			$connect_try_count++;
-			sleep(2); //2ÉÃÂÔ¤Ä
+			if (connection_aborted()) exit();
+			sleep(1); //1ÉÃÂÔ¤Ä
 		}
 		if (!$fp)
 		{
@@ -1556,6 +1557,7 @@ class Hyp_HTTP_Request
 			&& (is_null($this->getSize) || strlen($response) < $this->getSize)
 		)
 		{
+			if (connection_aborted()) exit();
 			if ($this->read_timeout)
 			{
 				@set_time_limit($this->read_timeout + $max_execution_time);
