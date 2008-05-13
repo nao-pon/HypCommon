@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/02/11 by nao-pon http://hypweb.net/
- * $Id: favicon.php,v 1.4 2008/04/29 11:22:38 nao-pon Exp $
+ * $Id: favicon.php,v 1.5 2008/05/13 07:44:04 nao-pon Exp $
  */
 
 /**
@@ -29,7 +29,7 @@ if (file_exists(FAVICON_TRUST_PATH . '/conf.php')) {
 
 function get_favicon_url($url)
 {
-    if (! is_url($url)) return false;
+    if (! $url || ! is_url($url)) return false;
     if (time() <= get_timestamp($url) + FAVICON_CACHE_TTL) {
         $cache = get_url_filename($url);
         return file_get_contents($cache);
@@ -296,7 +296,7 @@ if (isset($_GET['icon'])) {
 $url = get_favicon_url(rawurldecode(@ $_GET['url']));
 
 if ($url === false) {
-    output_image(FAVICON_ERROR_IMAGE);
+    output_image('ErrorIcon');
     exit;
 }
 
