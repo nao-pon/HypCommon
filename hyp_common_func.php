@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.34 2008/04/29 11:21:52 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.35 2008/05/15 23:54:33 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -13,6 +13,20 @@ class HypCommonFunc
 			include (dirname(__FILE__) . '/version.php');
 		}
 		return $version;
+	}
+	
+	function loadClass($name) {
+		if (class_exists($name)) return;
+		
+		$dir = dirname(__FILE__);
+		switch($name) {
+			case 'HypSimpleAmazon':
+				include_once $dir . '/hsamazon/hyp_simple_amazon.php';
+				break;
+			case 'HypPinger':
+				include_once $dir . '/hyppinger/hyppinger.php';
+				break;
+		}
 	}
 	
 	// 1バイト文字をエンティティ化
@@ -1581,8 +1595,8 @@ class Hyp_HTTP_Request
 		}
 		fclose($fp);
 		
-		$resp = explode("\r\n\r\n",$response,2);
-		$rccd = explode(' ',$resp[0],3); // array('HTTP/1.1','200','OK\r\n...')
+		$resp = array_pad(explode("\r\n\r\n",$response,2), 2, '');
+		$rccd = array_pad(explode(' ',$resp[0],3), 3, ''); // array('HTTP/1.1','200','OK\r\n...')
 		$rc = (integer)$rccd[1];
 		
 		// Redirect
