@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.35 2008/05/15 23:54:33 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.36 2008/05/16 06:11:08 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1369,6 +1369,8 @@ class Hyp_HTTP_Request
 
 	var $uri='';
 	
+	var $iniLoaded = FALSE;
+	
 	// リダイレクト回数制限
 	var $redirect_max=10;
 	// 同期モード or 非同期モード
@@ -1414,7 +1416,35 @@ class Hyp_HTTP_Request
 	var $getSize = null; // Get size
 	function Hyp_HTTP_Request()
 	{
-		$this->ua="PHP/".PHP_VERSION;
+		$this->ua = 'PHP/'.PHP_VERSION;
+		
+		// Load "http_request.ini"
+		$ini_file = dirname(__FILE__) . '/ini/http_request.ini';
+		if (file_exists($ini_file)) {
+			$ini_array = parse_ini_file($ini_file);
+			
+			$keys = array(
+				'use_proxy',
+				'proxy_host',
+				'proxy_port',
+				'need_proxy_auth',
+				'proxy_auth_user',
+				'proxy_auth_pass',
+				'no_proxy'
+			);
+
+			foreach($keys as $key) {
+				if (isset($ini_array[$key])) {
+					if ($key === 'no_proxy') {
+						$this->$key = explode(' ', $ini_array[$key]);
+					} else {
+						$this->$key = $ini_array[$key];
+					}
+				}
+			}
+			
+			$this->iniLoaded = TRUE;
+		}
 	}
 		
 	function init()
