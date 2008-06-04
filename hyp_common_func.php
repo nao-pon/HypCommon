@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.36 2008/05/16 06:11:08 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.37 2008/06/04 08:31:29 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -25,6 +25,15 @@ class HypCommonFunc
 				break;
 			case 'HypPinger':
 				include_once $dir . '/hyppinger/hyppinger.php';
+				break;
+			case 'HypGetQueryWord':
+				include_once $dir . 'hyp_get_engine.php';
+				break;
+			case 'Hyp_KAKASHI':
+				include_once $dir . 'hyp_kakasi.php';
+				break;
+			case 'HypSimpleXML':
+				include_once $dir . 'hyp_simplexml.php';
 				break;
 		}
 	}
