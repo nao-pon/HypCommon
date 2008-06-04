@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_get_engine.php,v 1.6 2008/02/05 01:02:26 nao-pon Exp $
+// $Id: hyp_get_engine.php,v 1.7 2008/06/04 08:33:04 nao-pon Exp $
 // HypGetQueryWord Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -198,7 +198,7 @@ class HypGetQueryWord
 		$id = 0;
 		foreach ($keys as $key=>$pattern)
 		{
-			$s_key = htmlspecialchars($key);
+			$s_key = preg_replace('/&amp;#(\d+;)/', '&#$1', htmlspecialchars($key));
 			$search_word .= " <strong class=\"word$id\">$s_key</strong>";
 			$pattern = ($s_key{0} == '&') ?
 				"/(<head.*?<\/head>|<script.*?<\/script>|<style.*?<\/style>|<textarea.*?<\/textarea>|<[^>]*>)|($pattern)/isS" :
