@@ -291,24 +291,26 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 	
 	function HypCommonPreLoad (& $controller) {
 		
+		// 各機能のメインスイッチ (On = 1, Off = 0)
+		$this->use_set_query_words   = 0; // 検索ワードを定数にセット
+		$this->use_words_highlight   = 0; // 検索ワードをハイライト表示
+		$this->use_proxy_check       = 0; // POST時プロキシチェックする
+		$this->use_dependence_filter = 0; // 機種依存文字フィルター
+		$this->use_post_spam_filter  = 0; // POST SPAM フィルター
+		$this->post_spam_trap_set    = 0; // 無効フィールドのBot罠を自動で仕掛ける
+				
 		// 各種設定
 		$this->configEncoding = 'EUC-JP'; // このファイルの文字コード
 		
 		$this->encodehint_word = 'ぷ';    // POSTエンコーディング判定用文字
 		$this->encodehint_name = 'HypEncHint'; // POSTエンコーディング判定用 Filed name
 		
-		$this->use_set_query_words = 1;   // 検索ワードを定数にセット
-		$this->use_words_highlight = 1;   // 検索ワードをハイライト表示
 		$this->msg_words_highlight = 'これらのキーワードがハイライトされています'; 
 		
-		$this->use_proxy_check = 1;       // POST時プロキシチェックする
 		$this->no_proxy_check  = '/^(127\.0\.0\.1|192\.168\.1\.)/'; // 除外IP
 		$this->msg_proxy_check = 'Can not post from public proxy.';
 		
-		$this->use_dependence_filter = 1; // 機種依存文字フィルター
-		
 		// POST SPAM
-		$this->use_post_spam_filter = 1;  // POST SPAM フィルター
 		$this->use_mail_notify = 1;       // POST SPAM メール通知 0:なし, 1:SPAM判定のみ, 2:すべて
 		$this->post_spam_a   = 1;         // <a> タグ 1個あたりのポイント
 		$this->post_spam_bb  = 1;         // BBリンク 1個あたりのポイント
@@ -317,20 +319,11 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_word  = 10;      // Spam Word の加算ポイント
 		$this->post_spam_filed = 51;      // Spam 無効フィールドの加算ポイント
 		$this->post_spam_trap  = '___url';// Spam 罠用無効フィールド名
-		$this->post_spam_trap_set = 1;    // 無効フィールドの罠を自動で仕掛ける
 		
 		$this->post_spam_user  = 30;      // POST SPAM 閾値: ログインユーザー
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
 		$this->post_spam_badip = 50;      // アクセス拒否リストへ登録する閾値
 	
-		// 検索ワード定数名
-		$this->q_word  = 'XOOPS_QUERY_WORD';         // 検索ワード
-		$this->q_word2 = 'XOOPS_QUERY_WORD2';        // 検索ワード分かち書き
-		$this->se_name = 'XOOPS_SEARCH_ENGINE_NAME'; // 検索元名
-	
-		// KAKASI での分かち書き結果のキャッシュ先
-		$this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
-		
 		// POST SPAM のポイント加算設定
 		$this->post_spam_rules = array(
 			// 同じURLが1行に3回 11pt
@@ -347,6 +340,14 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->ignore_fileds = array(
 			// 'url' => array('newbb/post.php', 'comment_post.php'),
 		);
+		
+		// 検索ワード定数名
+		$this->q_word  = 'XOOPS_QUERY_WORD';         // 検索ワード
+		$this->q_word2 = 'XOOPS_QUERY_WORD2';        // 検索ワード分かち書き
+		$this->se_name = 'XOOPS_SEARCH_ENGINE_NAME'; // 検索元名
+	
+		// KAKASI での分かち書き結果のキャッシュ先
+		$this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
 		
 		parent::HypCommonPreLoadBase($controller);
 		
