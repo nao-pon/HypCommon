@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.37 2008/06/04 08:31:29 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.38 2008/06/09 01:51:59 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1354,6 +1354,104 @@ EOF;
 		} else {
 			return FALSE;
 		}
+	}
+
+	// HTML を指定サイズ内に収まるように分割する
+	function html_split($html, $maxlen, $encode = '') {
+		$u = '';
+		// 文字コード別に1文字の正規表現をセット
+		switch (strtoupper($encode)) {
+			case 'EUC-JP':
+			case 'EUC':
+			case 'EUCJP':
+			case 'EUC_JP':
+				$p = '(?:[\xA1-\xFE][\xA1-\xFE]|[\x01-\x7F]|\x8E[\xA0-\xDF])';
+				break;
+			case 'SHIFT_JIS':
+			case 'SHIFT-JIS':
+			case 'SJIS':
+				$p = '(?:[\x81-\x9F\xE0-\xFC][\x40-\xFC]|[\x01-\x7F]|[\xA0-\xDF])';
+				break;
+			case 'UTF-8':
+			case 'UTF_8':
+			case 'UTF8':
+				$u = 'u';
+			default:
+				$p = '.';
+		}
+		
+		// 必ずひとまとめにする塊
+		$arr = preg_split('#(<form.+?/form>|<a.+?/a>|<th.+?/th>|<h1.+?/h1>|<h2.+?/h2>|<h3.+?/h3>|<h4.+?/h4>|<h5.+?/h5>|<h6.+?/h6>|<[^>]+>|&(?:[a-zA-Z]{2,8}|\#[0-9]{1,6}|\#x[0-9a-fA-F]{2,4});|'.$p.')#sS'.$u, $html, -1, PREG_SPLIT_DELIM_CAPTURE);
+
+		$out = array();
+		$i = 0;
+		$len = 0;
+		
+		// ページ分断で閉じられなかったらきちんと閉じて次ページの先頭で再度開くタグ
+		$checks = array('address', 'blockquote', 'center', 'div', 'dl', 'fieldset', 'ol', 'p', 'pre', 'table', 'td', 'tr', 'ul');
+		
+		$stacks = array();
+		$opentags = array();
+
+		foreach($arr as $key => $val) {
+			if (! isset($out[$i])) $out[$i] = '';
+			$out[$i] .= $val;
+			$len += strlen($val);
+
+			// タグの開閉をチェックする
+			if ($val[0] === '<') {
+				if (preg_match('/^<([a-zA-Z]+)/', $val, $match) && in_array($match[1], $checks)) {
+					array_unshift($stacks, $match[1]);
+					array_unshift($opentags, $val);
+					$len += strlen($match[1]) + 3;
+				} else if (preg_match('/\/([a-zA-Z]+)>$/', $val, $match) && in_array($match[1], $checks)) {
+					$stack_key = array_search($match[1], $stacks);
+					if ($stack_key !== FALSE) {
+						unset($stacks[$stack_key]);
+						unset($opentags[$stack_key]);
+						$len -= (strlen($match[1]) + 3);
+					}
+				}
+			}
+
+			// 次の塊も合わせてバイト数チェック
+			$nextlen = (isset($arr[$key + 1]))? strlen($arr[$key + 1]) : 0;
+			if ($len + $nextlen > $maxlen) {
+				// 次のページへ
+				$len = 0;
+				$next = $i + 1;
+				$out[$next] = '';
+				foreach ($stacks as $_key => $_tag) {
+					$out[$i] .= '</' . $_tag . '>';
+					$out[$next] = $opentags[$_key] . $out[$next];
+					$len += strlen($opentags[$_key]);
+				}
+				$i++;
+			}
+		}
+		
+		return $out;
+	}
+	
+	// HTML を携帯端末用にシェイプアップする
+	function html_diet_for_hp ($body, $my_root = '') {
+		// Remove etc.
+		while(preg_match('#<[^>]*\s+(?:class|title|alt|id|on[^=]+)="[^"]*"[^>]*>#iS', $body)) {
+			$body = preg_replace('#(<[^>]*)\s+(?:class|title|alt|id|on[^=]+)="[^"]*"([^>]*>)#iS', '$1$2', $body);
+		}
+		$body = str_replace(' />', '>', $body);
+		$body = str_replace('</li>', '', $body);
+		$body = preg_replace('#<!--.+?-->#sS', '', $body);
+		$body = preg_replace('#<script.+?/script>#isS', '', $body);
+		$body = preg_replace('#</?(?:code|label|small)[^>]*>#iS', '', $body);
+
+		if ($my_root) {
+			// Host name
+			$my_root = rtrim($my_root, '/');
+			$body = preg_replace('#(<[^>]*\s+(?:href|src)=")'.preg_quote($my_root, '#').'#iS', '$1', $body);
+		}
+		
+		return $body;
 	}
 }
 
