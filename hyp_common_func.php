@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.39 2008/06/10 00:25:56 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.40 2008/06/10 09:16:40 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1502,6 +1502,8 @@ EOF;
 		while(preg_match('#<[^>]*\s+(?:class|title|alt|on[^=]+)="[^"]*"[^>]*>#iS', $body)) {
 			$body = preg_replace('#(<[^>]*)\s+(?:class|title|alt|on[^=]+)="[^"]*"([^>]*>)#iS', '$1$2', $body);
 		}
+		
+		$body = preg_replace('#(<input[^>]*?\s+type=[\'"])password#iS', '$1text', $body);
 		
 		$pat = $rep = array();
 		
