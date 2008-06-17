@@ -337,6 +337,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		HypCommonFunc::loadClass('HypKTaiRender');
 		$r = new HypKTaiRender();
 		$r->set_myRoot(XOOPS_URL);
+		$r->redirect = $this->k_tai_conf['redirect'];
 		$r->contents['header'] = $header;
 		$r->contents['body'] = $body;
 		$r->contents['footer'] = $footer;
@@ -509,6 +510,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		);
 		
 		$this->k_tai_conf['template'] = 'default';
+		$this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/redirect.php';
 		
 		// 以下は変更してはいけません。
 		parent::HypCommonPreLoadBase($controller);
