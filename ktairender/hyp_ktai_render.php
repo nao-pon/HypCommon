@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.1 2008/06/17 00:12:21 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.2 2008/06/17 05:19:13 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -30,6 +30,7 @@ class HypKTaiRender
 	var $keymap = array();
 	var $keybutton = array();
 	var $showImgHosts = array('amazon.com', 'yimg.jp', 'yimg.com');
+	var $redirect = '';
 	
 	function HypKTaiRender () {
 		$this->keymap['prev'] = '4';
@@ -656,7 +657,12 @@ class HypKTaiRender
 			if ($add) $href .= ((strpos($href, "?") === FALSE)? '?' : '&amp;') . (join('&amp;', $add));
 			$url = $href . ($hash? '#' . $hash : '');
 		} else if ($parsed_url['host'] !== $parsed_base['host']) {
-			$url = $this->myRoot . '/redirect.php?l='. rawurlencode($url);
+			if ($this->redirect) {
+				$url = $this->redirect;
+			} else {
+				$url = $this->myRoot . '/redirect.php';
+			}
+			$url .= '?l=' . rawurlencode($url);
 		}
 		
 		return $match[1] . $url . (isset($match[4])? $match[4] : '');
@@ -670,11 +676,15 @@ class HypKTaiRender
 		
 		$hostsReg = '#(?!)#';
 		if ($this->showImgHosts) {
-			$hosts = array();
-			foreach($this->showImgHosts as $_host) {
-				$hosts[] = preg_quote($_host, '#');
+			if ($this->showImgHosts === 'all') {
+				$hostsReg = '#(?=)#';
+			} else {
+				$hosts = array();
+				foreach($this->showImgHosts as $_host) {
+					$hosts[] = preg_quote($_host, '#');
+				}
+				$hostsReg = '#(?:' . join('|', $hosts) . ')$#';
 			}
-			$hostsReg = '#(?:' . join('|', $hosts) . ')$#';
 		}
 		
 		if (empty($parsed_url['host'])
