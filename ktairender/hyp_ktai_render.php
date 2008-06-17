@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.2 2008/06/17 05:19:13 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.3 2008/06/17 10:10:31 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -29,8 +29,9 @@ class HypKTaiRender
 	var $outputBody = '';
 	var $keymap = array();
 	var $keybutton = array();
-	var $showImgHosts = array('amazon.com', 'yimg.jp', 'yimg.com');
-	var $redirect = '';
+	var $Config_showImgHosts = array('amazon.com', 'yimg.jp', 'yimg.com');
+	var $Config_directLinkHosts = array('amazon.co.jp');
+	var $Config_redirect = '';
 	
 	function HypKTaiRender () {
 		$this->keymap['prev'] = '4';
@@ -657,14 +658,11 @@ class HypKTaiRender
 			if ($add) $href .= ((strpos($href, "?") === FALSE)? '?' : '&amp;') . (join('&amp;', $add));
 			$url = $href . ($hash? '#' . $hash : '');
 		} else if ($parsed_url['host'] !== $parsed_base['host']) {
-			if ($this->redirect) {
-				$url = $this->redirect;
-			} else {
-				$url = $this->myRoot . '/redirect.php';
+			$hostsReg = $this->_getHostsRegex($this->Config_directLinkHosts);
+			if (!preg_match($hostsReg, $parsed_url['host'])) {
+				$url =($this->Config_redirect? $this->Config_redirect : $this->myRoot . '/redirect.php?l=') . rawurlencode(str_replace('&amp;', '&', $url));
 			}
-			$url .= '?l=' . rawurlencode($url);
 		}
-		
 		return $match[1] . $url . (isset($match[4])? $match[4] : '');
 	}
 	
@@ -675,15 +673,11 @@ class HypKTaiRender
 		$parsed_url = parse_url($url);
 		
 		$hostsReg = '#(?!)#';
-		if ($this->showImgHosts) {
-			if ($this->showImgHosts === 'all') {
+		if ($this->Config_showImgHosts) {
+			if ($this->Config_showImgHosts === 'all') {
 				$hostsReg = '#(?=)#';
 			} else {
-				$hosts = array();
-				foreach($this->showImgHosts as $_host) {
-					$hosts[] = preg_quote($_host, '#');
-				}
-				$hostsReg = '#(?:' . join('|', $hosts) . ')$#';
+				$hostsReg = $this->_getHostsRegex($this->Config_showImgHosts);
 			}
 		}
 		
@@ -702,6 +696,19 @@ class HypKTaiRender
 				}
 			}
 		}
+	}
+	
+	function _getHostsRegex ($arr, $dem = '#') {
+		if (is_array($arr) && $arr) {
+			$hosts = array();
+			foreach($arr as $host) {
+				$hosts[] = preg_quote($host, $dem);
+			}
+			$hostsReg = $dem . '(?:' . join('|', $hosts) . ')$' . $dem;
+		} else {
+			$hostsReg = $dem . '(?!)' . $dem;
+		}
+		return $hostsReg;
 	}
 
 }

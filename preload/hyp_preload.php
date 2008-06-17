@@ -337,7 +337,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		HypCommonFunc::loadClass('HypKTaiRender');
 		$r = new HypKTaiRender();
 		$r->set_myRoot(XOOPS_URL);
-		$r->redirect = $this->k_tai_conf['redirect'];
+		
+		$r->Config_redirect = $this->k_tai_conf['redirect'];
+		$r->Config_showImgHosts = $this->k_tai_conf['showImgHosts'];
+		$r->Config_directLinkHosts = $this->k_tai_conf['directLinkHosts'];
+		
 		$r->contents['header'] = $header;
 		$r->contents['body'] = $body;
 		$r->contents['footer'] = $footer;
@@ -483,9 +487,13 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// KAKASI での分かち書き結果のキャッシュ先
 		$this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
 		
+		/////////////////////////
 		// 携帯対応レンダー設定
+		
+		// 携帯端末判定用 UA 正規表現
 		$this->k_tai_conf['ua_regex'] = '#(?:SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser)#';
 		
+		// HTML再構築用タグ設定
 		$this->k_tai_conf['rebuilds'] = array(
 			'headerlogo' => array(	'above' => '<center>',
 									'below' => '</center>'),
@@ -509,9 +517,23 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 									'below' => ''),
 		);
 		
+		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';
-		$this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/redirect.php';
 		
+		// インラインイメージを表示するホスト名(後方一致)
+		$this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com');
+		
+		// リダイレクトスクリプトを経由しないホスト名(後方一致)
+		$this->k_tai_conf['directLinkHosts'] = array('amazon.co.jp');
+
+		// 外部リンク用リダイレクトスクリプト
+		$this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/redirect.php?l=';
+		
+		// 携帯対応レンダー設定 以上
+		/////////////////////////////
+
+		
+		///////////////////////////////
 		// 以下は変更してはいけません。
 		parent::HypCommonPreLoadBase($controller);
 
