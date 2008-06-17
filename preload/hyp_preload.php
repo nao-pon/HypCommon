@@ -1,4 +1,5 @@
 <?php
+define('HYP_SESSION_NAME', 'hypsid');
 
 //// mbstring ////
 if (! extension_loaded('mbstring')) {
@@ -64,9 +65,21 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 	
 	function preFilter() {
-		// <from> フィルター
-		if (! empty($this->encodehint_word) || ! empty($this->post_spam_trap_set)) {
-			ob_start(array(&$this, 'formFilter'));
+		// Use K_TAI Render
+		if (! empty($this->use_k_tai_render) && isset($_SERVER['HTTP_USER_AGENT']) &&
+			preg_match($this->k_tai_conf['ua_regex'], $_SERVER['HTTP_USER_AGENT'])) {
+
+			define('HYP_K_TAI_RENDER', TRUE);
+			
+			$skey = ini_get('session.name');
+			if(isset($_POST[$skey])) $sid=$_POST[$skey];
+			else if(isset($_GET[$skey])) $sid=$_GET[$skey];
+			else $sid=null;
+			if( preg_match('/^[0-9a-z]{32}$/', $sid) ){
+				session_id($sid);
+			}
+		} else {
+			define('HYP_K_TAI_RENDER', FALSE);
 		}
 	}
 	
@@ -79,14 +92,18 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			$this->encodehint_word = '';
 		}
 		
-		// Set Query Words
-		if ($this->use_set_query_words) {
-			HypCommonFunc::set_query_words($this->q_word, $this->q_word2, $this->se_name, $this->kakasi_cache_dir, $this->encode);
-			if ($this->use_words_highlight) {
-				ob_start(array(&$this, 'obFilter'));
+		if (! empty($_GET)) {
+			// 文字コードを正規化
+			$enchint = (isset($_GET[$this->encodehint_name]))? $_GET[$this->encodehint_name] : ((isset($_GET['encode_hint']))? $_GET['encode_hint'] : '');
+			if ($enchint && function_exists('mb_detect_encoding')) {
+				$encode = strtoupper(mb_detect_encoding($enchint));
+				if ($encode !== $this->encode) {
+					mb_convert_variables($this->encode, $encode, $_GET);
+					if (isset($_GET['charset'])) $_GET['charset'] = $this->encode;
+				}
 			}
 		}
-
+		
 		if (! empty($_POST)) {
 			// POST 文字列の文字エンコードを判定
 			$enchint = (isset($_POST[$this->encodehint_name]))? $_POST[$this->encodehint_name] : ((isset($_POST['encode_hint']))? $_POST['encode_hint'] : '');
@@ -109,6 +126,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				$_POST = HypCommonFunc::dependence_filter($_POST);
 			}
 			
+			// 文字コードを正規化
+			if (defined('HYP_POST_ENCODING') && $this->encode !== HYP_POST_ENCODING) {
+				mb_convert_variables($this->encode, HYP_POST_ENCODING, $_POST);
+				if (isset($_POST['charset'])) $_POST['charset'] = $this->encode;
+			}
+
 			// PostSpam をチェック
 			if ($this->use_post_spam_filter) {
 				// 加算 pt
@@ -192,6 +215,26 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				}
 			}
 		}
+		
+		// Use K_TAI Render
+		if (! empty($this->use_k_tai_render) && isset($_SERVER['HTTP_USER_AGENT']) &&
+			preg_match($this->k_tai_conf['ua_regex'], $_SERVER['HTTP_USER_AGENT'])) {
+			// keitai Filter
+			ob_start(array(&$this, 'keitaiFilter'));
+		}
+		
+		// <from> Filter
+		if (! empty($this->encodehint_word) || ! empty($this->post_spam_trap_set)) {
+			ob_start(array(&$this, 'formFilter'));
+		}
+
+		// Set Query Words
+		if ($this->use_set_query_words) {
+			HypCommonFunc::set_query_words($this->q_word, $this->q_word2, $this->se_name, $this->kakasi_cache_dir, $this->encode);
+			if ($this->use_words_highlight) {
+				ob_start(array(&$this, 'obFilter'));
+			}
+		}
 	}
 	
 	function obFilter( $s ) {
@@ -203,7 +246,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$this->encode = _CHARSET;
 		
 		// スパムロボット用の罠を仕掛ける
-		if (! empty($this->post_spam_trap_set)) {
+		if (! empty($this->post_spam_trap_set) && ! defined('HYP_K_TAI_RENDER')) {
 			$insert .= "\n<input name=\"{$this->post_spam_trap}\" type=\"text\" size=\"1\" style=\"display:none;speak:none;\" />";
 		}
 		// エンコーディング判定用ヒント文字
@@ -215,9 +258,98 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 			$insert .= "\n<input name=\"{$this->encodehint_name}\" type=\"hidden\" value=\"{$encodehint_word}\" />";
 		}
-		if ($insert) $insert = "\n".'<div>'.$insert."\n".'</div>';
-		return preg_replace('/<form[^>]+?method=("|\')post\\1[^>]*?>/isS' ,
+		if ($insert) $insert = "\n".$insert."\n";
+		return preg_replace('/<form[^>]+?>/isS' ,
 			"$0".$insert, $s);
+	}
+	
+	function keitaiFilter ( $s ) {
+
+		$head = $header = $body = $footer = '';
+		$header_template = $body_template = $footer_template = '';
+		
+		$rebuilds = $this->k_tai_conf['rebuilds'];
+		
+		// テンプレート読み込み
+		if ($rebuilds && $this->k_tai_conf['template']) {
+			$templates_dir = dirname(dirname( __FILE__ )) . '/ktairender/templates/' . $this->k_tai_conf['template']  . '/';
+			foreach(array('header', 'body', 'footer') as $_name) {
+				if (file_exists( $templates_dir . $_name . '.html' )) {
+					$var_name = $_name . '_template';
+					$$var_name = file_get_contents( $templates_dir . $_name . '.html' );
+				}
+			}
+		}
+		
+		// preg_match では、サイズが大きいページで正常処理できないことがあるので。
+		$arr1 = explode('<head', $s, 2);
+		if (isset($arr1[1]) && strpos($arr1[1], '</head>') !== FALSE) {
+			$arr2 = explode('</head>', $arr1[1], 2);
+			$head = substr($arr2[0], strpos($arr2[0], '>') + 1);
+		}
+		$arr1 = explode('<body', $s, 2);
+		if (isset($arr1[1]) && strpos($arr1[1], '</body>') !== FALSE) {
+			$arr2 = explode('</body>', $arr1[1], 2);
+			$body = substr($arr2[0], strpos($arr2[0], '>') + 1);
+		}
+		if ($body) {
+			if ($rebuilds) {
+				$parts = array();
+				$found = FALSE;
+				foreach($rebuilds as $id => $var) {
+					$qid = preg_quote($id, '#');
+					$parts[$id] = '';
+					// preg_match では、サイズが大きいページで正常処理できないことがあるので。
+					$arr1 = explode('<!--' . $id . '-->', $body, 2);
+					if (isset($arr1[1]) && strpos($arr1[1], '<!--/' . $id . '-->') !== FALSE) {
+						$arr2 = explode('<!--/' . $id . '-->', $arr1[1], 2);
+						$target = trim(preg_replace('/<!--.+?-->/sS', '', $arr2[0]));
+						if ($target) {
+							$parts[$id] = $var['above'] . $target . $var['below'];
+							$found = TRUE;
+						}
+					}
+				}
+				
+				if ($found) {
+					foreach(array_keys($rebuilds) as $id) {
+						$header_template = str_replace('<' . $id . '>', $parts[$id], $header_template);
+						$body_template = str_replace('<' . $id . '>', $parts[$id], $body_template);
+						$footer_template = str_replace('<' . $id . '>', $parts[$id], $footer_template);
+					}
+					
+					if ($header_template) $header = $header_template;
+					if ($body_template) $body = $body_template;
+					if ($footer_template) $footer = $footer_template;
+				}
+			}
+		}
+		if ($head) {
+			$_head = '<head>';
+			if (preg_match('#<meta[^>]+http-equiv=("|\')Refresh\\1[^>]*>#iUS', $head, $match)) {
+				$_head .= str_replace('/>', '>', $match[0]);
+			} else if (preg_match('#<title[^>]*>.*</title>#isUS', $head, $match)) {
+				$_head .= mb_convert_encoding($match[0], 'SJIS', $this->encode);
+			}
+			$head = $_head;
+		}
+		
+		HypCommonFunc::loadClass('HypKTaiRender');
+		$r = new HypKTaiRender();
+		$r->set_myRoot(XOOPS_URL);
+		$r->contents['header'] = $header;
+		$r->contents['body'] = $body;
+		$r->contents['footer'] = $footer;
+		$r->doOptimize();
+		
+		$s = '<html>' . $head . '<body>' . $r->outputBody . '</body></html>';
+		
+		$r = NULL;
+		unset($r);
+		
+		header('Content-Type: text/html; charset=Shift_JIS');
+		
+		return $s;
 	}
 	
 	function sendMail ($spamlev) {
@@ -298,6 +430,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->use_dependence_filter = 0; // 機種依存文字フィルター
 		$this->use_post_spam_filter  = 0; // POST SPAM フィルター
 		$this->post_spam_trap_set    = 0; // 無効フィールドのBot罠を自動で仕掛ける
+		$this->use_k_tai_render      = 0; // 携帯対応レンダーを有効にする
 				
 		// 各種設定
 		$this->configEncoding = 'EUC-JP'; // このファイルの文字コード
@@ -349,8 +482,37 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// KAKASI での分かち書き結果のキャッシュ先
 		$this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
 		
-		parent::HypCommonPreLoadBase($controller);
+		// 携帯対応レンダー設定
+		$this->k_tai_conf['ua_regex'] = '#(?:SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser)#';
 		
+		$this->k_tai_conf['rebuilds'] = array(
+			'headerlogo' => array(	'above' => '<center>',
+									'below' => '</center>'),
+			'headerbar' => array(	'above' => '<hr>',
+									'below' => ''),
+			'breadcrumbs' => array(	'above' => '',
+									'below' => ''),
+			'leftcolumn' => array(	'above' => '<hr>',
+									'below' => ''),
+			'centerCcolumn' => array(	'above' => '<hr>',
+									'below' => ''),
+			'centerLcolumn' => array(	'above' => '',
+									'below' => ''),
+			'centerRcolumn' => array(	'above' => '',
+									'below' => ''),
+			'content' => array(	'above' => '<hr>',
+									'below' => ''),
+			'rightcolumn' => array(	'above' => '<hr>',
+									'below' => ''),
+			'footerbar' => array(	'above' => '',
+									'below' => ''),
+		);
+		
+		$this->k_tai_conf['template'] = 'default';
+		
+		// 以下は変更してはいけません。
+		parent::HypCommonPreLoadBase($controller);
+
 	}
 }
 }

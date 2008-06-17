@@ -19,6 +19,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->use_dependence_filter = 0; // 機種依存文字フィルター
 		$this->use_post_spam_filter  = 0; // POST SPAM フィルター
 		$this->post_spam_trap_set    = 0; // 無効フィールドのBot罠を自動で仕掛ける
+		$this->use_k_tai_render      = 0; // 携帯対応レンダーを有効にする
 				
 		// 各種設定
 		$this->configEncoding = 'EUC-JP'; // このファイルの文字コード
@@ -70,6 +71,39 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// KAKASI での分かち書き結果のキャッシュ先
 		$this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
 		
+		parent::HypCommonPreLoadBase($controller);
+
+		// 携帯対応レンダー設定
+		$this->k_tai_conf['ua_regex'] = '#(?:SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser)#';
+		
+		$this->k_tai_conf['rebuilds'] = array(
+			'headerlogo' => array(	'above' => '<center>',
+									'below' => '</center>'),
+			'headerbar' => array(	'above' => '<hr>',
+									'below' => ''),
+			'breadcrumbs' => array(	'above' => '',
+									'below' => ''),
+			'leftcolumn' => array(	'above' => '<hr>',
+									'below' => ''),
+			'centerCcolumn' => array(	'above' => '<hr>',
+									'below' => ''),
+			'centerLcolumn' => array(	'above' => '',
+									'below' => ''),
+			'centerRcolumn' => array(	'above' => '',
+									'below' => ''),
+			'content' => array(	'above' => '<hr>',
+									'below' => ''),
+			'rightcolumn' => array(	'above' => '<hr>',
+									'below' => ''),
+			'footerbar' => array(	'above' => '',
+									'below' => ''),
+		);
+		
+		$this->k_tai_conf['header_template'] = '<headerlogo><breadcrumbs>';
+		$this->k_tai_conf['body_template'] = '<headerbar><centerCcolumn><content><centerLcolumn><centerRcolumn><leftcolumn><rightcolumn>';
+		$this->k_tai_conf['footer_template'] = '<footerbar>';
+
+		// 以下は変更してはいけません。		
 		parent::HypCommonPreLoadBase($controller);
 		
 	}
