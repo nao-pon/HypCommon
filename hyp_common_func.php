@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.40 2008/06/10 09:16:40 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.41 2008/06/17 00:12:21 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -34,6 +34,9 @@ class HypCommonFunc
 				break;
 			case 'HypSimpleXML':
 				include_once $dir . 'hyp_simplexml.php';
+				break;
+			case 'HypKTaiRender':
+				include_once $dir . '/ktairender/hyp_ktai_render.php';
 				break;
 		}
 	}
@@ -1354,184 +1357,6 @@ EOF;
 		} else {
 			return FALSE;
 		}
-	}
-
-	// HTML を指定サイズ内に収まるように分割する
-	function html_split($html, $maxlen, $encode = '') {
-	
-		// ページ分断で閉じられなかったらきちんと閉じて次ページの先頭で再度開くタグ
-		$checks = array('address', 'blockquote', 'center', 'div', 'dl', 'fieldset', 'ol', 'p', 'pre', 'table', 'td', 'tr', 'ul');
-		
-		$out = array();
-		$stacks = array();
-		$opentags = array();
-		$i = $len = 0;
-
-		$arr = HypCommonFunc::html_split_make_array($html, $maxlen, $encode);
-		foreach($arr as $key => $val) {
-		
-			if (! isset($out[$i])) $out[$i] = '';
-			$out[$i] .= $val;
-			$len += strlen($val);
-
-			// タグの開閉をチェックする
-			if ($val[0] === '<') {
-				if (preg_match('/^<([a-zA-Z]+)/', $val, $match) && in_array($match[1], $checks)) {
-					array_unshift($stacks, $match[1]);
-					array_unshift($opentags, $val);
-					$len += strlen($match[1]) + 3;
-				}
-				if (preg_match('/\/([a-zA-Z]+)>$/', $val, $match) && in_array($match[1], $checks)) {
-					$stack_key = array_search($match[1], $stacks);
-					if ($stack_key !== FALSE) {
-						unset($stacks[$stack_key]);
-						unset($opentags[$stack_key]);
-						$len -= (strlen($match[1]) + 3);
-					}
-				}
-			}
-
-			// 次の塊も合わせてバイト数チェック
-			$nextlen = (isset($arr[$key + 1]))? strlen($arr[$key + 1]) : 0;
-			if (($len + $nextlen) > $maxlen) {
-				// 次のページへ
-				$len = 0;
-				$next = $i + 1;
-				$out[$next] = '';
-				foreach ($stacks as $_key => $_tag) {
-					$out[$i] .= '</' . $_tag . '>';
-					$out[$next] = $opentags[$_key] . $out[$next];
-					$len += strlen($opentags[$_key]);
-				}
-				$i++;
-			}
-		}
-		
-		return $out;
-	}
-	
-	function html_split_make_array ($html, $maxlen, $encode = '') {
-		$u = '';
-		// 文字コード別に1文字の正規表現をセット
-		switch (strtoupper($encode)) {
-			case 'EUC-JP':
-			case 'EUC':
-			case 'EUCJP':
-			case 'EUC_JP':
-				$p = '(?:[\xA1-\xFE][\xA1-\xFE]|[\x01-\x7F]|\x8E[\xA0-\xDF])';
-				break;
-			case 'SHIFT_JIS':
-			case 'SHIFT-JIS':
-			case 'SJIS':
-				$p = '(?:[\x81-\x9F\xE0-\xFC][\x40-\xFC]|[\x01-\x7F]|[\xA0-\xDF])';
-				break;
-			case 'UTF-8':
-			case 'UTF_8':
-			case 'UTF8':
-				$u = 'u';
-			default:
-				$p = '.';
-		}
-		
-		// できるだけひとまとめにする塊
-		$oneps = array(
-			'form',
-			'table',
-			'th',
-			'tr',
-			'td',
-			'div',
-			'p',
-			'h1',
-			'h2',
-			'h4',
-			'h5',
-			'h6',
-			'ul',
-			'ol'
-		);
-		$regs = array();
-		foreach($oneps as $onep) {
-			$regs[] = '<'.$onep.'(?:.(?!<'.$onep.'))+/'.$onep.'>';
-		}
-		
-		$first = '';
-		$last = '';
-		
-		if (preg_match('#^(<([a-zA-Z]+)[^>]*>)(.*)(</\\2>)$#sS', $html, $match)) {
-			$first = $match[1];
-			$html = $match[3];
-			$last = $match[4];
-		}
-		
-		$args = preg_split(
-			'#(' .
-			join('|', $regs) . '|' .
-			'<a.+/a>|' .
-			'<[^>]+>|' .
-			'&(?:[a-zA-Z]{2,8}|\#[0-9]{1,6}|\#x[0-9a-fA-F]{2,4});|' .
-			$p .
-			')#sSU'.$u, $html, -1, PREG_SPLIT_DELIM_CAPTURE);
-		
-		$out = array();
-		if ($first) $out[] = $first;
-		foreach($args as $arg) {
-			if (strlen($arg) > $maxlen) {
-				$out = array_merge($out, HypCommonFunc::html_split_make_array($arg, $maxlen, $encode));
-			} else if ($arg) {
-				$out[] = $arg;
-			}
-		}
-		if ($last) $out[] = $last;
-		return $out;
-	}
-	
-	// HTML を携帯端末用にシェイプアップする
-	function html_diet_for_hp ($body, $my_root = '', $encording = '') {
-
-		if (function_exists('mb_convert_kana')) {
-			if (! $encording) $encording = mb_internal_encoding();
-			$body = preg_replace_callback('/(^|<textarea.+?\/textarea>|<pre.+?\/pre>|<[^>]*>)(.*?)(?=<textarea.+?\/textarea>|<pre.+?\/pre>|<[^>]*>|$)/sS',
-				create_function(
-					'$match',
-					'return $match[1] . mb_convert_kana(preg_replace(\'/[\s]+/\',\' \',str_replace(array("\r\n","\r","\n"),\'\',$match[2])), \'knr\', \''.$encording.'\');'
-				), $body);
-		}
-
-		// Remove etc.
-		while(preg_match('#<[^>]*\s+(?:class|title|alt|on[^=]+)="[^"]*"[^>]*>#iS', $body)) {
-			$body = preg_replace('#(<[^>]*)\s+(?:class|title|alt|on[^=]+)="[^"]*"([^>]*>)#iS', '$1$2', $body);
-		}
-		
-		$body = preg_replace('#(<input[^>]*?\s+type=[\'"])password#iS', '$1text', $body);
-		
-		$pat = $rep = array();
-		
-		$pat[] = '#<!--.+?-->#sS';
-		$rep[] = '';
-		
-		$pat[] = '#<script.+?/script>#isS';
-		$rep[] = '';
-		
-		$pat[] = '#</?(?:code|label|small)[^>]*>#iS';
-		$rep[] = '';
-
-		$pat[] = '#<del[^>]*>#iS';
-		$rep[] = '[del]';
-
-		$body = preg_replace($pat, $rep, $body);
-
-		$pat = array(' />', '</li>', '</del>');
-		$rep = array('>'  , ''     , '[/del]');
-		$body = str_replace($pat, $rep, $body);
-
-		if ($my_root) {
-			// Host name
-			$my_root = rtrim($my_root, '/');
-			$body = preg_replace('#(<[^>]*\s+(?:href|src)=")'.preg_quote($my_root, '#').'#iS', '$1', $body);
-		}
-
-		return $body;
 	}
 }
 
