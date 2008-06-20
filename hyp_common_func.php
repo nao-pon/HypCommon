@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.41 2008/06/17 00:12:21 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.42 2008/06/20 01:32:26 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1357,6 +1357,26 @@ EOF;
 		} else {
 			return FALSE;
 		}
+	}
+
+	// flock safty file_get_contents()
+	function flock_get_contents ($filename) {
+		$return = FALSE;
+		if (is_string($filename) && !empty($filename)) {
+			if (is_readable($filename)) {
+				if ($handle = @fopen($filename, 'r')) {
+					while (!$return) {
+						if (flock($handle, LOCK_SH)) {
+							if ($return = file_get_contents($filename)) {
+								flock($handle, LOCK_UN);
+							}
+						}
+					}
+					fclose($handle);
+				}
+			}
+		}
+		return $return;
 	}
 }
 
