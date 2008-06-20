@@ -265,7 +265,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			$myroot = str_replace('/', '_', preg_replace('#https?://#i', '', XOOPS_URL));
 			$datfile = XOOPS_TRUST_PATH . '/cache/' . $myroot . '_easylogin.dat';
 			if (file_exists($datfile)) {
-				$uids = unserialize(file_get_contents($datfile));
+				$uids = unserialize(HypCommonFunc::flock_get_contents($datfile));
 			} else {
 				$uids = array();
 			}
@@ -278,6 +278,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					}
 					$uids[$uaUid] = $_SESSION['xoopsUserId'];
 					if ($fp = fopen($datfile, 'wb')) {
+						flock($fp, LOCK_EX);
 						fwrite($fp, serialize($uids));
 						fclose($fp);
 					}
