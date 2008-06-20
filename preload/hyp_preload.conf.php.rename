@@ -99,6 +99,8 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 									'below' => ''),
 			'footerbar' => array(	'above' => '',
 									'below' => ''),
+			'easylogin' => array(	'above' => '<div style="text-align:center;font-size:0.9em">[ ',
+									'below' => ' ]</div>'),
 		);
 		
 		// 使用テンプレート
@@ -113,6 +115,14 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// 外部リンク用リダイレクトスクリプト
 		$this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/redirect.php?l=';
 		
+		// Easy login を有効にする
+		$this->k_tai_conf['easyLogin'] = 1;
+		// Easy login で IP アドレス帯域をチェックしない
+		$this->k_tai_conf['noCheckIpRange'] = 0;
+		// リンクメッセージ
+		$this->k_tai_conf['msg']['easylogin'] = '簡単ログイン';
+		$this->k_tai_conf['msg']['logout'] = 'ログアウト';
+
 		// 携帯対応レンダー設定 以上
 		/////////////////////////////
 
