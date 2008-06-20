@@ -71,6 +71,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 			define('HYP_K_TAI_RENDER', TRUE);
 			
+			ini_set('session.use_trans_sid', 0);
+			
 			$skey = ini_get('session.name');
 			if(isset($_POST[$skey])) $sid=$_POST[$skey];
 			else if(isset($_GET[$skey])) $sid=$_GET[$skey];
@@ -217,9 +219,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 		
 		// Use K_TAI Render
-		if (! empty($this->use_k_tai_render) && isset($_SERVER['HTTP_USER_AGENT']) &&
-			preg_match($this->k_tai_conf['ua_regex'], $_SERVER['HTTP_USER_AGENT'])) {
+		if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
 			// keitai Filter
+			HypCommonFunc::loadClass('HypKTaiRender');
+			$this->HypKTaiRender = new HypKTaiRender();
+			$this->HypKTaiRender->set_myRoot(XOOPS_URL);
+			$this->_checkEasyLogin();
 			ob_start(array(&$this, 'keitaiFilter'));
 		}
 		
@@ -233,6 +238,82 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			HypCommonFunc::set_query_words($this->q_word, $this->q_word2, $this->se_name, $this->kakasi_cache_dir, $this->encode);
 			if ($this->use_words_highlight) {
 				ob_start(array(&$this, 'obFilter'));
+			}
+		}
+	}
+	
+	function _checkEasyLogin () {
+		if (empty($_SESSION['xoopsUserId'])) {
+			$this->HypKTaiRender->vars['ua']['isGuest'] = TRUE;
+		} else {
+			if (empty($this->k_tai_conf['noCheckIpRange']) && ! $this->HypKTaiRender->checkIp ($_SERVER['REMOTE_ADDR'], $this->HypKTaiRender->vars['ua']['carrier'])) {
+				$_SESSION = array();
+				redirect_header(XOOPS_URL, 0, 'Your IP "' . $_SERVER['REMOTE_ADDR'] . '" doesn\'t match to IP range of "'.$this->HypKTaiRender->vars['ua']['carrier'].'".');
+				exit();
+				//exit('Your IP "' . $_SERVER['REMOTE_ADDR'] . '" doesn\'t match to IP range of "'.$this->HypKTaiRender->vars['ua']['carrier'].'".');
+			}			
+		}
+
+		if (! empty($this->k_tai_conf['easyLogin']) && isset($_GET['_EASYLOGIN'])) {
+			$uaUid = md5($this->HypKTaiRender->vars['ua']['uid'] . XOOPS_DB_PASS);
+
+			if (empty($this->HypKTaiRender->vars['ua']['uid'])) {
+					exit('Could not got your device ID.');
+			}
+			
+			// Read data file
+			$myroot = str_replace('/', '_', preg_replace('#https?://#i', '', XOOPS_URL));
+			$datfile = XOOPS_TRUST_PATH . '/cache/' . $myroot . '_easylogin.dat';
+			if (file_exists($datfile)) {
+				$uids = unserialize(file_get_contents($datfile));
+			} else {
+				$uids = array();
+			}
+			
+			if (! empty($_SESSION['xoopsUserId'])) {
+				// Check & save uids data
+				if (! isset($uids[$uaUid]) || $uids[$uaUid] !== $_SESSION['xoopsUserId']) {
+					foreach(array_keys($uids, $_SESSION['xoopsUserId']) as $_key) {
+						unset($uids[$_key]);
+					}
+					$uids[$uaUid] = $_SESSION['xoopsUserId'];
+					if ($fp = fopen($datfile, 'wb')) {
+						fwrite($fp, serialize($uids));
+						fclose($fp);
+					}
+				}
+			} else {
+				// Do easy login
+				if (empty($this->k_tai_conf['noCheckIpRange']) && ! $this->HypKTaiRender->checkIp ($_SERVER['REMOTE_ADDR'], $this->HypKTaiRender->vars['ua']['carrier'])) {
+					exit('Your IP "' . $_SERVER['REMOTE_ADDR'] . '" doesn\'t match to IP range of "'.$this->HypKTaiRender->vars['ua']['carrier'].'".');
+				}
+			
+				$uri = $_SERVER['REQUEST_URI'];
+				// Default is login form
+				$url = XOOPS_URL . '/user.php?xoops_redirect=' . rawurlencode($uri);
+				if (! empty($uids[$uaUid])) {
+			        // Login success
+			        $member_handler =& xoops_gethandler('member');
+			        $user =& $member_handler->getUser($uids[$uaUid]);
+					if (false !== $user && $user->getVar('level') > 0) {
+						// Update last login
+						$user->setVar('last_login', time());
+						$member_handler->insertUser($user, TRUE);
+						
+						// Set session vars
+						$_SESSION['xoopsUserId'] = $uids[$uaUid];
+						$_SESSION['xoopsUserGroups'] = $user->getGroups();
+						$user_theme = $user->getVar('theme');
+						if (in_array($user_theme, $GLOBALS['xoopsConfig']['theme_set_allowed'])) {
+							$_SESSION['xoopsUserTheme'] = $user_theme;
+						}
+						
+						$url = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->removeQueryFromUrl($uri, array('guid', '_EASYLOGIN'));
+			        }
+				}
+				// Redirect
+				header('Location: ' . $url);
+				exit();
 			}
 		}
 	}
@@ -280,7 +361,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				}
 			}
 		}
-		
+
 		// preg_match では、サイズが大きいページで正常処理できないことがあるので。
 		$arr1 = explode('<head', $s, 2);
 		if (isset($arr1[1]) && strpos($arr1[1], '</head>') !== FALSE) {
@@ -292,6 +373,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			$arr2 = explode('</body>', $arr1[1], 2);
 			$body = substr($arr2[0], strpos($arr2[0], '>') + 1);
 		}
+
+		$r =& $this->HypKTaiRender;
+
 		if ($body) {
 			if ($rebuilds) {
 				$parts = array();
@@ -312,6 +396,28 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				}
 				
 				if ($found) {
+					// Easy login
+					if (! empty($this->k_tai_conf['easyLogin'])) {
+						if (! empty($r->vars['ua']['isGuest'])) {
+							$add = '_EASYLOGIN';
+							if ($r->vars['ua']['name'] === 'DoCoMo') {
+								$add .= '&guid=ON';
+							}
+							$url = $r->myRoot . $r->removeSID($_SERVER['REQUEST_URI']);
+							$url .= ((strpos($url, '?') === FALSE)? '?' : '&') . $add;
+							$url = str_replace('&', '&amp;', $url);
+							$easylogin = '<a href="' . $url . '">' . $this->k_tai_conf['msg']['easylogin'] . '</a>';
+						} else {
+							if (is_object($GLOBALS['xoopsUser'])) {
+								$uname = htmlspecialchars($GLOBALS['xoopsUser']->getVar('uname'));
+								$uid = $GLOBALS['xoopsUser']->getVar('uid');
+								$uname = '<a href="' . XOOPS_URL . '/userinfo.php?uid=' . $uid . '">' . $uname . '</a>';
+							}
+							$easylogin = $uname . ' <a href="' . XOOPS_URL . '/user.php?op=logout">' . $this->k_tai_conf['msg']['logout'] . '</a>';
+						}
+						$parts['easylogin'] = $rebuilds['easylogin']['above'] . $easylogin . $rebuilds['easylogin']['below'];
+					}
+
 					foreach(array_keys($rebuilds) as $id) {
 						$header_template = str_replace('<' . $id . '>', $parts[$id], $header_template);
 						$body_template = str_replace('<' . $id . '>', $parts[$id], $body_template);
@@ -324,6 +430,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				}
 			}
 		}
+
 		if ($head) {
 			$_head = '<head>';
 			if (preg_match('#<meta[^>]+http-equiv=("|\')Refresh\\1[^>]*>#iUS', $head, $match)) {
@@ -334,9 +441,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			$head = $_head;
 		}
 		
-		HypCommonFunc::loadClass('HypKTaiRender');
-		$r = new HypKTaiRender();
-		$r->set_myRoot(XOOPS_URL);
+		if ($r->vars['ua']['name'] === 'DoCoMo') {
+			$body = preg_replace('/<form[^>]+?user\.php[^>]+?>/isS', '$0<input type="hidden" name="guid" value="ON">', $body);
+		}
 		
 		$r->Config_redirect = $this->k_tai_conf['redirect'];
 		$r->Config_showImgHosts = $this->k_tai_conf['showImgHosts'];
@@ -515,6 +622,8 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 									'below' => ''),
 			'footerbar' => array(	'above' => '',
 									'below' => ''),
+			'easylogin' => array(	'above' => '<div style="text-align:center;font-size:0.9em">[ ',
+									'below' => ' ]</div>'),
 		);
 		
 		// 使用テンプレート
@@ -528,6 +637,14 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 
 		// 外部リンク用リダイレクトスクリプト
 		$this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/redirect.php?l=';
+		
+		// Easy login を有効にする
+		$this->k_tai_conf['easyLogin'] = 1;
+		// Easy login で IP アドレス帯域をチェックしない
+		$this->k_tai_conf['noCheckIpRange'] = 0;
+		// リンクメッセージ
+		$this->k_tai_conf['msg']['easylogin'] = '簡単ログイン';
+		$this->k_tai_conf['msg']['logout'] = 'ログアウト';
 		
 		// 携帯対応レンダー設定 以上
 		/////////////////////////////

@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.3 2008/06/17 10:10:31 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.4 2008/06/20 01:07:10 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -27,6 +27,7 @@ class HypKTaiRender
 	var $outputHtml = '';
 	var $outputHead = '';
 	var $outputBody = '';
+	var $vars = array();
 	var $keymap = array();
 	var $keybutton = array();
 	var $Config_showImgHosts = array('amazon.com', 'yimg.jp', 'yimg.com');
@@ -52,7 +53,22 @@ class HypKTaiRender
 	
 	function set_myRoot ($url) {
 		$parsed_url = parse_url($url);
-			$this->myRoot = $parsed_url['scheme'].'://'.$parsed_url['host'].(isset($parsed_url['port'])? ':' . $parsed_url['port'] : '');
+		$this->myRoot = $parsed_url['scheme'].'://'.$parsed_url['host'].(isset($parsed_url['port'])? ':' . $parsed_url['port'] : '');
+	}
+	
+	function removeSID ($url) {
+		return $this->removeQueryFromUrl($url, session_name());
+	}
+
+	function removeQueryFromUrl ($url, $keys) {
+		if (! is_array($keys)) {
+			$keys = array($keys);
+		}
+		foreach ($keys as $key) {
+			$url = preg_replace('/(?:(\?)|&(?:amp;)?)' . $key . '(?:=[^&#>]+)?(&(?:amp;)?|$)/', '$1$2', $url);
+		}
+		$url = str_replace('?&', '?', $url);
+		return $url;
 	}
 	
 	function doOptimize () {
@@ -198,10 +214,13 @@ class HypKTaiRender
 
 		// Remove etc.
 		// tag attribute
-		$reg = '#(<(?!textarea)[^>]+?)\s+(?:class|clear|target|nowrap|title|alt|on[^=]+)=[\'"][^\'"]*[\'"]([^>]*>)#iS';
+		$body = str_replace('\\"', "\x08", $body);
+		$reg = '#(<(?!textarea)[^>]+?)\s+(?:class|clear|target|nowrap|title|alt|on[^=]+)=(?:\'[^\']*\'|"[^"\x08]*")([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
+		$body = str_replace("\x08", '\\"', $body);
+		
 		// css property
 		$reg = '#(<(?!textarea)[^>]+?style=[\'"][^\'"]*?)\s*(?<!-)(?:width|height|margin|padding|float|position|left|top|right|bottom|clear|overflow)[^;\'"]+(?:[ ;]+)?([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
@@ -233,8 +252,8 @@ class HypKTaiRender
 
 		$body = preg_replace($pat, $rep, $body);
 
-		$pat = array(' />', '</li>', '</del>');
-		$rep = array('>'  , ''     , '[/del]');
+		$pat = array(' />', '/>', '</li>', '</del>');
+		$rep = array('>'  , '>' , ''     , '[/del]');
 		$body = str_replace($pat, $rep, $body);
 
 		// Host name
@@ -330,11 +349,24 @@ class HypKTaiRender
 				create_function(
 					'$match',
 					'if (strpos($match[3], "'.$this->myRoot.'") !== 0 && preg_match("#^https?://#i", $match[3])) return $match[0];
-					return $match[0] . \'<input type="hidden" name="'.$sid_key.'" value="'.$sid_val.'" />\';'
+					return $match[0] . \'<input type="hidden" name="'.$sid_key.'" value="'.$sid_val.'">\';'
 				), $html);
 		}
 		
 		return $html;
+	}
+
+	function checkIp ($address, $carrier) {
+		$ret = FALSE;
+		$ip_file = dirname(__FILE__) . '/ipranges/' . strtolower($carrier) . '.ip';
+		
+		if (file_exists($ip_file)) {
+			$iprange = file($ip_file);
+			$iprange = array_diff(array_map('trim', $iprange), array(''));
+			$address = $this->_dumpAddress($address);
+			$ret = $this->_compareIp($address, $iprange);
+		}
+		return $ret;
 	}
 
 	function _extractHeadBody () {
@@ -478,131 +510,146 @@ class HypKTaiRender
 			'#'	=>	'[#]',
 			'*'	=>	'[*]'
 		);
+		$this->vars['ua']['isBot'] = FALSE;
 		
-		if (isset($_SERVER['HTTP_USER_AGENT']) && preg_match('#(?:^|\b)([a-zA-Z.-]+)(?:/([0-9.]+))?#', $_SERVER['HTTP_USER_AGENT'], $match)) {
-			$ua_agent = $_SERVER['HTTP_USER_AGENT'];
-			$ua_name = $match[1];
-			$ua_vers = isset($match[2])? $match[2] : '';
-			$max_size = 0;
+		if (isset($_SERVER['HTTP_USER_AGENT'])) {
+			$this->vars['ua']['isBot'] = preg_match('/Googlebot-Mobile/i', $_SERVER['HTTP_USER_AGENT']);
 			
-			// Browser-name only
-			switch ($ua_name) {
-				// NetFront / Compact NetFront
-				case 'NetFront':
-				case 'CNF':
-				case 'DoCoMo':
-				case 'Opera': // Performing CNF compatible
-					if (preg_match('#\b[cC]([0-9]+)\b#', $ua_agent, $matches)) {
-						$max_size = $matches[1];	// Cache max size
-					}
-					break;
+			if ( preg_match('#(?:^|\b)([a-zA-Z.-]+)(?:/([0-9.]+))?#', $_SERVER['HTTP_USER_AGENT'], $match) ) {
 			
-				// Vodafone (ex. J-PHONE)
-				case 'J-PHONE':
-					$matches = array("");
-					preg_match('/^([0-9]+)\./', $ua_vers, $matches);
-					switch($matches[1]){
-					case '3': $max_size =   6; break; // C type: lt 6000bytes
-					case '4': $max_size =  12; break; // P type: lt  12Kbytes
-					case '5': $max_size =  40; break; // W type: lt  48Kbytes
-					}
-					break;
-			
-				case 'Vodafone':
-				case 'SoftBank':
-					$matches = array("");
-					preg_match('/^([0-9]+)\./', $ua_vers, $matches);
-					switch($matches[1]){
-						case '1': $max_size = 40; break;
-					}
-					break;
-			
-				// UP.Browser
-				case 'UP.Browser':
-					// UP.Browser for KDDI cell phones
-					// http://www.au.kddi.com/ezfactory/tec/spec/xhtml.html ('About 9KB max')
-					// http://www.au.kddi.com/ezfactory/tec/spec/4_4.html (User-agent strings)
-					if (preg_match('#^KDDI#', $ua_agent)) $max_size =  9;
-					break;
-			}
-			
-			// Browser-name + version
-			switch ($ua_name.'/'.$ua_vers) {
-				// Restriction For imode:
-				//  http://www.nttdocomo.co.jp/mc-user/i/tag/s2.html
-				case 'DoCoMo/2.0':	$max_size = min($max_size, 30); break;
-			}
+				$this->vars['ua']['agent'] = $ua_agent = $_SERVER['HTTP_USER_AGENT'];
+				$this->vars['ua']['name'] = $ua_name = $match[1];
+				$this->vars['ua']['ver'] = $ua_vers = isset($match[2])? $match[2] : '';
+				$max_size = 0;
+				
+				// Browser-name only
+				switch ($ua_name) {
+					// NetFront / Compact NetFront
+					case 'NetFront':
+					case 'CNF':
+					case 'DoCoMo':
+					case 'Opera': // Performing CNF compatible
+						if (preg_match('#\b[cC]([0-9]+)\b#', $ua_agent, $matches)) {
+							$max_size = $matches[1];	// Cache max size
+						}
+						break;
+				
+					// Vodafone (ex. J-PHONE)
+					case 'J-PHONE':
+						$matches = array("");
+						preg_match('/^([0-9]+)\./', $ua_vers, $matches);
+						switch($matches[1]){
+						case '3': $max_size =   6; break; // C type: lt 6000bytes
+						case '4': $max_size =  12; break; // P type: lt  12Kbytes
+						case '5': $max_size =  40; break; // W type: lt  48Kbytes
+						}
+						break;
+				
+					case 'Vodafone':
+					case 'SoftBank':
+						$matches = array("");
+						preg_match('/^([0-9]+)\./', $ua_vers, $matches);
+						switch($matches[1]){
+							case '1': $max_size = 40; break;
+						}
+						break;
+				
+					// UP.Browser
+					case 'UP.Browser':
+						// UP.Browser for KDDI cell phones
+						// http://www.au.kddi.com/ezfactory/tec/spec/xhtml.html ('About 9KB max')
+						// http://www.au.kddi.com/ezfactory/tec/spec/4_4.html (User-agent strings)
+						if (preg_match('#^KDDI#', $ua_agent)) $max_size =  9;
+						break;
+				}
+				
+				// Browser-name + version
+				switch ($ua_name.'/'.$ua_vers) {
+					// Restriction For imode:
+					//  http://www.nttdocomo.co.jp/mc-user/i/tag/s2.html
+					case 'DoCoMo/2.0':	$max_size = min($max_size, 30); break;
+				}
 
-			if ($max_size) {
-				$this->maxSize = $max_size * 1024;
-			}
+				if ($max_size) {
+					$this->maxSize = $max_size * 1024;
+				}
+				
+				// Set Key Button
+				switch ($ua_name) {
 			
-			// Set Key Button
-			switch ($ua_name) {
-		
-				// Graphic icons for imode HTML 4.0, with Shift-JIS text output
-				// http://www.nttdocomo.co.jp/mc-user/i/tag/emoji/e1.html
-				// http://www.nttdocomo.co.jp/mc-user/i/tag/emoji/list.html
-				case 'DoCoMo':
-					$this->keybutton = array(
-						'1'	=>	'&#63879;',
-						'2'	=>	'&#63880;',
-						'3'	=>	'&#63881;',
-						'4'	=>	'&#63882;',
-						'5'	=>	'&#63883;',
-						'6'	=>	'&#63884;',
-						'7'	=>	'&#63885;',
-						'8'	=>	'&#63886;',
-						'9'	=>	'&#63887;',
-						'0'	=>	'&#63888;',
-						'#'	=>	'&#63877;',
-						'*'	=>	'[*]'
-					);
-					break;
-		
-				// Graphic icons for Vodafone (ex. J-PHONE) cell phones
-				// http://www.dp.j-phone.com/dp/tool_dl/web/picword_top.php
-				case 'J-PHONE':
-				case 'Vodafone':
-				case 'SoftBank':
-		
-					$this->keybutton = array(
-						'1'	=>	chr(27).'$F<'.chr(15),
-						'2'	=>	chr(27).'$F='.chr(15),
-						'3'	=>	chr(27).'$F>'.chr(15),
-						'4'	=>	chr(27).'$F?'.chr(15),
-						'5'	=>	chr(27).'$F@'.chr(15),
-						'6'	=>	chr(27).'$FA'.chr(15),
-						'7'	=>	chr(27).'$FB'.chr(15),
-						'8'	=>	chr(27).'$FC'.chr(15),
-						'9'	=>	chr(27).'$FD'.chr(15),
-						'0'	=>	chr(27).'$FE'.chr(15),
-						'#'	=>	chr(27).'$F0'.chr(15),
-						'*'	=>	'[*]'
-					);
-					break;
-		
-				case 'UP.Browser':
-		
-				// UP.Browser for KDDI cell phones' built-in icons
-				// http://www.au.kddi.com/ezfactory/tec/spec/3.html
-					if (preg_match('#^KDDI#', $root->ua_agent)) {
+					// Graphic icons for imode HTML 4.0, with Shift-JIS text output
+					// http://www.nttdocomo.co.jp/mc-user/i/tag/emoji/e1.html
+					// http://www.nttdocomo.co.jp/mc-user/i/tag/emoji/list.html
+					case 'DoCoMo':
 						$this->keybutton = array(
-							'1'	=>	'<img localsrc="180">',
-							'2'	=>	'<img localsrc="181">',
-							'3'	=>	'<img localsrc="182">',
-							'4'	=>	'<img localsrc="183">',
-							'5'	=>	'<img localsrc="184">',
-							'6'	=>	'<img localsrc="185">',
-							'7'	=>	'<img localsrc="186">',
-							'8'	=>	'<img localsrc="187">',
-							'9'	=>	'<img localsrc="188">',
-							'0'	=>	'<img localsrc="325">',
-							'#'	=>	'<img localsrc="818">',
+							'1'	=>	'&#63879;',
+							'2'	=>	'&#63880;',
+							'3'	=>	'&#63881;',
+							'4'	=>	'&#63882;',
+							'5'	=>	'&#63883;',
+							'6'	=>	'&#63884;',
+							'7'	=>	'&#63885;',
+							'8'	=>	'&#63886;',
+							'9'	=>	'&#63887;',
+							'0'	=>	'&#63888;',
+							'#'	=>	'&#63877;',
 							'*'	=>	'[*]'
 						);
-					}
-					break;
+						if (isset($_SERVER['HTTP_X_DCMGUID'])) $this->vars['ua']['uid'] = $_SERVER['HTTP_X_DCMGUID'];
+						$this->vars['ua']['isKTai'] = TRUE;
+						$this->vars['ua']['carrier'] = 'docomo';
+						break;
+			
+					// Graphic icons for Vodafone (ex. J-PHONE) cell phones
+					// http://www.dp.j-phone.com/dp/tool_dl/web/picword_top.php
+					case 'J-PHONE':
+					case 'Vodafone':
+					case 'SoftBank':
+			
+						$this->keybutton = array(
+							'1'	=>	chr(27).'$F<'.chr(15),
+							'2'	=>	chr(27).'$F='.chr(15),
+							'3'	=>	chr(27).'$F>'.chr(15),
+							'4'	=>	chr(27).'$F?'.chr(15),
+							'5'	=>	chr(27).'$F@'.chr(15),
+							'6'	=>	chr(27).'$FA'.chr(15),
+							'7'	=>	chr(27).'$FB'.chr(15),
+							'8'	=>	chr(27).'$FC'.chr(15),
+							'9'	=>	chr(27).'$FD'.chr(15),
+							'0'	=>	chr(27).'$FE'.chr(15),
+							'#'	=>	chr(27).'$F0'.chr(15),
+							'*'	=>	'[*]'
+						);
+						if (isset($_SERVER['HTTP_X_JPHONE_UID'])) $this->vars['ua']['uid'] = $_SERVER['HTTP_X_JPHONE_UID'];
+						$this->vars['ua']['isKTai'] = TRUE;
+						$this->vars['ua']['carrier'] = 'softbank';
+						break;
+			
+					case 'UP.Browser':
+			
+					// UP.Browser for KDDI cell phones' built-in icons
+					// http://www.au.kddi.com/ezfactory/tec/spec/3.html
+						if (preg_match('#^KDDI#', $root->ua_agent)) {
+							$this->keybutton = array(
+								'1'	=>	'<img localsrc="180">',
+								'2'	=>	'<img localsrc="181">',
+								'3'	=>	'<img localsrc="182">',
+								'4'	=>	'<img localsrc="183">',
+								'5'	=>	'<img localsrc="184">',
+								'6'	=>	'<img localsrc="185">',
+								'7'	=>	'<img localsrc="186">',
+								'8'	=>	'<img localsrc="187">',
+								'9'	=>	'<img localsrc="188">',
+								'0'	=>	'<img localsrc="325">',
+								'#'	=>	'<img localsrc="818">',
+								'*'	=>	'[*]'
+							);
+						}
+						if (isset($_SERVER['HTTP_X_UP_SUBNO'])) $this->vars['ua']['uid'] = $_SERVER['HTTP_X_UP_SUBNO'];
+						$this->vars['ua']['isKTai'] = TRUE;
+						$this->vars['ua']['carrier'] = 'au';
+						break;
+				}
 			}
 		}
 
@@ -638,21 +685,22 @@ class HypKTaiRender
 		}
 		if (empty($parsed_url['host']) || ($parsed_url['host'] === $parsed_base['host'] && $parsed_url['scheme'] === $parsed_base['scheme'])) {
 			$url = preg_replace('/(?:\?|&(?:amp;)?)' . preg_quote(session_name(), '/') . '=[^&#>]+/', '', $url);
-			$url = preg_replace('/(?:\?|&(?:amp;)?)' . preg_quote($this->hashkey, '/') . '=[^&#>]+/', '', $url);
+			//$url = preg_replace('/(?:\?|&(?:amp;)?)' . preg_quote($this->hashkey, '/') . '=[^&#>]+/', '', $url);
 			
 			list($href, $hash) = array_pad(explode('#', $url, 2), 2, '');
 			
 			if (!$href) {
 				$href = isset($_SERVER['QUERY_STRING'])? '?' . $_SERVER['QUERY_STRING'] : '';
 				$href = preg_replace('/(?:\?|&(?:amp;)?)' . preg_quote(session_name(), '/') . '=[^&]+/', '', $href);
-				$href = preg_replace('/(?:\?|&(?:amp;)?)' . preg_quote($this->hashkey, '/') . '=[^&]+/', '', $href);
+				//$href = preg_replace('/(?:\?|&(?:amp;)?)' . preg_quote($this->hashkey, '/') . '=[^&]+/', '', $href);
 			};
 
 			$add = array();
-			if (defined('SID') && SID) {
+			if (defined('SID') && SID && empty($_COOKIE) && ! $this->vars['ua']['isBot']) {
 				$add[] = SID;
 			}
 			if ($hash) {
+				$href = preg_replace('/(?:\?|&(?:amp;)?)' . preg_quote($this->hashkey, '/') . '=[^&]+/', '', $href);
 				$add[] = $this->hashkey . '=' . $hash;
 			}
 			if ($add) $href .= ((strpos($href, "?") === FALSE)? '?' : '&amp;') . (join('&amp;', $add));
@@ -709,6 +757,74 @@ class HypKTaiRender
 			$hostsReg = $dem . '(?!)' . $dem;
 		}
 		return $hostsReg;
+	}
+	
+/* -------------------------------------------------------------------------
+	ClientDetect class
+	a part of PC2M Website Transcoder for Mobile Clients
+	Copyright (C) 2005-2007 ucb.rcdtokyo and the contributors
+	http://www.rcdtokyo.com/pc2m/note/
+------------------------------------------------------------------------- */
+	/**
+	 * Private method used by checkIpRange method
+	 *
+	 * @param  string  $address
+	 * @param  array   $iprange
+	 * @return bool
+	 * @access private
+	 */
+	function _compareIp($address, $iprange)
+	{
+		foreach ($iprange as $value) {
+			list($network, $mask) = explode('/', $value);
+			$network = $this->_dumpAddress($network);
+			$mask = $this->_dumpNetmask($mask);
+			if (($address & $mask) == ($network & $mask)) {
+				return true;
+				break;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Private method used by checkIpRange method
+	 *
+	 * @access private
+	 * @param  string  $mask
+	 * @return string
+	 */
+	function _dumpNetmask($mask)
+	{
+		$i = 0;
+		$x = '';
+		while ($i < $mask) {
+			$x .= '1';
+			$i++;
+		}
+		while ($i < 32) {
+			$x .= '0';
+			$i++;
+		}
+		$array = array();
+		$array[] = bindec(substr($x, 0, 8));
+		$array[] = bindec(substr($x, 8, 8));
+		$array[] = bindec(substr($x, 16, 8));
+		$array[] = bindec(substr($x, 24, 8));
+		return ($array[0] << 24) | ($array[1] << 16) | ($array[2] << 8) | $array[3];
+	}
+
+	/**
+	 * Private method used by checkIpRange method
+	 *
+	 * @param  string  $address
+	 * @return string
+	 * @access private
+	 */
+	function _dumpAddress($address)
+	{
+		$array = explode('.', $address);
+		return ($array[0] << 24) | ($array[1] << 16) | ($array[2] << 8) | $array[3];
 	}
 
 }
