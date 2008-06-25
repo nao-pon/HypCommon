@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.4 2008/06/20 01:07:10 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.5 2008/06/25 23:46:14 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -257,7 +257,7 @@ class HypKTaiRender
 		$body = str_replace($pat, $rep, $body);
 
 		// Host name
-		$body = preg_replace('#(<[^>]+? (?:href|src)=[\'"]?)'.preg_quote($this->myRoot, '#').'#iS', '$1', $body);
+		$body = preg_replace('#(<[^>]+? (?:href|src)=[\'"]?)'.preg_quote($this->myRoot, '#').'/?#iS', '$1/', $body);
 				
 		$body = $this->html_give_session_id($body);
 		
