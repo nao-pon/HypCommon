@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.42 2008/06/20 01:32:26 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.43 2008/06/25 23:52:52 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -27,16 +27,19 @@ class HypCommonFunc
 				include_once $dir . '/hyppinger/hyppinger.php';
 				break;
 			case 'HypGetQueryWord':
-				include_once $dir . 'hyp_get_engine.php';
+				include_once $dir . '/hyp_get_engine.php';
 				break;
 			case 'Hyp_KAKASHI':
-				include_once $dir . 'hyp_kakasi.php';
+				include_once $dir . '/hyp_kakasi.php';
 				break;
 			case 'HypSimpleXML':
-				include_once $dir . 'hyp_simplexml.php';
+				include_once $dir . '/hyp_simplexml.php';
 				break;
 			case 'HypKTaiRender':
 				include_once $dir . '/ktairender/hyp_ktai_render.php';
+				break;
+			case 'HypRss2Html':
+				include_once $dir . '/rss2html/hyp_rss2html.php';
 				break;
 		}
 	}
@@ -1360,17 +1363,19 @@ EOF;
 	}
 
 	// flock safty file_get_contents()
-	function flock_get_contents ($filename) {
+	function flock_get_contents ($filename, $maxRetry = 10) {
 		$return = FALSE;
 		if (is_string($filename) && !empty($filename)) {
 			if (is_readable($filename)) {
 				if ($handle = @fopen($filename, 'r')) {
-					while (!$return) {
+					$i = 0;
+					while ($return === FALSE && $maxRetry > $i++) {
 						if (flock($handle, LOCK_SH)) {
 							if ($return = file_get_contents($filename)) {
 								flock($handle, LOCK_UN);
 							}
 						}
+						if ($return === FALSE) usleep(50000); // Wait 500ms
 					}
 					fclose($handle);
 				}
