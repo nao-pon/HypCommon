@@ -320,15 +320,21 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 	
 	function obFilter( $s ) {
+		
+		if ($s === '' || strpos($s, '<html') === FALSE) return $s;
+		
 		return HypGetQueryWord::word_highlight($s, constant($this->q_word2), _CHARSET, $this->msg_words_highlight);
 	}
 
 	function formFilter( $s ) {
+		
+		if ($s === '' || strpos($s, '<html') === FALSE) return $s;
+		
 		$insert = '';
 		$this->encode = _CHARSET;
 		
 		// スパムロボット用の罠を仕掛ける
-		if (! empty($this->post_spam_trap_set) && ! defined('HYP_K_TAI_RENDER')) {
+		if (! empty($this->post_spam_trap_set) && (! defined('HYP_K_TAI_RENDER') || ! HYP_K_TAI_RENDER)) {
 			$insert .= "\n<input name=\"{$this->post_spam_trap}\" type=\"text\" size=\"1\" style=\"display:none;speak:none;\" />";
 		}
 		// エンコーディング判定用ヒント文字
@@ -347,6 +353,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	
 	function keitaiFilter ( $s ) {
 
+		if ($s === '') return;
+		
 		$head = $header = $body = $footer = '';
 		$header_template = $body_template = $footer_template = '';
 		
@@ -362,7 +370,15 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				}
 			}
 		}
-
+		
+		// Is RSS?
+		if (preg_match('/<(?:feed|rss)/i', $s)) {
+			HypCommonFunc::loadClass('HypRss2Html');
+			$r = new HypRss2Html($s);
+			$s = $r->getHtml();
+			$s = mb_convert_encoding($s, _CHARSET, $r->encoding);
+		}
+		
 		// preg_match では、サイズが大きいページで正常処理できないことがあるので。
 		$arr1 = explode('<head', $s, 2);
 		if (isset($arr1[1]) && strpos($arr1[1], '</head>') !== FALSE) {
@@ -378,6 +394,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$r =& $this->HypKTaiRender;
 
 		if ($body) {
+			// 無視する部分(<!--HypKTaiIgnore-->潤ｵ<!--/HypKTaiIgnore-->)を削除
+			while(strpos($body, '<!--HypKTaiIgnore-->') !== FALSE) {
+				$arr1 = explode('<!--HypKTaiIgnore-->', $body, 2);
+				$arr2 = array_pad(explode('<!--/HypKTaiIgnore-->', $arr1[1], 2), 2, '');
+				$body = $arr1[0] . $arr2[1];
+			}
 			if ($rebuilds) {
 				$parts = array();
 				$found = FALSE;
@@ -430,9 +452,31 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					if ($footer_template) $footer = $footer_template;
 				}
 			}
+		} else {
+			return $s;
 		}
 
 		if ($head) {
+			// Check RSS
+			$rss = array();
+			if (preg_match_all('#<link([^>]+?)>#iS', $head, $match)) {
+				foreach($match[1] as $attrs) {
+					if (preg_match('#type=("|\')application/(?:atom|rss)\+xml\\1#iS', $attrs)) {
+						if (preg_match('#href=("|\')([^ <>"\']+)\\1#is', $attrs, $match2)) {
+							$title = 'RSS';
+							$url = $match2[2];
+							if (preg_match('#title=("|\')([^<>"\']+)\\1#isS', $attrs, $match3)) {
+								$title = $match3[2];
+							}
+							$rss[] = '<a href="'.$url.'">'.$title.'</a>';
+						}
+					}
+				}
+			}
+			if ($rss) {
+				$body = '<div style="font-size:0.9em">[ ' . join(' ', $rss) . ' ]</div>' . $body;
+			}
+			
 			$_head = '<head>';
 			if (preg_match('#<meta[^>]+http-equiv=("|\')Refresh\\1[^>]*>#iUS', $head, $match)) {
 				$_head .= str_replace('/>', '>', $match[0]);
@@ -603,28 +647,28 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		
 		// HTML再構築用タグ設定
 		$this->k_tai_conf['rebuilds'] = array(
-			'headerlogo' => array(	'above' => '<center>',
-									'below' => '</center>'),
-			'headerbar' => array(	'above' => '<hr>',
-									'below' => ''),
-			'breadcrumbs' => array(	'above' => '',
-									'below' => ''),
-			'leftcolumn' => array(	'above' => '<hr>',
-									'below' => ''),
-			'centerCcolumn' => array(	'above' => '<hr>',
-									'below' => ''),
-			'centerLcolumn' => array(	'above' => '',
-									'below' => ''),
-			'centerRcolumn' => array(	'above' => '',
-									'below' => ''),
-			'content' => array(	'above' => '<hr>',
-									'below' => ''),
-			'rightcolumn' => array(	'above' => '<hr>',
-									'below' => ''),
-			'footerbar' => array(	'above' => '',
-									'below' => ''),
-			'easylogin' => array(	'above' => '<div style="text-align:center;font-size:0.9em">[ ',
-									'below' => ' ]</div>'),
+			'headerlogo'    => array( 'above' => '<center>',
+			                          'below' => '</center>'),
+			'headerbar'     => array( 'above' => '<hr>',
+			                          'below' => ''),
+			'breadcrumbs'   => array( 'above' => '',
+			                          'below' => ''),
+			'leftcolumn'    => array( 'above' => '<hr>',
+			                          'below' => ''),
+			'centerCcolumn' => array( 'above' => '<hr>',
+			                          'below' => ''),
+			'centerLcolumn' => array( 'above' => '',
+			                          'below' => ''),
+			'centerRcolumn' => array( 'above' => '',
+			                          'below' => ''),
+			'content'       => array( 'above' => '<hr>',
+			                          'below' => ''),
+			'rightcolumn'   => array( 'above' => '<hr>',
+			                          'below' => ''),
+			'footerbar'     => array( 'above' => '',
+			                          'below' => ''),
+			'easylogin'     => array( 'above' => '<div style="text-align:center;font-size:0.9em">[ ',
+			                          'below' => ' ]</div>'),
 		);
 		
 		// 使用テンプレート
