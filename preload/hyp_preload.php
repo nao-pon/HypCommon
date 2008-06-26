@@ -372,7 +372,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 		
 		// Is RSS?
-		if (preg_match('/<(?:feed|rss|rdf)/i', $s)) {
+		if (preg_match('/<(?:feed.+?<entry|(?:(?:rss|rdf).+?<channel))/isS', $s)) {
 			HypCommonFunc::loadClass('HypRss2Html');
 			$r = new HypRss2Html($s);
 			$s = $r->getHtml();
