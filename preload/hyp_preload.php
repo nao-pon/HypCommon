@@ -486,6 +486,18 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			$head = $_head;
 		}
 		
+		// Remove  xoopsCode buttons & Smilies buttons.
+		if (strpos($body, '<div id="message_bbcode_buttons_pre"') !== FALSE) {
+			$body = preg_replace('#<div id="message_bbcode_buttons_pre".+?/div>#sS', '', $body);
+			$body = preg_replace('#<div id="message_bbcode_buttons_post".+?/div>#sS', '', $body);
+			$body = preg_replace('#<input type="checkbox" id="message_bbcode_onoff".+?<br />#sS', '', $body);
+			$body = preg_replace('#<input type="checkbox" id="d3f_post_advanced_options_onoff".+?>#sS', '', $body);
+		}
+		if (strpos($body, '<a name=\'moresmiley\'>') !== FALSE) {
+			$body = preg_replace('#<a name=\'moresmiley\'>.+?<textarea#sS', '<textarea', $body);
+			$body = preg_replace('#(?:<img |<a href="\#" )onclick=\'xoopsCodeSmilie\(.+?</a>\]#sS', '', $body);
+		}
+		
 		if ($r->vars['ua']['name'] === 'DoCoMo') {
 			$body = preg_replace('/<form[^>]+?user\.php[^>]+?>/isS', '$0<input type="hidden" name="guid" value="ON">', $body);
 		}
