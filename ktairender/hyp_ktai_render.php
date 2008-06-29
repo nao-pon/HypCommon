@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.5 2008/06/25 23:46:14 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.6 2008/06/29 23:49:42 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -92,10 +92,6 @@ class HypKTaiRender
 		$footer = mb_convert_encoding($this->html_diet_for_hp($footer), $this->outputEncode, $this->inputEncode);
 		$pager = '';
 		
-		//if ($this->inputHtml) exit($body);
-		
-		//$this->maxSize = $this->get_maxsize_for_hp();
-		
 		$pnum = empty($_GET[$this->pagekey])? 0 : intval($_GET[$this->pagekey]);
 		
 		$extra_len = strlen($header . $footer);
@@ -104,6 +100,10 @@ class HypKTaiRender
 			$margin = 200;
 			$this->splitMaxSize = $this->maxSize - $extra_len - $margin;
 			list($pages, $ids) = $this->html_split($body);
+
+			if (isset($_GET[$this->hashkey]) && isset($ids[$_GET[$this->hashkey]])) {
+				$pnum = $ids[$_GET[$this->hashkey]];
+			}
 
 			if ($header) {
 				list(, $_ids) = $this->html_split($header, $pnum);
@@ -119,10 +119,6 @@ class HypKTaiRender
 				foreach($ids as $_h => $_p) {
 					$pageids[$_p][] = $_h;
 				}
-			}
-			
-			if (isset($_GET[$this->hashkey]) && isset($ids[$_GET[$this->hashkey]])) {
-				$pnum = $ids[$_GET[$this->hashkey]];
 			}
 			
 			$pagecount = count($pages);
@@ -212,17 +208,20 @@ class HypKTaiRender
 				), $body);
 		}
 
-		// Remove etc.
+		//// Remove etc.
+		// <a> with JavaScript
+		$body = preg_replace('#<a[^>]+?href=(?:"|\')?javascript:[^>]+?>(.+?)</a>#isS', '$1', $body);
+
 		// tag attribute
 		$body = str_replace('\\"', "\x08", $body);
-		$reg = '#(<(?!textarea)[^>]+?)\s+(?:class|clear|target|nowrap|title|alt|on[^=]+)=(?:\'[^\']*\'|"[^"\x08]*")([^>]*>)#iS';
+		$reg = '#(<[^>]+?)\s+(?:class|clear|target|nowrap|title|alt|on[^=]+)=(?:\'[^\']*\'|"[^"\x08]*")([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
 		$body = str_replace("\x08", '\\"', $body);
 		
 		// css property
-		$reg = '#(<(?!textarea)[^>]+?style=[\'"][^\'"]*?)\s*(?<!-)(?:width|height|margin|padding|float|position|left|top|right|bottom|clear|overflow)[^;\'"]+(?:[ ;]+)?([^>]*>)#iS';
+		$reg = '#(<[^>]+?style=[\'"][^\'"]*?)\s*(?<!-)(?:display:\s*non|width|height|margin|padding|float|position|left|top|right|bottom|clear|overflow)[^;\'"]+(?:[ ;]+)?([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
