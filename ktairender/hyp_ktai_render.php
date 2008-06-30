@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.6 2008/06/29 23:49:42 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.7 2008/06/30 02:57:25 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -514,7 +514,7 @@ class HypKTaiRender
 		if (isset($_SERVER['HTTP_USER_AGENT'])) {
 			$this->vars['ua']['isBot'] = preg_match('/Googlebot-Mobile/i', $_SERVER['HTTP_USER_AGENT']);
 			
-			if ( preg_match('#(?:^|\b)([a-zA-Z.-]+)(?:/([0-9.]+))?#', $_SERVER['HTTP_USER_AGENT'], $match) ) {
+			if ( preg_match('#(?:^(?:KDDI-[^\s]+ )?|\b)([a-zA-Z.-]+)(?:/([0-9.]+))?#', $_SERVER['HTTP_USER_AGENT'], $match) ) {
 			
 				$this->vars['ua']['agent'] = $ua_agent = $_SERVER['HTTP_USER_AGENT'];
 				$this->vars['ua']['name'] = $ua_name = $match[1];
@@ -628,7 +628,7 @@ class HypKTaiRender
 			
 					// UP.Browser for KDDI cell phones' built-in icons
 					// http://www.au.kddi.com/ezfactory/tec/spec/3.html
-						if (preg_match('#^KDDI#', $root->ua_agent)) {
+						if (preg_match('#^KDDI#', $ua_agent)) {
 							$this->keybutton = array(
 								'1'	=>	'<img localsrc="180">',
 								'2'	=>	'<img localsrc="181">',
