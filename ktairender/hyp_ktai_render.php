@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.7 2008/06/30 02:57:25 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.8 2008/07/08 23:46:40 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -30,9 +30,10 @@ class HypKTaiRender
 	var $vars = array();
 	var $keymap = array();
 	var $keybutton = array();
-	var $Config_showImgHosts = array('amazon.com', 'yimg.jp', 'yimg.com');
-	var $Config_directLinkHosts = array('amazon.co.jp');
+	var $Config_showImgHosts = array('amazon.com', 'yimg.jp', 'yimg.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
+	var $Config_directLinkHosts = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com');
 	var $Config_redirect = '';
+	var $Config_urlRewrites = array();
 	
 	function HypKTaiRender () {
 		$this->keymap['prev'] = '4';
@@ -49,6 +50,17 @@ class HypKTaiRender
 		$this->inputEncode = mb_internal_encoding();
 		
 		$this->_uaSetup();
+
+		// Amazon ECS DetailPageURL Rewrite
+		$this->Config_urlRewrites['regex'][] = '#^(http://(?:www\.)?amazon\.[^/]+?)/(?:[^/]+?/)?dp/([a-z0-9]+).+?tag%3D([a-z0-9-]+).*$#iS';
+		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?ie=UTF8&amp;dl=1&amp;uid=NULLGWDOCOMO&amp;lc=msn&amp;a=$2&amp;at=$3&amp;url=%2Fgp%2Faw%2Fd.html';
+	
+		// Amazon Search results link Rewrite
+		$this->Config_urlRewrites['regex'][] = '#^(http://(?:www\.)?amazon.[^/]+?)/gp/search\?.+?tag=([a-z0-9]+).+?keywords=([^& \'"]+).*$#iS';
+		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?ie=UTF8&amp;k=$3&amp;uid=NULLGWDOCOMO&amp;at=$2&amp;m=Blended&amp;url=%2Fgp%2Faw%2Fs.html&amp;lc=mqs';	
+		$this->Config_urlRewrites['regex'][] = '#^(http://(?:www\.)?amazon.[^/]+?)/gp/search\?.+?keywords=([^& \'"]+).+?tag=([a-z0-9]+).*$#iS';
+		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?ie=UTF8&amp;k=$2&amp;uid=NULLGWDOCOMO&amp;at=$3&amp;m=Blended&amp;url=%2Fgp%2Faw%2Fs.html&amp;lc=mqs';	
+		
 	}
 	
 	function set_myRoot ($url) {
@@ -257,7 +269,7 @@ class HypKTaiRender
 
 		// Host name
 		$body = preg_replace('#(<[^>]+? (?:href|src)=[\'"]?)'.preg_quote($this->myRoot, '#').'/?#iS', '$1/', $body);
-				
+		
 		$body = $this->html_give_session_id($body);
 		
 		return $body;
@@ -674,6 +686,11 @@ class HypKTaiRender
 	function _href_give_session_id ($match) {
 		
 		$url = $match[3];
+		
+		// Url rewrite
+		if (! empty($this->Config_urlRewrites['regex']) && ! empty($this->Config_urlRewrites['tostr'])) {
+			$url = preg_replace($this->Config_urlRewrites['regex'], $this->Config_urlRewrites['tostr'], $url);
+		}
 		
 		$parsed_base = parse_url($this->myRoot);
 		$parsed_url = parse_url($url);
