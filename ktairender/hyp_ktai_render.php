@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.8 2008/07/08 23:46:40 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.9 2008/07/17 00:12:49 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -531,67 +531,58 @@ class HypKTaiRender
 				$this->vars['ua']['agent'] = $ua_agent = $_SERVER['HTTP_USER_AGENT'];
 				$this->vars['ua']['name'] = $ua_name = $match[1];
 				$this->vars['ua']['ver'] = $ua_vers = isset($match[2])? $match[2] : '';
-				$max_size = 0;
+				$max_size = 100;
+				$carrier = '';
 				
 				// Browser-name only
 				switch ($ua_name) {
-					// NetFront / Compact NetFront
-					case 'NetFront':
-					case 'CNF':
 					case 'DoCoMo':
-					case 'Opera': // Performing CNF compatible
+						$carrier = 'docomo';
+						$max_size = 5;
 						if (preg_match('#\b[cC]([0-9]+)\b#', $ua_agent, $matches)) {
 							$max_size = $matches[1];	// Cache max size
+							$max_size = min($max_size, 30);
 						}
 						break;
 				
 					// Vodafone (ex. J-PHONE)
 					case 'J-PHONE':
-						$matches = array("");
-						preg_match('/^([0-9]+)\./', $ua_vers, $matches);
-						switch($matches[1]){
-						case '3': $max_size =   6; break; // C type: lt 6000bytes
-						case '4': $max_size =  12; break; // P type: lt  12Kbytes
-						case '5': $max_size =  40; break; // W type: lt  48Kbytes
+						$carrier = 'softbank';
+						$max_size = 6;
+						if (preg_match('/^([0-9]+)\./', $ua_vers, $matches)) {
+							switch($matches[1]){
+								case '3': $max_size =   6; break; // C type: lt 6000bytes
+								case '4': $max_size =  12; break; // P type: lt  12Kbytes
+								case '5': $max_size =  40; break; // W type: lt  40Kbytes
+							}
 						}
 						break;
 				
 					case 'Vodafone':
 					case 'SoftBank':
-						$matches = array("");
-						preg_match('/^([0-9]+)\./', $ua_vers, $matches);
-						switch($matches[1]){
-							case '1': $max_size = 40; break;
+						$carrier = 'softbank';
+						$max_size = 40;
+						if (preg_match('/^([0-9]+)\./', $ua_vers, $matches)) {
+							switch($matches[1]){
+								case '1': $max_size = 40; break;
+							}
 						}
 						break;
 				
 					// UP.Browser
 					case 'UP.Browser':
-						// UP.Browser for KDDI cell phones
-						// http://www.au.kddi.com/ezfactory/tec/spec/xhtml.html ('About 9KB max')
-						// http://www.au.kddi.com/ezfactory/tec/spec/4_4.html (User-agent strings)
-						if (preg_match('#^KDDI#', $ua_agent)) $max_size =  9;
+						$carrier = 'au';
+						if (preg_match('#^KDDI#', $ua_agent)) $max_size = 9;
 						break;
 				}
 				
-				// Browser-name + version
-				switch ($ua_name.'/'.$ua_vers) {
-					// Restriction For imode:
-					//  http://www.nttdocomo.co.jp/mc-user/i/tag/s2.html
-					case 'DoCoMo/2.0':	$max_size = min($max_size, 30); break;
-				}
-
 				if ($max_size) {
 					$this->maxSize = $max_size * 1024;
 				}
 				
-				// Set Key Button
-				switch ($ua_name) {
-			
-					// Graphic icons for imode HTML 4.0, with Shift-JIS text output
-					// http://www.nttdocomo.co.jp/mc-user/i/tag/emoji/e1.html
-					// http://www.nttdocomo.co.jp/mc-user/i/tag/emoji/list.html
-					case 'DoCoMo':
+				// Set Key Button & $this->vars['ua']
+				switch ($carrier) {
+					case 'docomo':
 						$this->keybutton = array(
 							'1'	=>	'&#63879;',
 							'2'	=>	'&#63880;',
@@ -608,15 +599,10 @@ class HypKTaiRender
 						);
 						if (isset($_SERVER['HTTP_X_DCMGUID'])) $this->vars['ua']['uid'] = $_SERVER['HTTP_X_DCMGUID'];
 						$this->vars['ua']['isKTai'] = TRUE;
-						$this->vars['ua']['carrier'] = 'docomo';
+						$this->vars['ua']['carrier'] = $carrier;
 						break;
-			
-					// Graphic icons for Vodafone (ex. J-PHONE) cell phones
-					// http://www.dp.j-phone.com/dp/tool_dl/web/picword_top.php
-					case 'J-PHONE':
-					case 'Vodafone':
-					case 'SoftBank':
-			
+					
+					case 'softbank':
 						$this->keybutton = array(
 							'1'	=>	chr(27).'$F<'.chr(15),
 							'2'	=>	chr(27).'$F='.chr(15),
@@ -633,32 +619,27 @@ class HypKTaiRender
 						);
 						if (isset($_SERVER['HTTP_X_JPHONE_UID'])) $this->vars['ua']['uid'] = $_SERVER['HTTP_X_JPHONE_UID'];
 						$this->vars['ua']['isKTai'] = TRUE;
-						$this->vars['ua']['carrier'] = 'softbank';
+						$this->vars['ua']['carrier'] = $carrier;
 						break;
-			
-					case 'UP.Browser':
-			
-					// UP.Browser for KDDI cell phones' built-in icons
-					// http://www.au.kddi.com/ezfactory/tec/spec/3.html
-						if (preg_match('#^KDDI#', $ua_agent)) {
-							$this->keybutton = array(
-								'1'	=>	'<img localsrc="180">',
-								'2'	=>	'<img localsrc="181">',
-								'3'	=>	'<img localsrc="182">',
-								'4'	=>	'<img localsrc="183">',
-								'5'	=>	'<img localsrc="184">',
-								'6'	=>	'<img localsrc="185">',
-								'7'	=>	'<img localsrc="186">',
-								'8'	=>	'<img localsrc="187">',
-								'9'	=>	'<img localsrc="188">',
-								'0'	=>	'<img localsrc="325">',
-								'#'	=>	'<img localsrc="818">',
-								'*'	=>	'[*]'
-							);
-						}
+					
+					case 'au':
+						$this->keybutton = array(
+							'1'	=>	'<img localsrc="180">',
+							'2'	=>	'<img localsrc="181">',
+							'3'	=>	'<img localsrc="182">',
+							'4'	=>	'<img localsrc="183">',
+							'5'	=>	'<img localsrc="184">',
+							'6'	=>	'<img localsrc="185">',
+							'7'	=>	'<img localsrc="186">',
+							'8'	=>	'<img localsrc="187">',
+							'9'	=>	'<img localsrc="188">',
+							'0'	=>	'<img localsrc="325">',
+							'#'	=>	'<img localsrc="818">',
+							'*'	=>	'[*]'
+						);
 						if (isset($_SERVER['HTTP_X_UP_SUBNO'])) $this->vars['ua']['uid'] = $_SERVER['HTTP_X_UP_SUBNO'];
 						$this->vars['ua']['isKTai'] = TRUE;
-						$this->vars['ua']['carrier'] = 'au';
+						$this->vars['ua']['carrier'] = $carrier;
 						break;
 				}
 			}
