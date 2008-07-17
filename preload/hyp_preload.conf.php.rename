@@ -102,6 +102,9 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			'easylogin'     => array( 'above' => '<div style="text-align:center;font-size:0.9em">[ ',
 			                          'below' => ' ]</div>'),
 		);
+
+		// 携帯用テーマセット
+		$this->k_tai_conf['themeSet'] = 'ktai_default';
 		
 		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';

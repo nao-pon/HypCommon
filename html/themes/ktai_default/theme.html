@@ -1,0 +1,100 @@
+<html>
+<head>
+<link rel="alternate" type="application/rss+xml" title="RSS of <{$xoops_sitename}>" href="<{$xoops_url}>/backend.php">
+<title><{$xoops_pagetitle}> - <{$xoops_sitename}></title>
+</head>
+<body>
+
+<!--headerlogo-->
+<a href="<{$xoops_url}>/"><img src="<{$xoops_url}>/themes/<{$xoops_theme}>/images/logo.jpg"></a>
+<!--/headerlogo-->
+
+<!--headerbar-->
+<center>
+| <a href="#mainmenu">Main Menu</a> |
+<{if $xoops_lblocks}>
+ <a href="#leftcolumn">Left Block</a> |
+<{/if}>
+<{if $xoops_rblocks}>
+ <a href="#rightcolumn">Right Block</a> |
+<{/if}>
+</center>
+<!--/headerbar-->
+
+<{if $xoops_breadcrumbs}>
+<!--breadcrumbs-->
+<a href="<{$xoops_url}>/">TOP</a>
+<{foreach from=$xoops_breadcrumbs item="item"}>
+	&#187;
+	<{if $item.url}>
+		<a href="<{$item.url}>"><{$item.name}></a>
+	<{else}>
+		<{$item.name}>
+	<{/if}>
+<{/foreach}>
+<!--/breadcrumbs-->
+<{/if}>
+
+<{if $xoops_showcblock == 1}>
+<!--centerCcolumn-->
+<div class="centercolumn">
+<{foreach item=block from=$xoops_ccblocks}>
+	<h2 style="text-align:center;background-color:#ccccff"><{$block.title}></h2>
+	<div><{$block.content}></div>
+<{/foreach}>
+</div>
+<!--/centerCcolumn-->
+<{/if}>
+
+<!--content-->
+<{$xoops_contents}>
+<!--/content-->
+
+<{if $xoops_clblocks}>
+<!--centerLcolumn-->
+<{foreach item=block from=$xoops_clblocks}>
+	<h2 style="text-align:center;background-color:#ccccff"><{$block.title}></h2>
+	<div><{$block.content}></div>
+<{/foreach}>
+<!--/centerLcolumn-->
+<{/if}>
+
+<{if $xoops_crblocks}>
+<!--centerRcolumn-->
+<{foreach item=block from=$xoops_crblocks}>
+	<h2 style="text-align:center;background-color:#ccccff"><{$block.title}></h2>
+	<div><{$block.content}></div>
+<{/foreach}>
+<!--/centerRcolumn-->
+<{/if}>
+
+<{if $xoops_lblocks}>
+<!--leftcolumn-->
+<div id="leftcolumn">
+<{foreach item=block from=$xoops_lblocks}>
+	<h2 style="text-align:center;background-color:#ccccff"><{$block.title}></h2>
+	<div><{$block.content}></div>
+<{/foreach}>
+</div>
+<!--/leftcolumn-->
+<{/if}>
+
+<{if $xoops_showrblock == 1 && $xoops_rblocks}>
+<!--rightcolumn-->
+<div id="rightcolumn">
+<{foreach item=block from=$xoops_rblocks}>
+	<h2 style="text-align:center;background-color:#ccccff"><{$block.title}></h2>
+	<div><{$block.content}></div>
+<{/foreach}>
+</div>
+<!--/rightcolumn-->
+<{/if}>
+
+<!--footerbar-->
+<div style="text-align:center;background-color:#ccffcc;font-size:0.9em">
+Powered by <a href="http://xoopscube.sourceforge.net/">XOOPS</a> with <a href="http://xoops.hypweb.net/">K-Tai Render</a>
+</div>
+<!--/footerbar-->
+
+</body>
+</html>

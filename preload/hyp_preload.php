@@ -1,5 +1,5 @@
 <?php
-define('HYP_SESSION_NAME', 'hypsid');
+define('X2_ADD_SMARTYPLUGINS_DIR', XOOPS_TRUST_PATH . '/libs/smartyplugins/x2');
 
 //// mbstring ////
 if (! extension_loaded('mbstring')) {
@@ -226,6 +226,17 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			$this->HypKTaiRender->set_myRoot(XOOPS_URL);
 			$this->_checkEasyLogin();
 			ob_start(array(&$this, 'keitaiFilter'));
+
+			// Set theme set
+			if (isset($this->k_tai_conf['themeSet']) && file_exists(XOOPS_THEME_PATH . '/' . $this->k_tai_conf['themeSet'] . '/theme.html')) {
+				if (defined('XOOPS_CUBE_LEGACY')) {
+					$this->mRoot->mContext->setThemeName($this->k_tai_conf['themeSet']);
+				} else {
+					$config_handler =& xoops_gethandler('config');
+					$xoopsConfig =& $config_handler->getConfigsByCat(XOOPS_CONF);
+					$xoopsConfig['theme_set'] = $this->k_tai_conf['themeSet'];
+				}
+			}
 		}
 		
 		// <from> Filter
@@ -683,6 +694,9 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			                          'below' => ' ]</div>'),
 		);
 		
+		// 携帯用テーマセット
+		$this->k_tai_conf['themeSet'] = 'ktai_default';
+
 		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';
 		
