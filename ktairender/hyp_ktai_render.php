@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.9 2008/07/17 00:12:49 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.10 2008/07/20 07:08:00 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -34,6 +34,7 @@ class HypKTaiRender
 	var $Config_directLinkHosts = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com');
 	var $Config_redirect = '';
 	var $Config_urlRewrites = array();
+	var $Config_emojiDir = '';
 	
 	function HypKTaiRender () {
 		$this->keymap['prev'] = '4';
@@ -85,6 +86,7 @@ class HypKTaiRender
 	
 	function doOptimize () {
 
+		
 		if ($this->inputHtml) {
 			$this->_extractHeadBody();
 			$header = $footer = '';
@@ -99,9 +101,27 @@ class HypKTaiRender
 			}
 		}
 		
+		
 		$header = mb_convert_encoding($this->html_diet_for_hp($header), $this->outputEncode, $this->inputEncode);
 		$body = mb_convert_encoding($this->html_diet_for_hp($body), $this->outputEncode, $this->inputEncode);
 		$footer = mb_convert_encoding($this->html_diet_for_hp($footer), $this->outputEncode, $this->inputEncode);
+		
+		foreach(array('heder', 'body', 'footer') as $var) {
+			$str =& $$var;
+			if (preg_match('/\(\((?:e|i|s):[0-9a-f]{4}\)\)/S', $str)) {
+				if (! isset($mpc)) {
+					if (! class_exists('MobilePictogramConverter')) {
+						HypCommonFunc::loadClass('MobilePictogramConverter');
+					}
+					$mpc =& MobilePictogramConverter::factory_common();
+					$mpc->setImagePath($this->Config_emojiDir);
+					$mpc->setFromCharset(MPC_FROM_CHARSET_SJIS);
+				}
+				$mpc->setString($str);
+				$str = $mpc->autoConvertModKtai();
+			}
+		}
+		
 		$pager = '';
 		
 		$pnum = empty($_GET[$this->pagekey])? 0 : intval($_GET[$this->pagekey]);
@@ -506,7 +526,6 @@ class HypKTaiRender
 	}
 	
 	function _uaSetup () {
-		$this->max_size = NULL;
 		$this->keybutton = array(
 			'1'	=>	'[1]',
 			'2'	=>	'[2]',
@@ -524,7 +543,7 @@ class HypKTaiRender
 		$this->vars['ua']['isBot'] = FALSE;
 		
 		if (isset($_SERVER['HTTP_USER_AGENT'])) {
-			$this->vars['ua']['isBot'] = preg_match('/Googlebot-Mobile/i', $_SERVER['HTTP_USER_AGENT']);
+			$this->vars['ua']['isBot'] = preg_match('/Googlebot-Mobile|Y!J-SRD/i', $_SERVER['HTTP_USER_AGENT']);
 			
 			if ( preg_match('#(?:^(?:KDDI-[^\s]+ )?|\b)([a-zA-Z.-]+)(?:/([0-9.]+))?#', $_SERVER['HTTP_USER_AGENT'], $match) ) {
 			

@@ -80,6 +80,13 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			if( preg_match('/^[0-9a-z]{32}$/', $sid) ){
 				session_id($sid);
 			}
+			
+			// Set HypKTaiRender
+			HypCommonFunc::loadClass('HypKTaiRender');
+			$this->HypKTaiRender = new HypKTaiRender();
+			$this->HypKTaiRender->set_myRoot(XOOPS_URL);
+			$this->HypKTaiRender->Config_emojiDir = XOOPS_URL . '/images/emoji';
+
 		} else {
 			define('HYP_K_TAI_RENDER', FALSE);
 		}
@@ -114,7 +121,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			} else if (isset($_POST['charset'])) {
 				define ('HYP_POST_ENCODING', strtoupper($_POST['charset']));
 			}
-
+			
+			// 携帯レンダーの場合絵文字変換
+			if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
+				$_POST = $this->_modKtaiEmojiEncode($_POST);
+			}
+			
 			// Proxy Check
 			if (defined('HYP_POST_ENCODING') && $this->use_proxy_check) {
 				HypCommonFunc::BBQ_Check($this->no_proxy_check, $this->msg_proxy_check);
@@ -221,9 +233,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		// Use K_TAI Render
 		if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
 			// keitai Filter
-			HypCommonFunc::loadClass('HypKTaiRender');
-			$this->HypKTaiRender = new HypKTaiRender();
-			$this->HypKTaiRender->set_myRoot(XOOPS_URL);
 			$this->_checkEasyLogin();
 			ob_start(array(&$this, 'keitaiFilter'));
 
@@ -237,6 +246,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					$xoopsConfig['theme_set'] = $this->k_tai_conf['themeSet'];
 				}
 			}
+		} else if (! empty($this->use_k_tai_render)) {
+			ob_start(array(&$this, 'emojiFilter'));
 		}
 		
 		// <from> Filter
@@ -330,6 +341,50 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 	}
 	
+	function _modKtaiEmojiEncode ($vars) {
+		if (is_array($vars)) {
+			foreach($vars as $key=>$var) {
+				$vars[$key] = $this->_modKtaiEmojiEncode($var);
+			}
+			return $vars;
+		}
+		static $mpc;
+		static $to;
+		
+		$to = $mpc = NULL;
+		
+		if (! class_exists('MobilePictogramConverter')) {
+			HypCommonFunc::loadClass('MobilePictogramConverter');
+		}
+		
+		if (is_null($mpc)) {
+			$carrier = '';
+			$mpc = '';
+			switch ($this->HypKTaiRender->vars['ua']['carrier']) {
+				case 'docomo':
+					$to = MPC_TO_FOMA;
+					$carrier = MPC_FROM_FOMA;
+					break;
+				case 'softbank':
+					$to = MPC_TO_SOFTBANK;
+					$carrier = MPC_FROM_SOFTBANK;
+					break;
+				case 'au':
+					$to = MPC_TO_EZWEB;
+					$carrier = MPC_FROM_EZWEB;
+					break;
+			}
+			if ($carrier) {
+				$mpc =& MobilePictogramConverter::factory('', $carrier, MPC_FROM_CHARSET_SJIS, MPC_FROM_OPTION_RAW);
+			}
+		}
+		
+		if (! $mpc) return $vars;
+		
+		$mpc->setString($vars);
+		return $mpc->Convert($to, MPC_TO_OPTION_MODKTAI);
+	}
+	
 	function obFilter( $s ) {
 		
 		if ($s === '' || strpos($s, '<html') === FALSE) return $s;
@@ -365,6 +420,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	function keitaiFilter ( $s ) {
 
 		if ($s === '') return;
+
+		//$fp = fopen(XOOPS_TRUST_PATH . '/cache/debug.txt', 'a');
+		//fwrite($fp, '$this->HypKTaiRender->Config_emojiDir: '.$this->HypKTaiRender->Config_emojiDir."\n");
+		//fclose($fp);
+
 		
 		$head = $header = $body = $footer = '';
 		$header_template = $body_template = $footer_template = '';
@@ -405,7 +465,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$r =& $this->HypKTaiRender;
 
 		if ($body) {
-			// 無視する部分(<!--HypKTaiIgnore-->潤ｵ<!--/HypKTaiIgnore-->)を削除
+			// 無視する部分(<!--HypKTaiIgnore-->...<!--/HypKTaiIgnore-->)を削除
 			while(strpos($body, '<!--HypKTaiIgnore-->') !== FALSE) {
 				$arr1 = explode('<!--HypKTaiIgnore-->', $body, 2);
 				$arr2 = array_pad(explode('<!--/HypKTaiIgnore-->', $arr1[1], 2), 2, '');
@@ -492,7 +552,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			if (preg_match('#<meta[^>]+http-equiv=("|\')Refresh\\1[^>]*>#iUS', $head, $match)) {
 				$_head .= str_replace('/>', '>', $match[0]);
 			} else if (preg_match('#<title[^>]*>.*</title>#isUS', $head, $match)) {
-				$_head .= mb_convert_encoding($match[0], 'SJIS', $this->encode);
+				$_head .= mb_convert_encoding($match[0], 'SJIS-win', $this->encode);
 			}
 			$head = $_head;
 		}
@@ -517,9 +577,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$r->Config_showImgHosts = $this->k_tai_conf['showImgHosts'];
 		$r->Config_directLinkHosts = $this->k_tai_conf['directLinkHosts'];
 		
+		
 		$r->contents['header'] = $header;
 		$r->contents['body'] = $body;
 		$r->contents['footer'] = $footer;
+		
 		$r->doOptimize();
 		
 		$s = '<html>' . $head . '<body>' . $r->outputBody . '</body></html>';
@@ -530,6 +592,21 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		header('Content-Type: text/html; charset=Shift_JIS');
 		
 		return $s;
+	}
+	
+	function emojiFilter ($str) {
+		
+		if ($str === '' || strpos($str, '<html') === FALSE) return $str;
+		
+		if (preg_match('/\(\((?:e|i|s):[0-9a-f]{4}\)\)/S', $str)) {
+			require_once dirname(dirname(__FILE__)) . '/mpc/MobilePictogramConverter.php';
+			$mpc =& MobilePictogramConverter::factory_common();
+			$mpc->setImagePath(XOOPS_URL . '/images/emoji');
+			$mpc->setString($str, FALSE);
+			$str = $mpc->autoConvertModKtai();
+		}
+		
+		return $str;
 	}
 	
 	function sendMail ($spamlev) {
@@ -633,9 +710,9 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_filed = 51;      // Spam 無効フィールドの加算ポイント
 		$this->post_spam_trap  = '___url';// Spam 罠用無効フィールド名
 		
-		$this->post_spam_user  = 30;      // POST SPAM 閾値: ログインユーザー
+		$this->post_spam_user  = 50;      // POST SPAM 閾値: ログインユーザー
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
-		$this->post_spam_badip = 50;      // アクセス拒否リストへ登録する閾値
+		$this->post_spam_badip = 100;     // アクセス拒否リストへ登録する閾値
 	
 		// POST SPAM のポイント加算設定
 		$this->post_spam_rules = array(
