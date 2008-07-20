@@ -42,9 +42,9 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_filed = 51;      // Spam 無効フィールドの加算ポイント
 		$this->post_spam_trap  = '___url';// Spam 罠用無効フィールド名
 		
-		$this->post_spam_user  = 30;      // POST SPAM 閾値: ログインユーザー
+		$this->post_spam_user  = 50;      // POST SPAM 閾値: ログインユーザー
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
-		$this->post_spam_badip = 50;      // アクセス拒否リストへ登録する閾値
+		$this->post_spam_badip = 100;      // アクセス拒否リストへ登録する閾値
 	
 		// POST SPAM のポイント加算設定
 		$this->post_spam_rules = array(

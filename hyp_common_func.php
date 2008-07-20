@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.43 2008/06/25 23:52:52 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.44 2008/07/20 07:08:00 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -40,6 +40,9 @@ class HypCommonFunc
 				break;
 			case 'HypRss2Html':
 				include_once $dir . '/rss2html/hyp_rss2html.php';
+				break;
+			case 'MobilePictogramConverter':
+				include_once $dir . '/mpc/MobilePictogramConverter.php';
 				break;
 		}
 	}
