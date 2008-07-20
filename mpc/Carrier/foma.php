@@ -18,6 +18,7 @@ class MPC_FOMA extends MPC_Common
     var $regex = array(
         'WEB' => '/&#(63\d{3});/ie',
         'IMG' => '/<img *src="{PATH}\/(63\d{3})\.gif" alt="" border="0" width="12" height="12" \/>/ie',
+        'MODKTAI' => '/\(\(i:([0-9a-z]{4})\)\)/e',
     );
     
     /**
@@ -38,13 +39,18 @@ class MPC_FOMA extends MPC_Common
         
         // RAW‚Ö•ÏŠ·
         if ($type != MPC_FROM_OPTION_RAW) {
-            if ($type == MPC_FROM_OPTION_WEB) {
-                $eval = ($fromCharset === MPC_FROM_CHARSET_UTF8) ? 'mb_convert_encoding(pack("H*", @$1), "UTF-8", "unicode")' : 'mb_convert_encoding(pack("H*", @$1), "SJIS-win", "unicode")';
-                $str  = preg_replace('/&#x([a-z0-9]{4});/ie', $eval, $str);
+            if ($type === MPC_FROM_OPTION_MODKTAI) {
+                $eval  = ($fromCharset !== MPC_FROM_CHARSET_SJIS) ? 'mb_convert_encoding(pack("H*", "$1"), $fromCharset, "SJIS-win")' : 'pack("H*", "$1")';
+                $str   = preg_replace($this->getRegex($type), $eval, $str);
+            } else {
+                if ($type == MPC_FROM_OPTION_WEB) {
+                    $eval = ($fromCharset === MPC_FROM_CHARSET_UTF8) ? 'mb_convert_encoding(pack("H*", @$1), "UTF-8", "unicode")' : 'mb_convert_encoding(pack("H*", @$1), "SJIS-win", "unicode")';
+                    $str  = preg_replace('/&#x([a-z0-9]{4});/ie', $eval, $str);
+                }
+                $regex = str_replace('{PATH}', preg_quote(rtrim($this->getFOMAImagePath(), '/'), '/'), $this->getRegex($type));
+                $eval  = ($fromCharset !== MPC_FROM_CHARSET_SJIS) ? 'mb_convert_encoding(pack("H*", dechex($1)), $fromCharset, "SJIS-win")' : 'pack("H*", dechex($1))';
+                $str   = preg_replace($regex, $eval, $str);
             }
-            $regex = str_replace('{PATH}', preg_quote(rtrim($this->getFOMAImagePath(), '/'), '/'), $this->getRegex($type));
-            $eval  = ($fromCharset !== MPC_FROM_CHARSET_SJIS) ? 'mb_convert_encoding(pack("H*", dechex($1)), $fromCharset, "SJIS-win")' : 'pack("H*", dechex($1))';
-            $str   = preg_replace($regex, $eval, $str);
         }
         
         $this->setDS(unpack('C*', $str));

@@ -18,6 +18,7 @@ class MPC_EZweb extends MPC_Common
     var $regex = array(
         'WEB' => '/<img\s+(icon|localsrc)="?([0-9]+)"?\s*>/ie',
         'IMG' => '/(<img src="{PATH}\/(\d{1,3})\.gif" alt="" border="0" \/>)/ie',
+        'MODKTAI' => '/\(\(e:([0-9a-z]{4})\)\)/e',
     );
     
     /**
@@ -41,12 +42,17 @@ class MPC_EZweb extends MPC_Common
         
         // RAW‚Ö•ÏŠ·
         if ($type != MPC_FROM_OPTION_RAW) {
-            if (empty($this->e2icon_table)) {
-                require 'map/e2icon_table.php';
+            if ($type === MPC_FROM_OPTION_MODKTAI) {
+                $eval  = ($fromCharset == MPC_FROM_CHARSET_UTF8) ? 'mb_convert_encoding(pack("H*", dechex(hexdec("$1") - 1792)), "UTF-8", "unicode")' : 'pack("H*", "$1")';
+                $str   = preg_replace($this->getRegex($type), $eval, $str);
+            } else {
+                if (empty($this->e2icon_table)) {
+                    require 'map/e2icon_table.php';
+                }
+                $regex = str_replace('{PATH}', preg_quote(rtrim($this->getEZwebImagePath(), '/'), '/'), $this->getRegex($type));
+                $eval  = ($fromCharset == MPC_FROM_CHARSET_UTF8) ? 'mb_convert_encoding(pack("H*", dechex(\$this->e2icon_table[$2] - 1792)), "UTF-8", "unicode")' : 'pack("H*", dechex(\$this->e2icon_table[$2]))';
+                $str   = preg_replace($regex, $eval, $str);
             }
-            $regex = str_replace('{PATH}', preg_quote(rtrim($this->getEZwebImagePath(), '/'), '/'), $this->getRegex($type));
-            $eval  = ($fromCharset == MPC_FROM_CHARSET_UTF8) ? 'mb_convert_encoding(pack("H*", dechex(\$this->e2icon_table[$2] - 1792)), "UTF-8", "unicode")' : 'pack("H*", dechex(\$this->e2icon_table[$2]))';
-            $str   = preg_replace($regex, $eval, $str);
         }
         
         $this->setDS(unpack('C*', $str));
