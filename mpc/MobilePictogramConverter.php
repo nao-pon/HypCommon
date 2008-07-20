@@ -7,6 +7,7 @@ define('MPC_FROM_SOFTBANK', 'SOFTBANK');
 define('MPC_FROM_OPTION_RAW' , 'RAW'); // バイナリコード
 define('MPC_FROM_OPTION_WEB' , 'WEB'); // Web入力コード
 define('MPC_FROM_OPTION_IMG' , 'IMG'); // 画像
+define('MPC_FROM_OPTION_MODKTAI' , 'MODKTAI'); // mod_ktai
 /* 変換前の文字列の文字コード */
 define('MPC_FROM_CHARSET_SJIS', 'SJIS');
 define('MPC_FROM_CHARSET_UTF8', 'UTF-8');
@@ -80,6 +81,26 @@ class MobilePictogramConverter
         $mpc->setString($str);
         $mpc->setFrom(strtoupper($carrier));
         $mpc->setStringType($type);
+        
+        return $mpc;
+    }
+    
+    function &factory_common()
+    {
+        $filepath = dirname(__FILE__).'/Carrier/common.php';
+        if (file_exists($filepath) == false) {
+            $error = 'The file doesn\'t exist.';
+            return $error;
+        }
+        
+        require_once($filepath);
+        
+        $mpc =& new MPC_Common();
+        $mpc->setFromCharset(MPC_FROM_CHARSET_SJIS);
+
+        if (is_object($mpc) == false) {
+            die($mpc);
+        }
         
         return $mpc;
     }

@@ -7,6 +7,7 @@ define('MPC_TO_SOFTBANK', 'SOFTBANK');
 define('MPC_TO_OPTION_RAW' , 'RAW'); // バイナリコード
 define('MPC_TO_OPTION_WEB' , 'WEB'); // Web入力コード
 define('MPC_TO_OPTION_IMG' , 'IMG'); // 画像
+define('MPC_TO_OPTION_MODKTAI' , 'MODKTAI'); // mod_ktai用コード
 
 // {{{ class MPC_common
 /**
@@ -159,6 +160,134 @@ class MPC_Common
        'SoftBank' => '/^(?:(?:SoftBank|Vodafone|J-PHONE)\/\d\.\d|MOT-)/',
        'EZweb'    => '/^(?:KDDI-[A-Z]+\d+[A-Z]? )?UP\.Browser\//',
     );
+
+    /**
+    * ユーザーエージェントからキャリアを自動判別し
+    * mod_ktai コードから対応する絵文字に自動変換 by nao-pon
+    * mod_ktai: http://labs.yumemi.co.jp/labs/mod/man_contents.html
+    *
+    * @return string
+    */
+    
+    function autoConvertModKtai()
+    {
+        $useragent = $_SERVER['HTTP_USER_AGENT'];
+        if (preg_match($this->getRegexp('DoCoMo'), $useragent)) {
+            $to     = MPC_TO_FOMA;
+            $option = MPC_TO_OPTION_RAW;
+        } elseif (preg_match($this->getRegexp('SoftBank'), $useragent)) {
+            $to     = MPC_TO_SOFTBANK;
+            $option = MPC_TO_OPTION_WEB;
+        } elseif (preg_match($this->getRegexp('EZweb'), $useragent)) {
+            $to     = MPC_TO_EZWEB;
+            $option = MPC_TO_OPTION_RAW;
+        } else {
+            $to     = 'COMMON';
+            $option = MPC_TO_OPTION_IMG;
+        }
+        
+        $this->setTo($to);
+        $this->setOption($option);
+        $str = $this->getString();
+        
+        $str = preg_replace_callback('/(<head.+?\/head>|<script.+?\/script>|<style.+?\/style>|<textarea.+?\/textarea>|<[^<>]+?>)|\(\((e|i|s):([0-9a-f]{4})\)\)/isS', array(& $this, '_decodeModKtai'), $str);
+
+        return $str;
+    }
+    
+    /**
+    * mod_ktai コードをデコード (サブ関数) by nao-pon
+    * 
+    * @param string $match
+    * @return string
+    */
+    function _decodeModKtai($match)
+    {
+        if ($match[1]) {
+            return $match[0];
+        }
+        $mode = $match[2];
+        
+        // ezweb convert to icon number
+        $dec = HexDec($match[3]);
+        if ($mode === 'e') {
+            if (empty($this->e2icon_table)) {
+                require 'map/e2icon_table.php';
+            }
+            $dec = intval(array_search($dec , $this->e2icon_table));
+        }
+        $_dec = $dec;
+        
+        //exists check
+        switch($mode) {
+            case 'i':
+                $table = $mode . '2e_table';
+                break;
+            case 's':
+                $table = $mode . '2e_table';
+                break;
+            case 'e':
+                $table = $mode . '2s_table';
+                break;
+        }
+        if (empty($this->$table)) {
+            require 'map/'.$table.'.php';
+        }
+        $table_array =& $this->$table;
+        if (! isset($table_array[$dec])) {
+            return $match[0];
+        }
+        
+        // set convert table
+        $table = '';
+        switch($this->to) {
+            case MPC_TO_FOMA:
+                if ($mode !== 'i') {
+                    $table = $mode . '2i_table';
+                }
+                $decode_func = 'i_options_encode';
+                break;
+            case MPC_TO_SOFTBANK:
+                if ($mode !== 's') {
+                    $table = $mode . '2s_table';
+                }
+                $decode_func = 's_options_encode';
+                break;
+            case MPC_TO_EZWEB:
+                if ($mode !== 'e') {
+                    $table = $mode . '2e_table';
+                }
+                $decode_func = 'e_options_encode';
+                break;
+            default:
+                $decode_func = $mode . '_options_encode';
+        }
+        
+        // convert
+        if ($table) {
+            if (empty($this->$table)) {
+                require 'map/'.$table.'.php';
+            }
+            $table_array =& $this->$table;
+            $dec = (isset($table_array[$dec]))? $table_array[$dec] : FALSE;
+        }
+        
+        // show image if nonexist
+        $_option = '';
+        if (! is_numeric($dec)) {
+            $dec = $_dec;
+            $_option = $this->getOption();
+            $this->setOption(MPC_TO_OPTION_IMG);
+            $decode_func = $mode . '_options_encode';
+        }
+        
+        // decode
+        $ret = $this->$decode_func($dec);
+        
+        if ($_option) $this->setOption($_option);
+        
+        return $ret;
+    }
     
     /**
     * ユーザーエージェントからキャリアを自動判別し
@@ -254,7 +383,10 @@ class MPC_Common
                 $buf = ($dec >= 63921 && $dec <= 63996) ? '&#x'.strtoupper(bin2hex(mb_convert_encoding(pack('H*', dechex($dec)), 'unicode', 'SJIS-win'))).';' : '&#'.$dec.';';
                 break;
             case MPC_TO_OPTION_IMG:
-                $buf = '<img src="'.rtrim($this->i_img_path, '/').'/'.$dec.'.gif" alt="" border="0" width="12" height="12" />';
+                $buf = '<img src="'.rtrim($this->i_img_path, '/').'/'.$dec.'.gif" alt="((i:'.dechex($dec).'))" border="0" width="12" height="12" />';
+                break;
+            case MPC_TO_OPTION_MODKTAI:
+                $buf = '((i:'.dechex($dec).'))';
                 break;
         }
         return $buf;
@@ -281,7 +413,13 @@ class MPC_Common
                 break;
             case MPC_TO_OPTION_IMG:
                 $width = ($iconno == 174) ? 7 : (($iconno == 175) ? 4 : 15);
-                $buf = '<img src="'.rtrim($this->e_img_path, '/').'/'.$iconno.'.gif" alt="" border="0" width="'.$width.'" height="15" />';
+                $buf = '<img src="'.rtrim($this->e_img_path, '/').'/'.$iconno.'.gif" alt="((e:'.dechex($this->e2icon_table[$iconno]).'))" border="0" width="'.$width.'" height="15" />';
+                break;
+            case MPC_TO_OPTION_MODKTAI:
+                if (empty($this->e2icon_table)) {
+                    require 'map/e2icon_table.php';
+                }
+                $buf = '((e:'.dechex($this->e2icon_table[$iconno]).'))';
                 break;
         }
         return $buf;
@@ -331,7 +469,10 @@ class MPC_Common
                 break;
             case MPC_TO_OPTION_IMG:
                 $width = ($dec >= 20828 && $dec <= 20830) ? 18 : 15;
-                $buf = '<img src="'.rtrim($this->s_img_path, '/').'/'.$dec.'.gif" alt="" border="0" width="'.$width.'" height="15" />';
+                $buf = '<img src="'.rtrim($this->s_img_path, '/').'/'.$dec.'.gif" alt="((s:'.dechex($dec).'))" border="0" width="'.$width.'" height="15" />';
+                break;
+            case MPC_TO_OPTION_MODKTAI:
+                $buf = '((s:'.dechex($dec).'))';
                 break;
         }
         return $buf;
@@ -555,10 +696,14 @@ class MPC_Common
     *
     * @param mixed $str
     */
-    function setString($string)
+    function setString($string, $convert = TRUE)
     {
-        $charset = ($this->getFromCharset() == MPC_FROM_CHARSET_SJIS) ? 'SJIS-win' : 'UTF-8';
-        $this->string = mb_convert_encoding($string, $charset, $charset);
+        if ($convert) {
+            $charset = ($this->getFromCharset() == MPC_FROM_CHARSET_SJIS) ? 'SJIS-win' : 'UTF-8';
+            $this->string = mb_convert_encoding($string, $charset, $charset);
+        } else {
+            $this->string = $string;
+        }
     }
     
     /**

@@ -18,6 +18,7 @@ class MPC_SoftBank extends MPC_Common
     var $regex = array(
         'WEB' => '/[\x1B][\x24](([\x47][\x21-\x7A]+)|([\x45][\x21-7A]+)|([\x46][\x21-\x7A]+)|([\x4F][\x21-\x6D]+)|([\x50][\x21-\x6C]+)|([\x51][\x21-\x5E]+))[\x0F]?/',
         'IMG' => '/<img src="{PATH}\/((17|18|20)\d{3})\.gif" alt="" border="0" width="15" height="15" \/>/ie',
+        'MODKTAI' => '/\(\(s:([0-9a-z]{4})\)\)/e',
     );
     
     /**
@@ -51,9 +52,13 @@ class MPC_SoftBank extends MPC_Common
         $fromCharset = $this->getFromCharset();
         
         // RAW‚Ö•ÏŠ·
-        if ($type != MPC_FROM_OPTION_RAW && $type != MPC_FROM_OPTION_WEB) {
-            $regex = str_replace('{PATH}', preg_quote(rtrim($this->getSoftBankImagePath(), '/'), '/'), $this->getRegex($type));
-            $str   = preg_replace($regex, 'pack("H*", "1B24".dechex($1)."0F")', $str);
+        if ($type === MPC_FROM_OPTION_MODKTAI) {
+            $str   = preg_replace($regex, 'pack("H*", "1B24".$1."0F")', $str);
+        } else {
+            if ($type != MPC_FROM_OPTION_RAW && $type != MPC_FROM_OPTION_WEB) {
+                $regex = str_replace('{PATH}', preg_quote(rtrim($this->getSoftBankImagePath(), '/'), '/'), $this->getRegex($type));
+                $str   = preg_replace($regex, 'pack("H*", "1B24".dechex($1)."0F")', $str);
+            }
         }
         
         $this->setDS(unpack('C*', $str));
