@@ -66,30 +66,64 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	
 	function preFilter() {
 		// Use K_TAI Render
-		if (! empty($this->use_k_tai_render) && isset($_SERVER['HTTP_USER_AGENT']) &&
-			preg_match($this->k_tai_conf['ua_regex'], $_SERVER['HTTP_USER_AGENT'])) {
+		if (! empty($this->use_k_tai_render)) {
+			if (isset($_SERVER['HTTP_USER_AGENT']) &&
+				preg_match($this->k_tai_conf['ua_regex'], $_SERVER['HTTP_USER_AGENT'])) {
 
-			define('HYP_K_TAI_RENDER', TRUE);
-			
-			ini_set('session.use_trans_sid', 0);
-			
-			$skey = ini_get('session.name');
+				define('HYP_K_TAI_RENDER', TRUE);
+				
+				ini_set('session.use_trans_sid', 0);
+				
+				$skey = ini_get('session.name');
+				if(isset($_POST[$skey])) $sid=$_POST[$skey];
+				else if(isset($_GET[$skey])) $sid=$_GET[$skey];
+				else $sid=null;
+				if( preg_match('/^[0-9a-z]{32}$/', $sid) ){
+					session_id($sid);
+				}
+				
+				// Set HypKTaiRender
+				HypCommonFunc::loadClass('HypKTaiRender');
+				$this->HypKTaiRender = new HypKTaiRender();
+				$this->HypKTaiRender->set_myRoot(XOOPS_URL);
+				$this->HypKTaiRender->Config_emojiDir = XOOPS_URL . '/images/emoji';
+			} else {
+				define('HYP_K_TAI_RENDER', FALSE);
+			}
+		}
+	}
+
+	function preBlockFilter()
+	{
+		// Use K_TAI Render (XCL only)
+		if (defined('XOOPS_CUBE_LEGACY') && defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
+			// Set session key
+			$skey = ($GLOBALS['xoopsConfig']['use_mysession'] && $GLOBALS['xoopsConfig']['session_name'] !== '')? $GLOBALS['xoopsConfig']['session_name'] : session_name();
 			if(isset($_POST[$skey])) $sid=$_POST[$skey];
 			else if(isset($_GET[$skey])) $sid=$_GET[$skey];
 			else $sid=null;
 			if( preg_match('/^[0-9a-z]{32}$/', $sid) ){
 				session_id($sid);
 			}
-			
-			// Set HypKTaiRender
-			HypCommonFunc::loadClass('HypKTaiRender');
-			$this->HypKTaiRender = new HypKTaiRender();
-			$this->HypKTaiRender->set_myRoot(XOOPS_URL);
-			$this->HypKTaiRender->Config_emojiDir = XOOPS_URL . '/images/emoji';
 
-		} else {
-			define('HYP_K_TAI_RENDER', FALSE);
+			// Set theme set
+			if (isset($this->k_tai_conf['themeSet']) && file_exists(XOOPS_THEME_PATH . '/' . $this->k_tai_conf['themeSet'] . '/theme.html')) {
+				$GLOBALS['xoopsConfig']['theme_set'] = $this->k_tai_conf['themeSet'];
+				$this->mRoot->mContext->setThemeName($this->k_tai_conf['themeSet']);
+				$this->mRoot->mDelegateManager->add( 'XoopsTpl.New' , array(& $this , '_xoopsConfig_theme_set' ) , XCUBE_DELEGATE_PRIORITY_FIRST) ;
+			}
+
+	        // For cubeUtils (disable auto login)
+	        $config_handler =& xoops_gethandler('config');
+	        $moduleConfigCubeUtils =& $config_handler->getConfigsByDirname('cubeUtils');
+			if ($moduleConfigCubeUtils) {
+	        	$moduleConfigCubeUtils['cubeUtils_use_autologin'] = FALSE;
+			}
 		}
+	}
+
+	function _xoopsConfig_theme_set () {
+		$GLOBALS['xoopsConfig']['theme_set'] = $this->k_tai_conf['themeSet'];
 	}
 	
 	function postFilter() {
@@ -114,6 +148,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 		
 		if (! empty($_POST)) {
+			// Input フィルター (remove "\0", "&#8203;")
+			$_POST = HypCommonFunc::input_filter($_POST);
+			
 			// POST 文字列の文字エンコードを判定
 			$enchint = (isset($_POST[$this->encodehint_name]))? $_POST[$this->encodehint_name] : ((isset($_POST['encode_hint']))? $_POST['encode_hint'] : '');
 			if ($enchint && function_exists('mb_detect_encoding')) {
@@ -232,20 +269,18 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		
 		// Use K_TAI Render
 		if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
-			// keitai Filter
+			// Check login
 			$this->_checkEasyLogin();
-			ob_start(array(&$this, 'keitaiFilter'));
-
 			// Set theme set
 			if (isset($this->k_tai_conf['themeSet']) && file_exists(XOOPS_THEME_PATH . '/' . $this->k_tai_conf['themeSet'] . '/theme.html')) {
+				$GLOBALS['xoopsConfig']['theme_set'] = $this->k_tai_conf['themeSet'];
 				if (defined('XOOPS_CUBE_LEGACY')) {
+					// Over write user setting
 					$this->mRoot->mContext->setThemeName($this->k_tai_conf['themeSet']);
-				} else {
-					$config_handler =& xoops_gethandler('config');
-					$xoopsConfig =& $config_handler->getConfigsByCat(XOOPS_CONF);
-					$xoopsConfig['theme_set'] = $this->k_tai_conf['themeSet'];
 				}
 			}
+			// keitai Filter
+			ob_start(array(&$this, 'keitaiFilter'));
 		} else if (! empty($this->use_k_tai_render)) {
 			ob_start(array(&$this, 'emojiFilter'));
 		}
@@ -360,22 +395,39 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (is_null($mpc)) {
 			$carrier = '';
 			$mpc = '';
-			switch ($this->HypKTaiRender->vars['ua']['carrier']) {
-				case 'docomo':
-					$to = MPC_TO_FOMA;
-					$carrier = MPC_FROM_FOMA;
+			
+			$from_encode = '';
+			switch (HYP_POST_ENCODING) {
+				case 'UTF-8':
+				case 'UTF_8':
+				case 'UTF8':
+					$from_encode = MPC_FROM_CHARSET_UTF8;
 					break;
-				case 'softbank':
-					$to = MPC_TO_SOFTBANK;
-					$carrier = MPC_FROM_SOFTBANK;
-					break;
-				case 'au':
-					$to = MPC_TO_EZWEB;
-					$carrier = MPC_FROM_EZWEB;
+				case 'SJIS':
+				case 'SHIFT-JIS':
+				case 'SHIFT_JIS':
+					$from_encode = MPC_FROM_CHARSET_SJIS;
 					break;
 			}
-			if ($carrier) {
-				$mpc =& MobilePictogramConverter::factory('', $carrier, MPC_FROM_CHARSET_SJIS, MPC_FROM_OPTION_RAW);
+			
+			if ($from_encode) {
+				switch ($this->HypKTaiRender->vars['ua']['carrier']) {
+					case 'docomo':
+						$to = MPC_TO_FOMA;
+						$carrier = MPC_FROM_FOMA;
+						break;
+					case 'softbank':
+						$to = MPC_TO_SOFTBANK;
+						$carrier = MPC_FROM_SOFTBANK;
+						break;
+					case 'au':
+						$to = MPC_TO_EZWEB;
+						$carrier = MPC_FROM_EZWEB;
+						break;
+				}
+				if ($carrier) {
+					$mpc =& MobilePictogramConverter::factory('', $carrier, $from_encode, MPC_FROM_OPTION_RAW);
+				}
 			}
 		}
 		
@@ -421,11 +473,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 		if ($s === '') return;
 
-		//$fp = fopen(XOOPS_TRUST_PATH . '/cache/debug.txt', 'a');
-		//fwrite($fp, '$this->HypKTaiRender->Config_emojiDir: '.$this->HypKTaiRender->Config_emojiDir."\n");
-		//fclose($fp);
-
-		
 		$head = $header = $body = $footer = '';
 		$header_template = $body_template = $footer_template = '';
 		
@@ -527,6 +574,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			return $s;
 		}
 
+		$xhtml = TRUE;
+
 		if ($head) {
 			// Check RSS
 			$rss = array();
@@ -554,6 +603,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			} else if (preg_match('#<title[^>]*>.*</title>#isUS', $head, $match)) {
 				$_head .= mb_convert_encoding($match[0], 'SJIS-win', $this->encode);
 			}
+			//if ($xhtml) $_head .= '<meta http-equiv="Content-Type" content="text/xhtml+xml; charset=Shift_JIS"/>';
+			$_head .= '</head>';
 			$head = $_head;
 		}
 		
@@ -577,19 +628,34 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$r->Config_showImgHosts = $this->k_tai_conf['showImgHosts'];
 		$r->Config_directLinkHosts = $this->k_tai_conf['directLinkHosts'];
 		
+		$r->Config_imageConvert = TRUE;
+		$r->Config_rootPath = XOOPS_ROOT_PATH;
+		$r->Config_rootUrl = XOOPS_URL;
 		
 		$r->contents['header'] = $header;
 		$r->contents['body'] = $body;
 		$r->contents['footer'] = $footer;
 		
+		if ($xhtml) {
+			$r->outputMode = 'xhtml';
+		}
+		
 		$r->doOptimize();
 		
-		$s = '<html>' . $head . '<body>' . $r->outputBody . '</body></html>';
+		if ($xhtml) {
+			$s = '<?xml version="1.0" encoding="Shift_JIS"?><html>';
+		} else {
+			$s = '<html>';
+		}
+		$s .= $head . '<body>' . $r->outputBody . '</body></html>';
 		
+		$ctype = $r->getOutputContentType();
+
 		$r = NULL;
 		unset($r);
 		
-		header('Content-Type: text/html; charset=Shift_JIS');
+		header('Content-Type: ' . $ctype . '; charset=Shift_JIS');
+		header('Content-Length: ' . strlen($s));
 		
 		return $s;
 	}
@@ -599,7 +665,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if ($str === '' || strpos($str, '<html') === FALSE) return $str;
 		
 		if (preg_match('/\(\((?:e|i|s):[0-9a-f]{4}\)\)/S', $str)) {
-			require_once dirname(dirname(__FILE__)) . '/mpc/MobilePictogramConverter.php';
+			if (! class_exists('MobilePictogramConverter')) {
+				HypCommonFunc::loadClass('MobilePictogramConverter');
+			}
 			$mpc =& MobilePictogramConverter::factory_common();
 			$mpc->setImagePath(XOOPS_URL . '/images/emoji');
 			$mpc->setString($str, FALSE);
