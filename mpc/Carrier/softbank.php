@@ -16,7 +16,7 @@ class MPC_SoftBank extends MPC_Common
   * @var string
   */
     var $regex = array(
-        'WEB' => '/[\x1B][\x24](([\x47][\x21-\x7A]+)|([\x45][\x21-7A]+)|([\x46][\x21-\x7A]+)|([\x4F][\x21-\x6D]+)|([\x50][\x21-\x6C]+)|([\x51][\x21-\x5E]+))[\x0F]?/',
+        'WEB' => '/[\x1B][\x24](([\x47][\x21-\x7A]+)|([\x45][\x21-\x7A]+)|([\x46][\x21-\x7A]+)|([\x4F][\x21-\x6D]+)|([\x50][\x21-\x6C]+)|([\x51][\x21-\x5E]+))[\x0F]?/',
         'IMG' => '/<img src="{PATH}\/((17|18|20)\d{3})\.gif" alt="" border="0" width="15" height="15" \/>/ie',
         'MODKTAI' => '/\(\(s:([0-9a-z]{4})\)\)/e',
     );
@@ -26,10 +26,12 @@ class MPC_SoftBank extends MPC_Common
     * @var array
     */
     var $sr2sw_table = array(
-        0x80 => 0x47, 0x81 => 0x47, 0x84 => 0x45,
-        0x85 => 0x46, 0x88 => 0x46, 0x89 => 0x46,
-        0x8C => 0x4F, 0x8D => 0x4F, 0x90 => 0x50,
-        0x91 => 0x50, 0x94 => 0x51
+        0x80 => 0x47, 0x81 => 0x47, // Page 1
+        0x84 => 0x45, 0x85 => 0x45, // Page 2
+        0x88 => 0x46, 0x89 => 0x46, // Page 3
+        0x8C => 0x4F, 0x8D => 0x4F, // Page 4
+        0x90 => 0x50, 0x91 => 0x50, // Page 5
+        0x94 => 0x51                // Page 6
     );
     
     /**
@@ -53,7 +55,7 @@ class MPC_SoftBank extends MPC_Common
         
         // RAW‚Ö•ÏŠ·
         if ($type === MPC_FROM_OPTION_MODKTAI) {
-            $str   = preg_replace($regex, 'pack("H*", "1B24".$1."0F")', $str);
+            $str  = preg_replace($this->getRegex($type), 'pack("H*", "1B24".$1."0F")', $str);
         } else {
             if ($type != MPC_FROM_OPTION_RAW && $type != MPC_FROM_OPTION_WEB) {
                 $regex = str_replace('{PATH}', preg_quote(rtrim($this->getSoftBankImagePath(), '/'), '/'), $this->getRegex($type));
@@ -77,7 +79,7 @@ class MPC_SoftBank extends MPC_Common
                     list($char1, $char2, $char3) = $result;
                 }
                 
-                $num  = ($char2 == 0x80 || $char2 == 0x84 || $char2 == 0x88 || $char2 == 0x8C || $char2 == 0x90 || $char2 == 0x94) ? $char3 - 0x81 : $char3 - 0x80 + 63;
+                $num  = ($char2 == 0x80 || $char2 == 0x84 || $char2 == 0x88 || $char2 == 0x8C || $char2 == 0x90 || $char2 == 0x94) ? ($char3 - 0x81) : ($char3 - 0x80 + 63);
                 $dec1 = $this->sr2sw_table[$char2];
                 $dec2 = $num + 0x21;
                 $this->setPictogram($this->encoder(hexdec($this->decs2hex(array($dec1, $dec2)))));
