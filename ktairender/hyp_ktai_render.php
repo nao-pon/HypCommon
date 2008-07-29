@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.10 2008/07/20 07:08:00 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.11 2008/07/29 14:35:40 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -15,6 +15,7 @@ if (! extension_loaded('mbstring') && ! class_exists('HypMBString')) {
 class HypKTaiRender
 {
 	var $contents = array();
+	var $outputMode = 'html';
 	var $inputEncode = '';
 	var $outputEncode = 'SJIS';
 	var $myRoot = '';
@@ -35,10 +36,15 @@ class HypKTaiRender
 	var $Config_redirect = '';
 	var $Config_urlRewrites = array();
 	var $Config_emojiDir = '';
+	var $Config_icons = array();
+	var $Config_imageConvert = FALSE;
 	
 	function HypKTaiRender () {
 		$this->keymap['prev'] = '4';
 		$this->keymap['next'] = '6';
+		
+		$this->Config_icons['extLink'] = '((i:f8d9))';
+		$this->Config_icons['hTag'] = '((i:f8e4))';
 		
 		$this->contents['header'] = '';
 		$this->contents['body'] = '';
@@ -106,7 +112,7 @@ class HypKTaiRender
 		$body = mb_convert_encoding($this->html_diet_for_hp($body), $this->outputEncode, $this->inputEncode);
 		$footer = mb_convert_encoding($this->html_diet_for_hp($footer), $this->outputEncode, $this->inputEncode);
 		
-		foreach(array('heder', 'body', 'footer') as $var) {
+		foreach(array('header', 'body', 'footer') as $var) {
 			$str =& $$var;
 			if (preg_match('/\(\((?:e|i|s):[0-9a-f]{4}\)\)/S', $str)) {
 				if (! isset($mpc)) {
@@ -189,17 +195,24 @@ class HypKTaiRender
 			$prev = $pnum - 1;
 			$next = $pnum + 1;
 			if ($pnum > 0) {
-				$pager[] = '<a href="' . $base . $this->pagekey . '=0' . '">|&lt;</a>';
-				$pager[] = '<a href="' . $base . $this->pagekey . '=' . $prev . '" ' . $accesskey . '="' . $this->keymap['prev'] . '">' . $this->keybutton[$this->keymap['prev']] . '&lt;</a>';
+				if ($pnum !== 1) $pager[] = '<a href="' . $base . $this->pagekey . '=0' . '">((s:465d))</a>';
+				$pager[] = '<a href="' . $base . $this->pagekey . '=' . $prev . '" ' . $accesskey . '="' . $this->keymap['prev'] . '">' . $this->keybutton[$this->keymap['prev']] . '((s:465b))</a>';
 			}
 			$pager[] = $next . '/' . $pagecount . ' ';
 			if ($pnum < $pagecount - 1) {
-				$pager[] = '<a href="' . $base . $this->pagekey . '=' . $next . '" ' . $accesskey . '="' . $this->keymap['next'] . '">&gt;' . $this->keybutton[$this->keymap['next']] . '</a>';
-				$pager[] = '<a href="' . $base . $this->pagekey . '=' . ($pagecount - 1) . '">&gt;|</a>';
+				$pager[] = '<a href="' . $base . $this->pagekey . '=' . $next . '" ' . $accesskey . '="' . $this->keymap['next'] . '">' . $this->keybutton[$this->keymap['next']] . '((s:465a))</a>';
+				if ($pnum !== $pagecount - 2) $pager[] = '<a href="' . $base . $this->pagekey . '=' . ($pagecount - 1) . '">((s:465c))</a>';
 			}
 
 			$pager = $this->html_give_session_id($pager);
-			$pager = '<center>' . join(' ', $pager) . '</center>';
+			if ($this->outputMode = 'xhtml') {
+				$pager = '<div style="text-align:center">' . join(' ', $pager) . '</div>';
+			} else {
+				$pager = '<center>' . join(' ', $pager) . '</center>';
+			}
+
+			$mpc->setString($pager);
+			$pager = $mpc->autoConvertModKtai();
 			
 		} else {
 			$h_reg = preg_quote($this->hashkey, '/') . '=[^&#]+';
@@ -250,6 +263,10 @@ class HypKTaiRender
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
+		$reg = '#(<[^>]+?)\s+(?:class|clear|target|nowrap|title|alt|on[^=]+?|cell[^=]+?)=[^ >/]+([^>]*>)#iS';
+		while(preg_match($reg, $body)) {
+			$body = preg_replace($reg, '$1$2', $body);
+		}
 		$body = str_replace("\x08", '\\"', $body);
 		
 		// css property
@@ -281,16 +298,35 @@ class HypKTaiRender
 		$pat[] = '#(<(?!textarea)[^>]+?) style=(?:\'\'|"")#iS';
 		$rep[] = '$1';
 
+		$pat[] = '#<h([5-6])(.+?)/h\\1>#isS';
+		$rep[] = '<h4$2/h4>';
+
+		// Add icon
+		if (! empty($this->Config_icons['hTag'])) {
+			$pat[] = '#(<h[1-6][^>]*?>)#iS';
+			$rep[] = '$1' . $this->Config_icons['hTag'];
+		}
+		
+		if ($this->outputMode === 'xhtml') {
+			$pat[] = '#(<(?:[bh]r|img)[^>]*?[^/])>#iS';
+			$rep[] = '$1/>';
+		}
+		
 		$body = preg_replace($pat, $rep, $body);
 
-		$pat = array(' />', '/>', '</li>', '</del>');
-		$rep = array('>'  , '>' , ''     , '[/del]');
+		if ($this->outputMode === 'xhtml') {
+			$pat = array(' />', '</del>', '<br>',  '<hr>', '<center>', '</center>',  '&deg;');
+			$rep = array('/>',  '[/del]', '<br/>', '<hr/>', '<div style="text-align:center">', '</div>', '&#176;');
+		} else {
+			$pat = array(' />', '/>', '</li>', '</del>');
+			$rep = array('>'  , '>' , ''     , '[/del]');
+		}
 		$body = str_replace($pat, $rep, $body);
+
+		$body = $this->html_give_session_id($body);
 
 		// Host name
 		$body = preg_replace('#(<[^>]+? (?:href|src)=[\'"]?)'.preg_quote($this->myRoot, '#').'/?#iS', '$1/', $body);
-		
-		$body = $this->html_give_session_id($body);
 		
 		return $body;
 	}
@@ -400,6 +436,16 @@ class HypKTaiRender
 		return $ret;
 	}
 
+	function getOutputContentType () {
+		$ctype = 'text/html';
+		if ($this->outputMode === 'xhtml') {
+			if ($this->checkIp($_SERVER['REMOTE_ADDR'], $this->vars['ua']['carrier']) || strpos($_SERVER['HTTP_USER_AGENT'], 'DoCoMo/2.0 ISIM') === 0) {
+				$ctype = 'application/xhtml+xml';
+			}
+		}
+		return $ctype;
+	}
+	
 	function _extractHeadBody () {
 
 		$this->inputHead = '';
@@ -669,24 +715,59 @@ class HypKTaiRender
 	
 	function _attr_idToname ($match) {
 		$tag = strtolower($match[1]);
+		$pre = '';
 		$add = '';
-		if (strpos($match[2], ' name=') === FALSE && strpos($match[2], ' id=') !== FALSE) {
-			if ($tag === 'a') {
-				$match[2] = str_replace(' id=', ' name=', $match[2]);
-			} else if ($tag !== 'textarea') {
-				if (preg_match('/ id=(\'|")?([^\'"]+)(?:\\1)?/i', $match[2], $_match)) {
-					$add = '<a name="' . $_match[2] . '"></a>';
+		if ($this->outputMode === 'xhtml') {
+			if (strpos($match[2], ' id=') === FALSE && strpos($match[2], ' name=') !== FALSE) {
+				if ($tag === 'a' || ! in_array($tag, array('textarea', 'input', 'select'))) {
+					$match[2] = str_replace(' name=', ' id=', $match[2]);
 				}
 			}
+			if ($tag !== 'a') {
+				if (! in_array($tag, array('textarea', 'tr', 'thead', 'tfoot', 'tbody'))) {
+					if (preg_match('/ id=(\'|")?([^\'"]+)(?:\\1)?/i', $match[2], $_match)) {
+						if (in_array($tag, array('table', 'ol', 'ul', 'dl'))) {
+							$_pos = 'pre';
+						} else {
+							$_pos = 'add';
+						}
+						$$_pos = '<a id="' . $_match[2] . '"></a>';
+					}
+				}
+				$match[2] = rtrim(preg_replace('/ id=[\'"][^\'"]*[\'"]/', '', $match[2]));
+			}
+			if (! in_array($tag, array('textarea', 'input', 'select'))) {
+				$match[2] = rtrim(preg_replace('/ name=[\'"][^\'"]*[\'"]/', '', $match[2]));
+			}
+		} else {
+			if (strpos($match[2], ' name=') === FALSE && strpos($match[2], ' id=') !== FALSE) {
+				if ($tag === 'a') {
+					$match[2] = str_replace(' id=', ' name=', $match[2]);
+				} else if (! in_array($tag, array('textarea', 'tr', 'thead', 'tfoot', 'tbody'))) {
+					if (preg_match('/ id=(\'|")?([^\'"]+)(?:\\1)?/i', $match[2], $_match)) {
+						if (in_array($tag, array('table', 'ol', 'ul', 'dl'))) {
+							$_pos = 'pre';
+						} else {
+							$_pos = 'add';
+						}
+						$$_pos = '<a name="' . $_match[2] . '"></a>';
+					}
+				}
+			}
+			$match[2] = rtrim(preg_replace('/ id=[\'"][^\'"]*[\'"]/', '', $match[2]));
 		}
-		$match[2] = rtrim(preg_replace('/ id=[\'"][^\'"]*[\'"]/', '', $match[2]));
-		return '<' . $match[1] . $match[2] . '>' . $add;
+		return $pre . '<' . $match[1] . $match[2] . '>' . $add;
 	}
 	
 	function _href_give_session_id ($match) {
 		
-		$url = $match[3];
+		static $session_name = NULL;
 		
+		if (is_null($session_name)) {
+			$session_name = session_name();
+		}
+		$url = $match[3];
+		$ext_icon = '';
 		// Url rewrite
 		if (! empty($this->Config_urlRewrites['regex']) && ! empty($this->Config_urlRewrites['tostr'])) {
 			$url = preg_replace($this->Config_urlRewrites['regex'], $this->Config_urlRewrites['tostr'], $url);
@@ -700,19 +781,17 @@ class HypKTaiRender
 			$parsed_url['host'] = $parsed_base['host'];
 		}
 		if (empty($parsed_url['host']) || ($parsed_url['host'] === $parsed_base['host'] && $parsed_url['scheme'] === $parsed_base['scheme'])) {
-			$url = preg_replace('/(?:\?|&(?:amp;)?)' . preg_quote(session_name(), '/') . '=[^&#>]+/', '', $url);
-			//$url = preg_replace('/(?:\?|&(?:amp;)?)' . preg_quote($this->hashkey, '/') . '=[^&#>]+/', '', $url);
+			$url = preg_replace('/(?:\?|&(?:amp;)?)' . $session_name . '=[^&#>]+/', '', $url);
 			
 			list($href, $hash) = array_pad(explode('#', $url, 2), 2, '');
 			
 			if (!$href) {
 				$href = isset($_SERVER['QUERY_STRING'])? '?' . $_SERVER['QUERY_STRING'] : '';
-				$href = preg_replace('/(?:\?|&(?:amp;)?)' . preg_quote(session_name(), '/') . '=[^&]+/', '', $href);
-				//$href = preg_replace('/(?:\?|&(?:amp;)?)' . preg_quote($this->hashkey, '/') . '=[^&]+/', '', $href);
+				$href = preg_replace('/(?:\?|&(?:amp;)?)' . $session_name . '=[^&]+/', '', $href);
 			};
 
 			$add = array();
-			if (defined('SID') && SID && empty($_COOKIE) && ! $this->vars['ua']['isBot']) {
+			if (defined('SID') && SID && empty($_COOKIE[$session_name]) && ! $this->vars['ua']['isBot']) {
 				$add[] = SID;
 			}
 			if ($hash) {
@@ -726,8 +805,9 @@ class HypKTaiRender
 			if (!preg_match($hostsReg, $parsed_url['host'])) {
 				$url =($this->Config_redirect? $this->Config_redirect : $this->myRoot . '/redirect.php?l=') . rawurlencode(str_replace('&amp;', '&', $url));
 			}
+			$ext_icon = $this->Config_icons['extLink'];
 		}
-		return $match[1] . $url . (isset($match[4])? $match[4] : '');
+		return $ext_icon . $match[1] . $url . (isset($match[4])? $match[4] : '');
 	}
 	
 	function _html_check_img_src ($match) {
@@ -748,13 +828,35 @@ class HypKTaiRender
 		if (empty($parsed_url['host'])
 		 || ($parsed_url['host'] === $parsed_base['host'] && $parsed_url['scheme'] === $parsed_base['scheme'])
 		 || preg_match($hostsReg, $parsed_url['host'])) {
-			return $match[0];
+			if (($this->vars['ua']['carrier'] === 'docomo' && ! preg_match('/\.(?:gif|jpe?g)$/i', $url))
+				|| ! preg_match('/\.(?:gif|jpe?g|png)$/i', $url)
+			) {
+				if (! $parsed_url['host']) {
+					if ($url[0] === '/') {
+						$url = $this->myRoot . $url;
+					} else {
+						$base = preg_replace('#/[^/]*$#', '',$_SERVER['REQUEST_URI']);
+						$pices = explode('/', $base);
+						if (strpos($url, '../') === 0) {
+							$count = substr_count($url, '../');
+							$url = $this->myRoot . join('/', array_slice($pices, $count + 1)) . substr($url, $count * 3 - 1);
+						} else if (strpos($url, './') === 0) {
+							$url = $this->myRoot . $base . substr($url, 1);
+						} else {
+							$url = $this->myRoot . $base . '/' . $url;
+						}
+					}
+				}
+				return $match[1] . ' src="/class/hyp_common/gate.php?way=imgconv&amp;m=i2g&amp;u=' . rawurlencode(str_replace('&amp;', '&', $url)) . '"' . $match[5] . (isset($match[6])? $match[6] : '');
+			} else {
+				return $match[0];
+			}
 		} else {
 			if ($type === 'input') {
 				return str_replace('image', 'submit', $match[1] . $match[5]) . (isset($match[6])? $match[6] : '');
 			} else {
 				if (! isset($match[6])) {
-					return "\x08" . ' href="' . $url . '">[ PIC ]</a>';
+					return "\x08" . ' href="' . $url . '">[PIC]</a>';
 				} else {
 					return htmlspecialchars($parsed_url['host']) . $match[6];
 				}

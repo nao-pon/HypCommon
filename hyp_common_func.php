@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.44 2008/07/20 07:08:00 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.45 2008/07/29 14:35:40 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -263,7 +263,63 @@ EOF;
 			return "EUC-JP,UTF-8,Shift_JIS,JIS";
 		}
 	}
-
+	
+	function img2gif($file) {
+		$size = @ getimagesize($file);
+		if (! $size) return FALSE;
+		$src_im = FALSE;
+		switch($size[2]) {
+			case IMAGETYPE_PNG:
+				if (function_exists('imagecreatefrompng')) $src_im = @ imagecreatefrompng($file);
+				break;
+			case IMAGETYPE_JPEG:
+				if (function_exists('imagecreatefromjpeg')) $src_im = @ imagecreatefromjpeg($file);
+				break;
+		}
+		if (! $src_im) return FALSE;
+		
+		//GD のバージョンを取得
+		static $gd_ver = null;
+		if (is_null($gd_ver))
+		{
+			$gd_ver = HypCommonFunc::gdVersion();
+		}
+		
+		// gd fuction のチェック
+		if ($gd_ver < 1 || !function_exists("imagecreate")) return FALSE;//gdをサポートしていない
+		
+		// gd のバージョンによる関数名の定義
+		$imagecreate = ($gd_ver >= 2)? "imagecreatetruecolor" : "imagecreate";
+		$imageresize = ($gd_ver >= 2)? "imagecopyresampled" : "imagecopyresized";
+		
+		$width = $size[0];
+		$height = $size[1];
+		
+		if (imagecolorstotal($src_im)) {
+			// PaletteColor
+			$colortransparent = imagecolortransparent($src_im);
+			if ($colortransparent > -1) {
+				// 透過色あり
+				$dst_im = imagecreate($width,$height);
+				imagepalettecopy ($dst_im, $src_im);
+				imagefill($dst_im,0,0,$colortransparent);
+				imagecolortransparent($dst_im, $colortransparent);
+				imagecopyresized($dst_im,$src_im,0,0,0,0,$width,$height,$width,$height);
+			} else {
+				// 透過色なし
+				$dst_im = $imagecreate($width,$height);
+				$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$width,$height);
+				if (function_exists('imagetruecolortopalette')) imagetruecolortopalette ($dst_im, false, imagecolorstotal($src_im));
+			}
+		} else {
+			// TrueColor
+			$dst_im = $imagecreate($width,$height);
+			$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$width,$height);
+		}
+		imagegif($dst_im, $file);
+		return TRUE;
+	}
+	
 	// サムネイル画像を作成。
 	// 成功ならサムネイルのファイルのパス、不成功なら元ファイルパスを返す
 	function make_thumb($o_file, $s_file, $max_width, $max_height, $zoom_limit="1,95", $refresh=FALSE, $quality=75)
@@ -1017,6 +1073,20 @@ EOF;
 		}
 	}
 	
+	// Input フィルター
+	function input_filter($param) {
+		if (is_array($param)) {
+			foreach ($param as $key => $val) {
+				$param[$key] = HypCommonFunc::input_filter($val);
+			}
+			return $param;
+		} else {
+			$removes = array("\0", '&#8203;');
+			$result = str_replace($removes, '', $param);
+			return $result;
+		}
+	}
+	
 	// 機種依存文字フィルター
 	function dependence_filter($post)
 	{
@@ -1274,7 +1344,7 @@ EOF;
 	}
 
 	function html_wordwrap(& $html, $num = 36, $sep = '&#8203;') {
-		$html = preg_replace_callback('/(<(script|textarea|style|option|pre).*?<\/\\2>|<[^>]*>)|((?>&#?[a-z0-9]+;|[!=\x23-\x3b\x3f-\x7e]){'.$num.'})/isS',
+		$html = preg_replace_callback('/(<(script|textarea|style|option|pre).*?<\/\\2>|<[^>]*>)|((?>&#?[a-z0-9]+;|\(\((?:e|i|s):[0-9a-f]{4}\)\)|[!=\x23-\x3b\x3f-\x7e]){'.$num.'})/isS',
 		create_function('$arg',
 			'if ($arg[1]) { return $arg[1]; } else { return $arg[3] . "'.$sep.'";}'
 		),$html);
