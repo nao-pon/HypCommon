@@ -204,6 +204,24 @@ class MPC_Common
     function _decodeModKtai($match)
     {
         if ($match[1]) {
+            if ($this->to !== 'COMMON' && strtolower(substr($match[1], 0, 9)) === '<textarea') {
+            	$carrier = '';
+            	switch($this->to) {
+            		case MPC_TO_FOMA:
+            			$carrier = MPC_FROM_FOMA;
+            			break;
+            		case MPC_TO_EZWEB:
+            			$carrier = MPC_FROM_EZWEB;
+            			break;
+            		case MPC_TO_SOFTBANK:
+            			$carrier = MPC_FROM_SOFTBANK;
+            			break;
+            	}
+            	if ($carrier) {
+            		$mpc = MobilePictogramConverter::factory($match[1], $carrier, $this->from_charset, MPC_FROM_OPTION_MODKTAI);
+            		return $mpc->autoConvert();
+            	}
+            }
             return $match[0];
         }
         $mode = $match[2];

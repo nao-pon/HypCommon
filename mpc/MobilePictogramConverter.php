@@ -85,7 +85,7 @@ class MobilePictogramConverter
         return $mpc;
     }
     
-    function &factory_common()
+    function &factory_common($charset = MPC_FROM_CHARSET_SJIS)
     {
         $filepath = dirname(__FILE__).'/Carrier/common.php';
         if (file_exists($filepath) == false) {
@@ -96,7 +96,7 @@ class MobilePictogramConverter
         require_once($filepath);
         
         $mpc =& new MPC_Common();
-        $mpc->setFromCharset(MPC_FROM_CHARSET_SJIS);
+        $mpc->setFromCharset($charset);
 
         if (is_object($mpc) == false) {
             die($mpc);

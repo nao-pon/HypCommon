@@ -55,7 +55,7 @@ class MPC_SoftBank extends MPC_Common
         
         // RAW‚Ö•ÏŠ·
         if ($type === MPC_FROM_OPTION_MODKTAI) {
-            $str  = preg_replace($this->getRegex($type), 'pack("H*", "1B24".$1."0F")', $str);
+            $str  = preg_replace($this->getRegex($type), 'pack("H*", "1B24"."$1"."0F")', $str);
         } else {
             if ($type != MPC_FROM_OPTION_RAW && $type != MPC_FROM_OPTION_WEB) {
                 $regex = str_replace('{PATH}', preg_quote(rtrim($this->getSoftBankImagePath(), '/'), '/'), $this->getRegex($type));
