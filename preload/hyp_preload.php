@@ -656,6 +656,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		
 		header('Content-Type: ' . $ctype . '; charset=Shift_JIS');
 		header('Content-Length: ' . strlen($s));
+		header('Cache-Control: no-cache');
 		
 		return $s;
 	}
