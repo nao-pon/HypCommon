@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.11 2008/07/29 14:35:40 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.12 2008/07/31 07:31:24 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -133,6 +133,31 @@ class HypKTaiRender
 		$pnum = empty($_GET[$this->pagekey])? 0 : intval($_GET[$this->pagekey]);
 		
 		$extra_len = strlen($header . $footer);
+
+		// タグを小文字に統一
+		$body = preg_replace('#</?[a-zA-Z]+#eS', 'strtolower("$0")', $body);
+		
+		// <table>を正規化
+		// 入れ子テーブルを展開
+		$args = preg_split('#(<table(?:.(?!<table))+?</table>)#sS', $body, -1, PREG_SPLIT_DELIM_CAPTURE);
+		$body = '';
+		foreach($args as $val) {
+			if (! preg_match('#^<table.+?/table>$#sS', $val)) {
+				$val = preg_replace('#(</?)(?:t(?:able|r|h))[^>]*?>#S', '$1div>', $val);
+				$val = preg_replace('#</td>#S', ' ', $val);
+				$val = preg_replace('#</?(?:col|t(?:d|body|head|foot))[^>]*?>#S', '', $val);
+			} else {
+				// remove tag attribute
+				$val = str_replace('\\"', "\x08", $val);
+				$reg = '#(<[^>]+?)\s+(?:align|width)=(?:\'[^\']*\'|"[^"\x08]*")([^>]*>)#iS';
+				while(preg_match($reg, $val)) {
+					$val = preg_replace($reg, '$1$2', $val);
+				}
+				$val = str_replace("\x08", '\\"', $val);
+			}
+			$body .= $val;
+		}
+
 		if ($this->maxSize && (strlen($body) + $extra_len) > $this->maxSize) {
 			
 			$margin = 200;
