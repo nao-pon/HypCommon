@@ -131,7 +131,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$this->encode = strtoupper(_CHARSET);
 		
 		// 設定ファイルのエンコーディングを検査
-		if ($this->encode !== strtoupper($this->configEncoding)) {
+		if ($this->encode !== 'UTF-8' && $this->encode !== strtoupper($this->configEncoding)) {
 			$this->encodehint_word = '';
 		}
 		
@@ -441,7 +441,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		
 		if ($s === '' || strpos($s, '<html') === FALSE) return $s;
 		
-		return HypGetQueryWord::word_highlight($s, constant($this->q_word2), _CHARSET, $this->msg_words_highlight);
+		if (function_exists('mb_convert_encoding') && $this->configEncoding && $this->encode !== $this->configEncoding) {
+			$this->msg_words_highlight = mb_convert_encoding($this->msg_words_highlight, $this->encode, $this->configEncoding);
+		}
+		return HypGetQueryWord::word_highlight($s, constant($this->q_word2), $this->encode, $this->msg_words_highlight);
 	}
 
 	function formFilter( $s ) {
@@ -449,7 +452,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if ($s === '' || strpos($s, '<html') === FALSE) return $s;
 		
 		$insert = '';
-		$this->encode = _CHARSET;
 		
 		// スパムロボット用の罠を仕掛ける
 		if (! empty($this->post_spam_trap_set) && (! defined('HYP_K_TAI_RENDER') || ! HYP_K_TAI_RENDER)) {
@@ -478,6 +480,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		
 		$rebuilds = $this->k_tai_conf['rebuilds'];
 		
+		// $this->k_tai_conf['msg'] 文字コード変換
+		if (function_exists('mb_convert_encoding') && $this->configEncoding && $this->encode !== $this->configEncoding) {
+			mb_convert_variables($this->encode, $this->configEncoding, $this->k_tai_conf['msg']);
+		}
+		
 		// テンプレート読み込み
 		if ($rebuilds && $this->k_tai_conf['template']) {
 			$templates_dir = dirname(dirname( __FILE__ )) . '/ktairender/templates/' . $this->k_tai_conf['template']  . '/';
@@ -494,7 +501,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			HypCommonFunc::loadClass('HypRss2Html');
 			$r = new HypRss2Html($s);
 			$s = $r->getHtml();
-			$s = mb_convert_encoding($s, _CHARSET, $r->encoding);
+			$s = mb_convert_encoding($s, $this->encode, $r->encoding);
 		}
 		
 		// preg_match では、サイズが大きいページで正常処理できないことがあるので。
