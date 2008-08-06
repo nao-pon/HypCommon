@@ -581,8 +581,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			return $s;
 		}
 
-		$xhtml = TRUE;
-
 		if ($head) {
 			// Check RSS
 			$rss = array();
@@ -635,7 +633,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$r->Config_showImgHosts = $this->k_tai_conf['showImgHosts'];
 		$r->Config_directLinkHosts = $this->k_tai_conf['directLinkHosts'];
 		
-		$r->Config_imageConvert = TRUE;
 		$r->Config_rootPath = XOOPS_ROOT_PATH;
 		$r->Config_rootUrl = XOOPS_URL;
 		
@@ -643,18 +640,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$r->contents['body'] = $body;
 		$r->contents['footer'] = $footer;
 		
-		if ($xhtml) {
-			$r->outputMode = 'xhtml';
-		}
+		$r->outputMode = 'xhtml';
+		$r->langcode = _LANGCODE;
 		
 		$r->doOptimize();
 		
-		if ($xhtml) {
-			$s = '<?xml version="1.0" encoding="Shift_JIS"?><html>';
-		} else {
-			$s = '<html>';
-		}
-		$s .= $head . '<body>' . $r->outputBody . '</body></html>';
+		$s = $r->getHtmlDeclaration() . $head . '<body>' . $r->outputBody . '</body></html>';
 		
 		$ctype = $r->getOutputContentType();
 
