@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.13 2008/08/06 00:02:53 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.14 2008/08/07 04:40:23 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -361,7 +361,7 @@ class HypKTaiRender
 		$body = str_replace($pat, $rep, $body);
 
 		// Remove empty elements
-		$body = preg_replace('#<([bipqsu]|[a-z]{2,})(?: [^>]+)?></\\1>#', '', $body);
+		$body = preg_replace('#<([bipqsu]|(?!textarea|td)[a-z]{2,})(?: [^>]+)?></\\1>#', '', $body);
 		
 		$body = $this->html_give_session_id($body);
 
