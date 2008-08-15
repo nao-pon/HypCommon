@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.14 2008/08/07 04:40:23 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.15 2008/08/15 02:13:54 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -41,6 +41,8 @@ class HypKTaiRender
 	var $Config_emojiDir = '';
 	var $Config_icons = array();
 	var $Config_imageConvert = FALSE;
+	var $Config_encodeHintName = 'HypEncHint';
+	var $Config_encodeHintWord = '';
 	
 	function HypKTaiRender () {
 		$this->SERVER = $_SERVER;
@@ -281,13 +283,21 @@ class HypKTaiRender
 
 	// HTML を携帯端末用にシェイプアップする
 	function html_diet_for_hp ($body) {
-		// 半角カナに変換
+	// 半角カナに変換
 		if (function_exists('mb_convert_kana')) {
 			$body = preg_replace_callback('/(^|<textarea.+?\/textarea>|<pre.+?\/pre>|<[^>]*>)(.*?)(?=<textarea.+?\/textarea>|<pre.+?\/pre>|<[^>]*>|$)/sS',
 				create_function(
 					'$match',
 					'return $match[1] . mb_convert_kana(preg_replace(\'/[\s]+/\',\' \',str_replace(array("\r\n","\r","\n"),\'\',$match[2])), \'knr\', \''.$this->inputEncode.'\');'
 				), $body);
+		}
+
+		// Hint character for encoding judgment
+		if (! empty($this->Config_encodeHintWord)) {
+			$body = preg_replace('/<form[^>]+?>/isS',
+				'$0' . 
+				'<input name="' . $this->Config_encodeHintName . '" type="hidden" value="' . $this->Config_encodeHintWord . '"/>',
+				$body);
 		}
 
 		//// Remove etc.
