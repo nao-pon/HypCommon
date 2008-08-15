@@ -87,6 +87,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				$this->HypKTaiRender = new HypKTaiRender();
 				$this->HypKTaiRender->set_myRoot(XOOPS_URL);
 				$this->HypKTaiRender->Config_emojiDir = XOOPS_URL . '/images/emoji';
+				if (! empty($_POST) && empty($_SERVER['HTTP_REFERER'])) {
+					if (! empty($this->k_tai_conf['noCheckIpRange']) || $this->HypKTaiRender->checkIp($_SERVER['REMOTE_ADDR'], $this->HypKTaiRender->vars['ua']['carrier'])) {
+						$_SERVER['HTTP_REFERER'] = XOOPS_URL . '/';
+					}
+				}
 			} else {
 				define('HYP_K_TAI_RENDER', FALSE);
 			}
@@ -279,17 +284,28 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					$this->mRoot->mContext->setThemeName($this->k_tai_conf['themeSet']);
 				}
 			}
+			// Hint character for encoding judgment
+			if (! empty($this->encodehint_word)) {
+				if (function_exists('mb_convert_encoding') && $this->configEncoding && $this->encode !== $this->configEncoding) {
+					$encodehint_word = mb_convert_encoding($this->encodehint_word, $this->encode, $this->configEncoding);
+				} else {
+					$encodehint_word = $this->encodehint_word;
+				}
+				$this->HypKTaiRender->Config_encodeHintWord = $encodehint_word;
+				$this->HypKTaiRender->Config_encodeHintName = $this->encodehint_name;
+				$this->encodehint_word = '';
+			}
 			// keitai Filter
 			ob_start(array(&$this, 'keitaiFilter'));
-		} else if (! empty($this->use_k_tai_render)) {
-			ob_start(array(&$this, 'emojiFilter'));
+		} else {
+			// <from> Filter
+			ob_start(array(&$this, 'formFilter'));
+			// emoji Filter
+			if (! empty($this->use_k_tai_render)) {
+				ob_start(array(&$this, 'emojiFilter'));
+			}
 		}
 		
-		// <from> Filter
-		if (! empty($this->encodehint_word) || ! empty($this->post_spam_trap_set)) {
-			ob_start(array(&$this, 'formFilter'));
-		}
-
 		// Set Query Words
 		if ($this->use_set_query_words) {
 			HypCommonFunc::set_query_words($this->q_word, $this->q_word2, $this->se_name, $this->kakasi_cache_dir, $this->encode);
@@ -454,7 +470,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$insert = '';
 		
 		// スパムロボット用の罠を仕掛ける
-		if (! empty($this->post_spam_trap_set) && (! defined('HYP_K_TAI_RENDER') || ! HYP_K_TAI_RENDER)) {
+		if (! empty($this->post_spam_trap_set)) {
 			$insert .= "\n<input name=\"{$this->post_spam_trap}\" type=\"text\" size=\"1\" style=\"display:none;speak:none;\" />";
 		}
 		// エンコーディング判定用ヒント文字
