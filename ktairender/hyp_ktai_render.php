@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.15 2008/08/15 02:13:54 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.16 2008/08/17 23:56:42 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -283,7 +283,7 @@ class HypKTaiRender
 
 	// HTML を携帯端末用にシェイプアップする
 	function html_diet_for_hp ($body) {
-	// 半角カナに変換
+		// 半角カナに変換
 		if (function_exists('mb_convert_kana')) {
 			$body = preg_replace_callback('/(^|<textarea.+?\/textarea>|<pre.+?\/pre>|<[^>]*>)(.*?)(?=<textarea.+?\/textarea>|<pre.+?\/pre>|<[^>]*>|$)/sS',
 				create_function(
@@ -291,6 +291,14 @@ class HypKTaiRender
 					'return $match[1] . mb_convert_kana(preg_replace(\'/[\s]+/\',\' \',str_replace(array("\r\n","\r","\n"),\'\',$match[2])), \'knr\', \''.$this->inputEncode.'\');'
 				), $body);
 		}
+
+		// Is <form> action anchor only?
+		$body = preg_replace_callback('#(<form[^>]*?\baction=([\'"])?)([^\s"\'>]+)((?:\\2)?)#isS',
+			create_function(
+				'$match',
+				'if ($match[3][0] !== \'#\') return $match[0];
+				return $match[1] . preg_replace(\'/#.*$/\', \'\', \'' . $this->SERVER['REQUEST_URI'] . '\') . (($match[3] !== \'#\')? $match[3] : \'\') . $match[4];'
+			), $body);
 
 		// Hint character for encoding judgment
 		if (! empty($this->Config_encodeHintWord)) {
