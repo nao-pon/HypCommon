@@ -103,8 +103,11 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			                          'below' => ' ]</div>'),
 		);
 
-		// 携帯用テーマセット
+		// 携帯用XOOPSテーマセット
 		$this->k_tai_conf['themeSet'] = 'ktai_default';
+		
+		// 携帯用XOOPSテンプレートセット
+		$this->k_tai_conf['templateSet'] = '';
 		
 		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';
