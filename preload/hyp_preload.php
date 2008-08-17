@@ -57,7 +57,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	var $q_word;               // 検索ワード
 	var $q_word2;              // 検索ワード分かち書き
 	var $se_name;              // 検索元名
-	var $kakasi_cache_dir;   
+	var $kakasi_cache_dir;
+	
+	var $wizMobileUse = FALSE;
 	
 	// コンストラクタ
 	function HypCommonPreLoadBase (& $controller) {
@@ -112,10 +114,16 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 
 			// Set theme set
-			if (isset($this->k_tai_conf['themeSet']) && file_exists(XOOPS_THEME_PATH . '/' . $this->k_tai_conf['themeSet'] . '/theme.html')) {
+			if (isset($this->k_tai_conf['themeSet']) && is_file(XOOPS_THEME_PATH . '/' . $this->k_tai_conf['themeSet'] . '/theme.html')) {
 				$GLOBALS['xoopsConfig']['theme_set'] = $this->k_tai_conf['themeSet'];
 				$this->mRoot->mContext->setThemeName($this->k_tai_conf['themeSet']);
 				$this->mRoot->mDelegateManager->add( 'XoopsTpl.New' , array(& $this , '_xoopsConfig_theme_set' ) , XCUBE_DELEGATE_PRIORITY_FIRST) ;
+			}
+
+			// Set template set
+			if (! empty($this->k_tai_conf['templateSet'])) {
+				$GLOBALS['xoopsConfig']['template_set'] = $this->k_tai_conf['templateSet'];
+				$this->mRoot->mDelegateManager->add( 'XoopsTpl.New' , array(& $this , '_xoopsConfig_template_set' ) , XCUBE_DELEGATE_PRIORITY_FIRST) ;
 			}
 
 	        // For cubeUtils (disable auto login)
@@ -131,7 +139,19 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$GLOBALS['xoopsConfig']['theme_set'] = $this->k_tai_conf['themeSet'];
 	}
 	
+	function _xoopsConfig_template_set () {
+		$GLOBALS['xoopsConfig']['template_set'] = $this->k_tai_conf['templateSet'];
+	}
+
+	
 	function postFilter() {
+		// For WizMobile
+		if (class_exists('WizMobile')) {
+			$wizMobile =& WizMobile::getSingleton();
+			$user = & Wizin_User::getSingleton();
+			$this->wizMobileUse = $user->bIsMobile;
+		}
+
 		// XOOPS の表示文字エンコーディング
 		$this->encode = strtoupper(_CHARSET);
 		
@@ -209,13 +229,13 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				
 				// PukiWikiMod のスパム定義読み込み 31pt
 				$datfile = XOOPS_ROOT_PATH.'/modules/pukiwiki/cache/spamdeny.dat';
-				if (file_exists($datfile)) {
+				if (is_file($datfile)) {
 					HypCommonFunc::PostSpam_filter("/".trim(join("",file($datfile)))."/i", 31);
 				}
 				
 				// Default スパムサイト定義読み込み
 				$datfile = dirname(dirname(__FILE__)) . '/spamsites.dat';
-				if (file_exists($datfile)) {
+				if (is_file($datfile)) {
 					$cachefile = XOOPS_TRUST_PATH . '/cache/hyp_spamsites.dat';
 					if (filemtime($datfile) > @ filemtime($cachefile)) {
 						$regs = HypCommonFunc::get_reg_pattern(array_map('trim',file($datfile)));
@@ -236,7 +256,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 				// Default スパムワード定義読み込み
 				$datfile = dirname(dirname(__FILE__)) . '/spamwords.dat';
-				if (file_exists($datfile)) {
+				if (is_file($datfile)) {
 					$cachefile = XOOPS_TRUST_PATH . '/cache/hyp_spamwords.dat';
 					if (filemtime($datfile) > @ filemtime($cachefile)) {
 						$regs = HypCommonFunc::get_reg_pattern(array_map('trim',file($datfile)));
@@ -277,12 +297,16 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			// Check login
 			$this->_checkEasyLogin();
 			// Set theme set
-			if (isset($this->k_tai_conf['themeSet']) && file_exists(XOOPS_THEME_PATH . '/' . $this->k_tai_conf['themeSet'] . '/theme.html')) {
+			if (isset($this->k_tai_conf['themeSet']) && is_file(XOOPS_THEME_PATH . '/' . $this->k_tai_conf['themeSet'] . '/theme.html')) {
 				$GLOBALS['xoopsConfig']['theme_set'] = $this->k_tai_conf['themeSet'];
 				if (defined('XOOPS_CUBE_LEGACY')) {
 					// Over write user setting
 					$this->mRoot->mContext->setThemeName($this->k_tai_conf['themeSet']);
 				}
+			}
+			// Set template set
+			if (! empty($this->k_tai_conf['templateSet'])) {
+				$GLOBALS['xoopsConfig']['template_set'] = $this->k_tai_conf['templateSet'];
 			}
 			// Hint character for encoding judgment
 			if (! empty($this->encodehint_word)) {
@@ -296,13 +320,15 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				$this->encodehint_word = '';
 			}
 			// keitai Filter
-			ob_start(array(&$this, 'keitaiFilter'));
+			ob_start(array(& $this, 'keitaiFilter'));
 		} else {
 			// <from> Filter
-			ob_start(array(&$this, 'formFilter'));
+			if (! $this->wizMobileUse) {
+				ob_start(array(& $this, 'formFilter'));
+			}
 			// emoji Filter
 			if (! empty($this->use_k_tai_render)) {
-				ob_start(array(&$this, 'emojiFilter'));
+				ob_start(array(& $this, 'emojiFilter'));
 			}
 		}
 		
@@ -310,7 +336,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if ($this->use_set_query_words) {
 			HypCommonFunc::set_query_words($this->q_word, $this->q_word2, $this->se_name, $this->kakasi_cache_dir, $this->encode);
 			if ($this->use_words_highlight) {
-				ob_start(array(&$this, 'obFilter'));
+				ob_start(array(& $this, 'obFilter'));
 			}
 		}
 	}
@@ -337,7 +363,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			// Read data file
 			$myroot = str_replace('/', '_', preg_replace('#https?://#i', '', XOOPS_URL));
 			$datfile = XOOPS_TRUST_PATH . '/cache/' . $myroot . '_easylogin.dat';
-			if (file_exists($datfile)) {
+			if (is_file($datfile)) {
 				$uids = unserialize(HypCommonFunc::flock_get_contents($datfile));
 			} else {
 				$uids = array();
@@ -505,7 +531,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if ($rebuilds && $this->k_tai_conf['template']) {
 			$templates_dir = dirname(dirname( __FILE__ )) . '/ktairender/templates/' . $this->k_tai_conf['template']  . '/';
 			foreach(array('header', 'body', 'footer') as $_name) {
-				if (file_exists( $templates_dir . $_name . '.html' )) {
+				if (is_file( $templates_dir . $_name . '.html' )) {
 					$var_name = $_name . '_template';
 					$$var_name = file_get_contents( $templates_dir . $_name . '.html' );
 				}
@@ -752,9 +778,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 }
 
-if (file_exists(XOOPS_ROOT_PATH.'/class/hyp_common/hyp_preload.conf.php')) {
+if (is_file(XOOPS_ROOT_PATH.'/class/hyp_common/hyp_preload.conf.php')) {
 	include_once(XOOPS_ROOT_PATH.'/class/hyp_common/hyp_preload.conf.php');
-} else if (file_exists(dirname(__FILE__).'/hyp_preload.conf.php')) {
+} else if (is_file(dirname(__FILE__).'/hyp_preload.conf.php')) {
 	include_once(dirname(__FILE__).'/hyp_preload.conf.php');
 }
 
@@ -854,9 +880,12 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			                          'below' => ' ]</div>'),
 		);
 		
-		// 携帯用テーマセット
+		// 携帯用XOOPSテーマセット
 		$this->k_tai_conf['themeSet'] = 'ktai_default';
-
+		
+		// 携帯用XOOPSテンプレートセット
+		$this->k_tai_conf['templateSet'] = '';
+		
 		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';
 		
