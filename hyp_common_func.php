@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.46 2008/08/20 04:26:12 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.47 2008/08/20 12:33:25 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -265,11 +265,10 @@ EOF;
 	}
 	
 	// 携帯用に画像を(リサイズして)変換する
-	function img4ktai($file, $maxsize = 128, $png = FALSE) {
+	function img4ktai($file, $maxsize = 128, $allowpng = FALSE, $allconvert = FALSE) {
 		//GD のバージョンを取得
 		static $gd_ver = null;
-		if (is_null($gd_ver))
-		{
+		if (is_null($gd_ver)) {
 			$gd_ver = HypCommonFunc::gdVersion();
 		}
 		
@@ -285,15 +284,15 @@ EOF;
 		// Image type
 		$imgtype = $size[2];
 		$allowtypes = array(IMAGETYPE_GIF, IMAGETYPE_JPEG);
-		if ($png) $allowtypes[] = IMAGETYPE_PNG;
+		if ($allowpng) $allowtypes[] = IMAGETYPE_PNG;
 		
 		// JPEG以外はファイルサイズが大きければとりあえず変換する ( > 10k)
 		if ($imgtype !== IMAGETYPE_JPEG && filesize($file) > 10240) {
-			$resized = TRUE;
+			$allconvert = TRUE;
 		}
 		
 		// リサイズされなかったなら変換しない
-		if (! $resized && in_array($imgtype, $allowtypes)) return FALSE;
+		if (! $allconvert && ! $resized && in_array($imgtype, $allowtypes)) return FALSE;
 		
 		$src_im = @ imagecreatefromstring(file_get_contents($file));
 		if (! $src_im) return FALSE;
@@ -335,7 +334,7 @@ EOF;
 		if ($imgtype !== IMAGETYPE_JPEG) {
 			// GIF or PNG で保存してサイズ比較
 			$temp = tempnam(dirname($file), 'i4k');
-			if ($png && $imgtype === IMAGETYPE_PNG) {
+			if ($allowpng && $imgtype === IMAGETYPE_PNG) {
 				imagepng($dst_im, $temp);
 			} else {
 				imagegif($dst_im, $temp);
