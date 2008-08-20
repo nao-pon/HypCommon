@@ -2,7 +2,7 @@
 /*
  * Created on 2008/07/24 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: imgconv.php,v 1.2 2008/08/20 04:26:12 nao-pon Exp $
+ * $Id: imgconv.php,v 1.3 2008/08/20 12:33:24 nao-pon Exp $
  */
 
 $url = (isset($_GET['u']))? $_GET['u'] : '';
@@ -57,8 +57,8 @@ switch($mode) {
 					header('Location: ' . $url);
 					exit();
 				}
-		
-				if (HypCommonFunc::img4ktai($file, $maxsize, $png)) {
+				$notImageHeader = (! preg_match('#^Content-Type: *image/(?:gif|jpeg|png)#mi', $h->header));
+				if (HypCommonFunc::img4ktai($file, $maxsize, $png, $notImageHeader)) {
 					$size = getimagesize($file);
 					if (isset($size['mime'])) {
 						$mime = $size['mime'];
