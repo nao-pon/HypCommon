@@ -2,25 +2,38 @@
 /*
  * Created on 2008/07/24 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: imgconv.php,v 1.1 2008/07/29 14:35:40 nao-pon Exp $
+ * $Id: imgconv.php,v 1.2 2008/08/20 04:26:12 nao-pon Exp $
  */
 
 $url = (isset($_GET['u']))? $_GET['u'] : '';
 $mode = (isset($_GET['m']))? $_GET['m'] : '';
+$maxsize = (isset($_GET['s']))? intval($_GET['s']) : 0;
+$png = (isset($_GET['p']))? 1 : 0;
+if (! $maxsize) $maxsize = 200;
 
 switch($mode) {
-	case 'i2g':
+	case 'i4k':
+		$maxage = 86400; // TTL 1day
 		if ($url) {
 			$TTL = 10 * 3600; // 10days
 			if (isset($_GET['c'])) $TTL = 0;
 			
-			$basename = md5($url) . '.gif';
+			$basename = md5(join("\t", array($url, $maxsize, $png))) . '.i4k';
 			$file = $cachepath . '/' .  $basename;
 			
-			if (file_exists($file) && filemtime($file) + $TTL > time()) {
+			if (is_file($file) && filemtime($file) + $TTL > time()) {
 				if (filesize($file)) {
-					header('Location: ' . $cacheurl . '/' .  $basename);
+					$size = getimagesize($file);
+					if (isset($size['mime'])) {
+						$mime = $size['mime'];
+					}
+					header('Content-Type: ' . $mime);
+					header('Content-Length: ' . filesize($file));
+					header('Cache-Control:max-age=' . $maxage);
+					readfile($file);
+					exit();
 				} else {
+					header('HTTP/1.1 301 Moved Permanently');
 					header('Location: ' . $url);
 				}
 				exit();
@@ -45,10 +58,14 @@ switch($mode) {
 					exit();
 				}
 		
-				if (HypCommonFunc::img2gif($file)) {
-					clearstatcache();
-					header('Content-Type: image/gif');
+				if (HypCommonFunc::img4ktai($file, $maxsize, $png)) {
+					$size = getimagesize($file);
+					if (isset($size['mime'])) {
+						$mime = $size['mime'];
+					}
+					header('Content-Type: ' . $mime);
 					header('Content-Length: ' . filesize($file));
+					header('Cache-Control:max-age=' . $maxage);
 					readfile($file);
 					exit();
 				}

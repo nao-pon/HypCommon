@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.45 2008/07/29 14:35:40 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.46 2008/08/20 04:26:12 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -264,20 +264,8 @@ EOF;
 		}
 	}
 	
-	function img2gif($file) {
-		$size = @ getimagesize($file);
-		if (! $size) return FALSE;
-		$src_im = FALSE;
-		switch($size[2]) {
-			case IMAGETYPE_PNG:
-				if (function_exists('imagecreatefrompng')) $src_im = @ imagecreatefrompng($file);
-				break;
-			case IMAGETYPE_JPEG:
-				if (function_exists('imagecreatefromjpeg')) $src_im = @ imagecreatefromjpeg($file);
-				break;
-		}
-		if (! $src_im) return FALSE;
-		
+	// 携帯用に画像を(リサイズして)変換する
+	function img4ktai($file, $maxsize = 128, $png = FALSE) {
 		//GD のバージョンを取得
 		static $gd_ver = null;
 		if (is_null($gd_ver))
@@ -288,6 +276,28 @@ EOF;
 		// gd fuction のチェック
 		if ($gd_ver < 1 || !function_exists("imagecreate")) return FALSE;//gdをサポートしていない
 		
+		// リサイズ
+		$resized = self::ImageResize($file, $maxsize . 'x' . $maxsize, 50);
+
+		$size = @ getimagesize($file);
+		if (! $size) return FALSE;
+		
+		// Image type
+		$imgtype = $size[2];
+		$allowtypes = array(IMAGETYPE_GIF, IMAGETYPE_JPEG);
+		if ($png) $allowtypes[] = IMAGETYPE_PNG;
+		
+		// JPEG以外はファイルサイズが大きければとりあえず変換する ( > 10k)
+		if ($imgtype !== IMAGETYPE_JPEG && filesize($file) > 10240) {
+			$resized = TRUE;
+		}
+		
+		// リサイズされなかったなら変換しない
+		if (! $resized && in_array($imgtype, $allowtypes)) return FALSE;
+		
+		$src_im = @ imagecreatefromstring(file_get_contents($file));
+		if (! $src_im) return FALSE;
+
 		// gd のバージョンによる関数名の定義
 		$imagecreate = ($gd_ver >= 2)? "imagecreatetruecolor" : "imagecreate";
 		$imageresize = ($gd_ver >= 2)? "imagecopyresampled" : "imagecopyresized";
@@ -304,22 +314,46 @@ EOF;
 				imagepalettecopy ($dst_im, $src_im);
 				imagefill($dst_im,0,0,$colortransparent);
 				imagecolortransparent($dst_im, $colortransparent);
-				imagecopyresized($dst_im,$src_im,0,0,0,0,$width,$height,$width,$height);
 			} else {
 				// 透過色なし
 				$dst_im = $imagecreate($width,$height);
-				$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$width,$height);
-				if (function_exists('imagetruecolortopalette')) imagetruecolortopalette ($dst_im, false, imagecolorstotal($src_im));
 			}
 		} else {
-			// TrueColor
-			$dst_im = $imagecreate($width,$height);
-			$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$width,$height);
+			// True color
+			$dst_im = $imagecreate($width, $height);
+			$colortransparent = imagecolortransparent($src_im);
+			if ($colortransparent > -1) {
+				imagecolortransparent($dst_im, $colortransparent);
+			}
 		}
-		imagegif($dst_im, $file);
+		imagecopymerge($dst_im, $src_im, 0, 0, 0, 0, $width, $height, 100);
+		
+		// とりあえず JPEG で保存
+		imagejpeg($dst_im, $file);
+		clearstatcache();
+
+		if ($imgtype !== IMAGETYPE_JPEG) {
+			// GIF or PNG で保存してサイズ比較
+			$temp = tempnam(dirname($file), 'i4k');
+			if ($png && $imgtype === IMAGETYPE_PNG) {
+				imagepng($dst_im, $temp);
+			} else {
+				imagegif($dst_im, $temp);
+			}
+			if (filesize($temp) < filesize($file)) {
+				unlink($file);
+				copy($temp, $file);
+				clearstatcache();
+			}
+			unlink($temp);
+		}
+		
+		@ imagedestroy($dst_im);
+		@ imagedestroy($src_im);
+		
 		return TRUE;
 	}
-	
+
 	// サムネイル画像を作成。
 	// 成功ならサムネイルのファイルのパス、不成功なら元ファイルパスを返す
 	function make_thumb($o_file, $s_file, $max_width, $max_height, $zoom_limit="1,95", $refresh=FALSE, $quality=75)
@@ -555,6 +589,7 @@ EOF;
 		unlink($img);
 		copy($tmp, $img);
 		unlink($tmp);
+		clearstatcache();
 		
 		return true;
 	}

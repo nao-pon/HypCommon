@@ -146,10 +146,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	
 	function postFilter() {
 		// For WizMobile
-		if (class_exists('WizMobile')) {
-			$wizMobile =& WizMobile::getSingleton();
-			$user = & Wizin_User::getSingleton();
-			$this->wizMobileUse = $user->bIsMobile;
+		if (class_exists('Wizin_User')) {
+			$wizinUser = & Wizin_User::getSingleton();
+			$this->wizMobileUse = $wizinUser->bIsMobile;
 		}
 
 		// XOOPS の表示文字エンコーディング
@@ -508,9 +507,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 			$insert .= "\n<input name=\"{$this->encodehint_name}\" type=\"hidden\" value=\"{$encodehint_word}\" />";
 		}
-		if ($insert) $insert = "\n".$insert."\n";
-		return preg_replace('/<form[^>]+?>/isS' ,
-			"$0".$insert, $s);
+		if ($insert) {
+			$insert = "\n".$insert."\n";
+			return preg_replace('/<form[^>]+?>/isS' ,
+				"$0".$insert, $s);
+		}
+		return $s;
 	}
 	
 	function keitaiFilter ( $s ) {
@@ -674,10 +676,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$r->Config_redirect = $this->k_tai_conf['redirect'];
 		$r->Config_showImgHosts = $this->k_tai_conf['showImgHosts'];
 		$r->Config_directLinkHosts = $this->k_tai_conf['directLinkHosts'];
-		
-		$r->Config_rootPath = XOOPS_ROOT_PATH;
-		$r->Config_rootUrl = XOOPS_URL;
-		
+		$r->Config_hypCommonURL = XOOPS_URL . '/class/hyp_common';
+		if (! empty($this->k_tai_conf['pictSizeMax'])) $r->Config_pictSizeMax = $this->k_tai_conf['pictSizeMax'];
 		$r->contents['header'] = $header;
 		$r->contents['body'] = $body;
 		$r->contents['footer'] = $footer;
@@ -888,6 +888,9 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		
 		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';
+		
+		// インラインイメージのリサイズ最大ピクセル
+		$this->k_tai_conf['pictSizeMax'] = '200';
 		
 		// インラインイメージを表示するホスト名(後方一致)
 		$this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com', 'ad.jp.ap.valuecommerce.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
