@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/02/11 by nao-pon http://hypweb.net/
- * $Id: favicon.php,v 1.5 2008/05/13 07:44:04 nao-pon Exp $
+ * $Id: favicon.php,v 1.6 2008/08/20 04:21:30 nao-pon Exp $
  */
 
 /**
@@ -18,7 +18,7 @@ error_reporting(0);
 
 define('FAVICON_TRUST_PATH' , dirname(__FILE__));
 
-if (file_exists(FAVICON_TRUST_PATH . '/conf.php')) {
+if (is_file(FAVICON_TRUST_PATH . '/conf.php')) {
 	include FAVICON_TRUST_PATH . '/conf.php';
 } else {
 	define('FAVICON_DEFAULT_IMAGE', FAVICON_TRUST_PATH . '/images/world_go.png');
@@ -224,7 +224,7 @@ function is_url(& $url)
         $url  = $base . $url;
 	} else {
 		$_hosts = @ file(FAVICON_TRUST_PATH . '/group.def.hosts');
-		if (file_exists(FAVICON_TRUST_PATH . '/group.hosts')) {
+		if (is_file(FAVICON_TRUST_PATH . '/group.hosts')) {
 			$_hosts = array_merge($_hosts, file(FAVICON_TRUST_PATH . '/group.hosts'));
 		}
 		if ($_hosts) {
@@ -272,7 +272,7 @@ function output_icon($icon) {
 if (!function_exists('file_put_contents')) {
     function file_put_contents($filename, $data)
     {
-        $fp = fopen($filename, file_exists($filename) ? 'r+b' : 'wb');
+        $fp = fopen($filename, is_file($filename) ? 'r+b' : 'wb');
         if ($fp === false) {
             return false;
         }
