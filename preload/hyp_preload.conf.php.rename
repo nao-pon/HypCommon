@@ -112,6 +112,9 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';
 		
+		// インラインイメージのリサイズ最大ピクセル
+		$this->k_tai_conf['pictSizeMax'] = '200';
+		
 		// インラインイメージを表示するホスト名(後方一致)
 		$this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
 		
