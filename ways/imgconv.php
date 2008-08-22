@@ -2,7 +2,7 @@
 /*
  * Created on 2008/07/24 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: imgconv.php,v 1.3 2008/08/20 12:33:24 nao-pon Exp $
+ * $Id: imgconv.php,v 1.4 2008/08/22 08:06:53 nao-pon Exp $
  */
 
 $url = (isset($_GET['u']))? $_GET['u'] : '';
@@ -48,11 +48,11 @@ switch($mode) {
 			$h->url = $url;
 			$h->get();
 			if ($h->rc === 200) {
-				
 				if ($fp = fopen($file, "wb")) {
 					flock($fp,  LOCK_EX);
 					fwrite($fp, $h->data);
 					fclose($fp);
+					clearstatcache();
 				} else {
 					header('Location: ' . $url);
 					exit();
