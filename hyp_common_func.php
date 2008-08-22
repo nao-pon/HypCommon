@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.47 2008/08/20 12:33:25 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.48 2008/08/22 08:05:49 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -577,6 +577,9 @@ EOF;
 			$zoom_h = $h / $size[1];
 			$zoom = min($zoom_w, $zoom_h);
 		}
+		
+		if ($zoom >= 1) return FALSE;
+		
 		$w = round($size[0] * $zoom);
 		$h = round($size[1] * $zoom);
 		
