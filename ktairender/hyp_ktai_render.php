@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.17 2008/08/20 04:26:12 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.18 2008/08/22 08:08:46 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -303,11 +303,20 @@ class HypKTaiRender
 			$body = preg_replace($reg, '$1$2', $body);
 		}
 		// img
-		$reg = '#(<img[^>]+?)\s+(?:width|height|hspace|vspace|border)=(?:\'[^\']*\'|"[^"\x08]*")([^>]*>)#iS';
+		$reg = '#(<img[^>]+?)\s+(?:hspace|vspace|border)=(?:\'[^\']*\'|"[^"\x08]*")([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
-		$reg = '#(<img[^>]+?)\s+(?:width|height|hspace|vspace|border)=[^ >/]+([^>]*>)#iS';
+		$reg = '#(<img[^>]+?)\s+(?:hspace|vspace|border)=[^ >/]+([^>]*>)#iS';
+		while(preg_match($reg, $body)) {
+			$body = preg_replace($reg, '$1$2', $body);
+		}
+		// input
+		$reg = '#(<input[^>]+?)\s+(?:size|alt|border)=(?:\'[^\']*\'|"[^"\x08]*")([^>]*>)#iS';
+		while(preg_match($reg, $body)) {
+			$body = preg_replace($reg, '$1$2', $body);
+		}
+		$reg = '#(<input[^>]+?)\s+(?:size|alt|border)=[^ >/]+([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
@@ -376,7 +385,7 @@ class HypKTaiRender
 				if (substr($val, 0, 6) === '<table') {
 					// remove tag attribute
 					$val = str_replace('\\"', "\x08", $val);
-					$reg = '#(<[^>]+?)\s+(?:align|width)=(?:\'[^\']*\'|"[^"\x08]*")([^>]*>)#iS';
+					$reg = '#(<table[^>]+?)\s+(?:align|width)=(?:\'[^\']*\'|"[^"\x08]*")([^>]*>)#iS';
 					while(preg_match($reg, $val)) {
 						$val = preg_replace($reg, '$1$2', $val);
 					}
@@ -681,6 +690,7 @@ class HypKTaiRender
 		$this->vars['ua']['isKTai'] = FALSE;
 		$this->vars['ua']['carrier'] = 'Unknown';
 		$this->vars['ua']['allowPNG'] = FALSE;
+		$this->vars['ua']['allowInputImage'] = FALSE;
 		
 		if (isset($this->SERVER['HTTP_USER_AGENT'])) {
 			$this->vars['ua']['isBot'] = preg_match('/Googlebot-Mobile|Y!J-SRD/i', $this->SERVER['HTTP_USER_AGENT']);
@@ -760,6 +770,7 @@ class HypKTaiRender
 						$this->vars['ua']['isKTai'] = TRUE;
 						$this->vars['ua']['carrier'] = $carrier;
 						$this->vars['ua']['allowPNG'] = FALSE;
+						$this->vars['ua']['allowInputImage'] = FALSE;
 						break;
 					
 					case 'softbank':
@@ -781,6 +792,7 @@ class HypKTaiRender
 						$this->vars['ua']['isKTai'] = TRUE;
 						$this->vars['ua']['carrier'] = $carrier;
 						$this->vars['ua']['allowPNG'] = TRUE;
+						$this->vars['ua']['allowInputImage'] = TRUE;
 						break;
 					
 					case 'au':
@@ -802,6 +814,7 @@ class HypKTaiRender
 						$this->vars['ua']['isKTai'] = TRUE;
 						$this->vars['ua']['carrier'] = $carrier;
 						$this->vars['ua']['allowPNG'] = TRUE;
+						$this->vars['ua']['allowInputImage'] = FALSE;
 						break;
 				}
 			}
@@ -909,6 +922,11 @@ class HypKTaiRender
 	
 	function _html_check_img_src ($match) {
 		$type = strtolower($match[2]);
+
+		if (! $this->vars['ua']['allowInputImage'] && $type === 'input') {
+			return str_replace('image', 'submit', $match[1] . $match[5]) . (isset($match[6])? $match[6] : '');
+		}
+
 		$url = $match[4];
 		$parsed_base = parse_url($this->myRoot);
 		$parsed_url = parse_url($url);
@@ -942,7 +960,46 @@ class HypKTaiRender
 					}
 				}
 			}
-			return $match[1] . ' src="' . $this->Config_hypCommonURL . '/gate.php?way=imgconv&amp;m=i4k&amp;s=' . $this->Config_pictSizeMax . $png . '&amp;u=' . rawurlencode(str_replace('&amp;', '&', $url)) . '"' . $match[5] . (isset($match[6])? $match[6] : '');
+			
+			// Size tag
+			$reps = array();
+			$width = $height = '';
+			if (preg_match('/(width=[\'"]?)(\d+)/i', ($match[1] . $match[5]), $arg)) {
+				$w_org = $arg[0];
+				$w_tag = $arg[1];
+				$width = $arg[2];
+			}
+			if (preg_match('/(height=[\'"]?)(\d+)/i', ($match[1] . $match[5]), $arg)) {
+				$h_org = $arg[0];
+				$h_tag = $arg[1];
+				$height = $arg[2];
+			}
+			if ($width && $height) {
+				$zoom = min($this->Config_pictSizeMax/$width, $this->Config_pictSizeMax/$height);
+				if ($zoom < 1) {
+					$reps['from'][] = $w_org;
+					$reps['to'][]   = $w_tag . round($width * $zoom);
+					$reps['from'][] = $h_org;
+					$reps['to'][]   = $h_tag . round($height * $zoom);
+				}
+			} else if ($width) {
+				if ($this->Config_pictSizeMax < $width) {
+					$reps['from'][] = $w_org;
+					$reps['to'][]   = $w_tag . $this->Config_pictSizeMax;
+				}
+			} else if ($height) {
+				if ($this->Config_pictSizeMax < $height) {
+					$reps['from'][] = $h_org;
+					$reps['to'][]   = $h_tag . $this->Config_pictSizeMax;
+				}
+			}
+			
+			$ret = $match[1] . ' src="' . $this->Config_hypCommonURL . '/gate.php?way=imgconv&amp;m=i4k&amp;s=' . $this->Config_pictSizeMax . $png . '&amp;u=' . rawurlencode(str_replace('&amp;', '&', $url)) . '"' . $match[5];
+			if (isset($reps['from'])) {
+				$ret = str_replace($reps['from'], $reps['to'], $ret);
+			}
+			
+			return $ret . (isset($match[6])? $match[6] : '');
 		} else {
 			if ($type === 'input') {
 				return str_replace('image', 'submit', $match[1] . $match[5]) . (isset($match[6])? $match[6] : '');
