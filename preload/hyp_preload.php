@@ -318,6 +318,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				$this->HypKTaiRender->Config_encodeHintName = $this->encodehint_name;
 				$this->encodehint_word = '';
 			}
+			// google AdSense
+			if ($this->k_tai_conf['googleAdsense']['config']) {
+				$this->HypKTaiRender->Config_googleAdSenseConfig = $this->k_tai_conf['googleAdsense']['config'];
+				$this->HypKTaiRender->Config_googleAdSenseBelow = $this->k_tai_conf['googleAdsense']['below'];
+			}
+
 			// keitai Filter
 			ob_start(array(& $this, 'keitaiFilter'));
 		} else {
@@ -626,6 +632,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 
 		if ($head) {
+			// Redirect
+			if (preg_match('#<meta[^>]+http-equiv=("|\')Refresh\\1[^>]+content=("|\')[\d]+;\s*url=(.+)\\2[^>]*>#iUS', $head, $match)) {
+				header('Location: ' . str_replace('&amp;', '&', $match[3]));
+				return '';
+			}
+			
 			// Check RSS
 			$rss = array();
 			if (preg_match_all('#<link([^>]+?)>#iS', $head, $match)) {
@@ -647,12 +659,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 			
 			$_head = '<head>';
-			if (preg_match('#<meta[^>]+http-equiv=("|\')Refresh\\1[^>]*>#iUS', $head, $match)) {
-				$_head .= str_replace('/>', '>', $match[0]);
-			} else if (preg_match('#<title[^>]*>.*</title>#isUS', $head, $match)) {
+			if (preg_match('#<title[^>]*>.*</title>#isUS', $head, $match)) {
 				$_head .= mb_convert_encoding($match[0], 'SJIS-win', $this->encode);
 			}
-			//if ($xhtml) $_head .= '<meta http-equiv="Content-Type" content="text/xhtml+xml; charset=Shift_JIS"/>';
 			$_head .= '</head>';
 			$head = $_head;
 		}
@@ -908,6 +917,12 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// リンクメッセージ
 		$this->k_tai_conf['msg']['easylogin'] = '簡単ログイン';
 		$this->k_tai_conf['msg']['logout'] = 'ログアウト';
+		
+		//// Google Adsense 設定
+		// config ファイルのパス
+		$this->k_tai_conf['googleAdsense']['config'] = '';
+		// 挿入場所 ('header', 'body', 'footer') の下、無指定時はページ最上部
+		$this->k_tai_conf['googleAdsense']['below'] = '';
 		
 		// 携帯対応レンダー設定 以上
 		/////////////////////////////
