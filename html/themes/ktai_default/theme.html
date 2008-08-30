@@ -23,9 +23,9 @@
 
 <{if $xoops_breadcrumbs}>
 <!--breadcrumbs-->
-<a href="<{$xoops_url}>/">TOP</a>
+<a href="<{$xoops_url}>/">Home</a>
 <{foreach from=$xoops_breadcrumbs item="item"}>
-	&#187;
+	&gt;
 	<{if $item.url}>
 		<a href="<{$item.url}>"><{$item.name}></a>
 	<{else}>
@@ -39,8 +39,10 @@
 <!--centerCcolumn-->
 <div class="centercolumn">
 <{foreach item=block from=$xoops_ccblocks}>
+	<ns>
 	<div style="text-align:center;background-color:#ccccff"><h2><{$block.title}></h2></div>
 	<div><{$block.content}></div>
+	</ns>
 <{/foreach}>
 </div>
 <!--/centerCcolumn-->
@@ -53,8 +55,10 @@
 <{if $xoops_clblocks}>
 <!--centerLcolumn-->
 <{foreach item=block from=$xoops_clblocks}>
+	<ns>
 	<div style="text-align:center;background-color:#ccccff"><h2><{$block.title}></h2></div>
 	<div><{$block.content}></div>
+	</ns>
 <{/foreach}>
 <!--/centerLcolumn-->
 <{/if}>
@@ -62,8 +66,10 @@
 <{if $xoops_crblocks}>
 <!--centerRcolumn-->
 <{foreach item=block from=$xoops_crblocks}>
+	<ns>
 	<div style="text-align:center;background-color:#ccccff"><h2><{$block.title}></h2></div>
 	<div><{$block.content}></div>
+	</ns>
 <{/foreach}>
 <!--/centerRcolumn-->
 <{/if}>
@@ -72,8 +78,10 @@
 <!--leftcolumn-->
 <div id="leftcolumn">
 <{foreach item=block from=$xoops_lblocks}>
+	<ns>
 	<div style="text-align:center;background-color:#ccccff"><h2><{$block.title}></h2></div>
 	<div><{$block.content}></div>
+	</ns>
 <{/foreach}>
 </div>
 <!--/leftcolumn-->
@@ -83,8 +91,10 @@
 <!--rightcolumn-->
 <div id="rightcolumn">
 <{foreach item=block from=$xoops_rblocks}>
+	<ns>
 	<div style="text-align:center;background-color:#ccccff"><h2><{$block.title}></h2></div>
 	<div><{$block.content}></div>
+	</ns>
 <{/foreach}>
 </div>
 <!--/rightcolumn-->
