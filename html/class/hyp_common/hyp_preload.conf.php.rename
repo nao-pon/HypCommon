@@ -132,6 +132,12 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->k_tai_conf['msg']['easylogin'] = '簡単ログイン';
 		$this->k_tai_conf['msg']['logout'] = 'ログアウト';
 
+		//// Google Adsense 設定
+		// config ファイルのパス
+		$this->k_tai_conf['googleAdsense']['config'] = '';
+		// 挿入場所 ('header', 'body', 'footer') の下、無指定時はページ最上部
+		$this->k_tai_conf['googleAdsense']['below'] = '';
+		
 		// 携帯対応レンダー設定 以上
 		/////////////////////////////
 
