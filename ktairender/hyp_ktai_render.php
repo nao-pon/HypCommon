@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.18 2008/08/22 08:08:46 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.19 2008/08/30 05:53:48 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -45,6 +45,8 @@ class HypKTaiRender
 	var $Config_encodeHintWord = '';
 	var $Config_hypCommonURL = '';
 	var $Config_pictSizeMax = '200';
+	var $Config_googleAdSenseConfig = '';
+	var $Config_googleAdSenseBelow = '';
 	
 	function HypKTaiRender () {
 		$this->SERVER = $_SERVER;
@@ -121,10 +123,19 @@ class HypKTaiRender
 			}
 		}
 		
-		
 		$header = mb_convert_encoding($this->html_diet_for_hp($header), $this->outputEncode, $this->inputEncode);
 		$body = mb_convert_encoding($this->html_diet_for_hp($body), $this->outputEncode, $this->inputEncode);
 		$footer = mb_convert_encoding($this->html_diet_for_hp($footer), $this->outputEncode, $this->inputEncode);
+		
+		$googleAdsenseHtml = '';
+		if ($this->Config_googleAdSenseConfig && is_file($this->Config_googleAdSenseConfig)) {
+			include $this->Config_googleAdSenseConfig;
+			@ include_once dirname(__FILE__) . '/googleAdsense.php';
+			if (class_exists('googleAdsense')) {
+				$googleAdsense = new googleAdsense();
+				$googleAdsenseHtml = $googleAdsense->getHtml();
+			}
+		}
 		
 		foreach(array('header', 'body', 'footer') as $var) {
 			$str =& $$var;
@@ -146,12 +157,13 @@ class HypKTaiRender
 		
 		$pnum = empty($_GET[$this->pagekey])? 0 : intval($_GET[$this->pagekey]);
 		
-		$extra_len = strlen($header . $footer);
+		$extra_len = strlen($header . $footer . $googleAdsenseHtml);
 
 		if ($this->maxSize && (strlen($body) + $extra_len) > $this->maxSize) {
 			
 			$margin = 200;
 			$this->splitMaxSize = $this->maxSize - $extra_len - $margin;
+			
 			list($pages, $ids) = $this->html_split($body);
 
 			if (isset($_GET[$this->hashkey]) && isset($ids[$_GET[$this->hashkey]])) {
@@ -233,6 +245,8 @@ class HypKTaiRender
 			$h_reg = preg_quote($this->hashkey, '/') . '=[^&#]+';
 		}
 		
+		$body = str_replace(array('<ns>', '</ns>'), '', $body);
+		
 		// Optimize query strings
 		$_func = create_function(
 			'$match',
@@ -242,12 +256,18 @@ class HypKTaiRender
 			'$match[3] = str_replace(\'&amp;#\', \'#\', $match[3]);' .
 			'return $match[1] . $match[3] . (isset($match[4])? $match[4] : \'\');'
 		);
+		$_reg = '#(<a[^>]*? href=([\'"])?)([^\s"\'>]+)(\\2)?#isS';
+		$header = preg_replace_callback($_reg, $_func, $header);
+		$body   = preg_replace_callback($_reg, $_func, $body);
+		$footer = preg_replace_callback($_reg, $_func, $footer);
 		
-		$header = preg_replace_callback('#(<a[^>]*? href=([\'"])?)([^\s"\'>]+)(\\2)?#isS', $_func, $header);
-
-		$body = preg_replace_callback('#(<a[^>]*? href=([\'"])?)([^\s"\'>]+)(\\2)?#isS', $_func, $body);
-			
-		$footer = preg_replace_callback('#(<a[^>]*? href=([\'"])?)([^\s"\'>]+)(\\2)?#isS', $_func, $footer);
+		if ($googleAdsenseHtml) {
+			if (in_array($this->Config_googleAdSenseBelow, array('header', 'body', 'footer'))) {
+				${$this->Config_googleAdSenseBelow} .= $googleAdsenseHtml;
+			} else {
+				$header = $googleAdsenseHtml . $header;
+			}
+		}
 		
 		$this->outputBody = $header . $pager . $body . $pager . $footer;
 		
@@ -368,8 +388,8 @@ class HypKTaiRender
 		$body = preg_replace($pat, $rep, $body);
 
 		if ($this->outputMode === 'xhtml') {
-			$pat = array(' />', '</del>', '<br>',  '<hr>', '<center>', '</center>',  '&deg;');
-			$rep = array('/>',  '[/del]', '<br/>', '<hr/>', '<div style="text-align:center">', '</div>', '&#176;');
+			$pat = array(' />', '</del>', '<br>',  '<hr>', '<center>', '</center>');
+			$rep = array('/>',  '[/del]', '<br/>', '<hr/>', '<div style="text-align:center">', '</div>');
 		} else {
 			$pat = array(' />', '/>', '</li>', '</del>');
 			$rep = array('>'  , '>' , ''     , '[/del]');
@@ -415,6 +435,7 @@ class HypKTaiRender
 
 		// ページ分断で閉じられなかったらきちんと閉じて次ページの先頭で再度開くタグ
 		$checks = array('address', 'blockquote', 'center', 'div', 'dl', 'fieldset', 'ol', 'p', 'pre', 'table', 'td', 'tr', 'ul');
+		if ($this->outputMode === 'xhtml') $checks[] = 'li';
 		
 		$out = array();
 		$ids = array();
@@ -475,7 +496,7 @@ class HypKTaiRender
 
 	function html_give_session_id ($html) {
 		// For regex simplify
-		$html = str_replace(array('<a', '<A'), "\x08", $html);
+		$html = str_replace('<a', "\x08", $html);
 		
 		// Check IMG & INPUT src
 		$html = preg_replace_callback('#(<(img|input)[^>]*?) src=([\'"])?([^\s"\'>]+)(?:\\3)?([^>]*>)([^\x08]*?</a>)?#isS',
@@ -528,7 +549,7 @@ class HypKTaiRender
 			}
 			$dec = '<?xml version="1.0" encoding="' . $encode . '"?>'
 			     . $this->xmlDocType
-			     . '<html xmlns="http://www.w3.org/1999/xhtml" lang="' . $this->langcode . '" xml:lang="' . $this->langcode . '">';
+			     . '<html xmlns="http://www.w3.org/1999/xhtml">';
 		} else {
 			$dec = '<html>';
 		}
@@ -629,6 +650,7 @@ class HypKTaiRender
 
 		$args = preg_split(
 			'#(' .
+			'(?><ns>.+?</ns>)|' .
 			'(?><form.+?/form>)|' .
 			''.join('|', $regs) . '|' .
 			'<a.+?/a>|' .
@@ -643,7 +665,7 @@ class HypKTaiRender
 		foreach($args as $arg) {
 			if (strlen($arg) > $this->splitMaxSize) {
 				if (substr($arg, 0, 5) === '<form') {
-					$out[] = '<div>[ Can\'t edit with your device. (form is too large.) ]</div>';
+					$out[] = '<div>[ Can\'t edit with your device. (&lt;form&gt; is too large.) ]</div>';
 					continue;
 				} else {
 					if ($arg === $html) {
@@ -693,7 +715,7 @@ class HypKTaiRender
 		$this->vars['ua']['allowInputImage'] = FALSE;
 		
 		if (isset($this->SERVER['HTTP_USER_AGENT'])) {
-			$this->vars['ua']['isBot'] = preg_match('/Googlebot-Mobile|Y!J-SRD/i', $this->SERVER['HTTP_USER_AGENT']);
+			$this->vars['ua']['isBot'] = preg_match('/Googlebot-Mobile|Y!J-(?:SRD|MBS)/i', $this->SERVER['HTTP_USER_AGENT']);
 			
 			if ( preg_match('#(?:^(?:KDDI-[^\s]+ )?|\b)([a-zA-Z.-]+)(?:/([0-9.]+))?#', $this->SERVER['HTTP_USER_AGENT'], $match) ) {
 			
@@ -707,26 +729,20 @@ class HypKTaiRender
 				switch ($ua_name) {
 					case 'DoCoMo':
 						$carrier = 'docomo';
-						$max_size = 5;
+						$max_size = 10;
 						if (preg_match('#\b[cC]([0-9]+)\b#', $ua_agent, $matches)) {
 							$max_size = $matches[1];	// Cache max size
 							$max_size = min($max_size, 30);
 						}
 						break;
 				
-					// Vodafone (ex. J-PHONE)
-					case 'J-PHONE':
-						$carrier = 'softbank';
-						$max_size = 6;
-						if (preg_match('/^([0-9]+)\./', $ua_vers, $matches)) {
-							switch($matches[1]){
-								case '3': $max_size =   6; break; // C type: lt 6000bytes
-								case '4': $max_size =  12; break; // P type: lt  12Kbytes
-								case '5': $max_size =  40; break; // W type: lt  40Kbytes
-							}
-						}
+					// UP.Browser
+					case 'UP.Browser':
+						$carrier = 'au';
+						if (preg_match('#^KDDI#', $ua_agent)) $max_size = 9;
 						break;
 				
+					// Vodafone (ex. J-PHONE)
 					case 'Vodafone':
 					case 'SoftBank':
 						$carrier = 'softbank';
@@ -737,11 +753,16 @@ class HypKTaiRender
 							}
 						}
 						break;
-				
-					// UP.Browser
-					case 'UP.Browser':
-						$carrier = 'au';
-						if (preg_match('#^KDDI#', $ua_agent)) $max_size = 9;
+					case 'J-PHONE':
+						$carrier = 'softbank';
+						$max_size = 6;
+						if (preg_match('/^([0-9]+)\./', $ua_vers, $matches)) {
+							switch($matches[1]){
+								case '3': $max_size =   6; break; // C type: lt 6000bytes
+								case '4': $max_size =  12; break; // P type: lt  12Kbytes
+								case '5': $max_size =  40; break; // W type: lt  40Kbytes
+							}
+						}
 						break;
 				}
 				
@@ -771,28 +792,7 @@ class HypKTaiRender
 						$this->vars['ua']['carrier'] = $carrier;
 						$this->vars['ua']['allowPNG'] = FALSE;
 						$this->vars['ua']['allowInputImage'] = FALSE;
-						break;
-					
-					case 'softbank':
-						$this->keybutton = array(
-							'1'	=>	chr(27).'$F<'.chr(15),
-							'2'	=>	chr(27).'$F='.chr(15),
-							'3'	=>	chr(27).'$F>'.chr(15),
-							'4'	=>	chr(27).'$F?'.chr(15),
-							'5'	=>	chr(27).'$F@'.chr(15),
-							'6'	=>	chr(27).'$FA'.chr(15),
-							'7'	=>	chr(27).'$FB'.chr(15),
-							'8'	=>	chr(27).'$FC'.chr(15),
-							'9'	=>	chr(27).'$FD'.chr(15),
-							'0'	=>	chr(27).'$FE'.chr(15),
-							'#'	=>	chr(27).'$F0'.chr(15),
-							'*'	=>	'[*]'
-						);
-						if (isset($this->SERVER['HTTP_X_JPHONE_UID'])) $this->vars['ua']['uid'] = $this->SERVER['HTTP_X_JPHONE_UID'];
-						$this->vars['ua']['isKTai'] = TRUE;
-						$this->vars['ua']['carrier'] = $carrier;
-						$this->vars['ua']['allowPNG'] = TRUE;
-						$this->vars['ua']['allowInputImage'] = TRUE;
+						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//i-mode group (ja)//DTD XHTML i-XHTML(Locale/Ver.=ja/2.3) 1.0//EN" "i-xhtml_4ja_10.dtd">';
 						break;
 					
 					case 'au':
@@ -815,6 +815,30 @@ class HypKTaiRender
 						$this->vars['ua']['carrier'] = $carrier;
 						$this->vars['ua']['allowPNG'] = TRUE;
 						$this->vars['ua']['allowInputImage'] = FALSE;
+						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//OPENWAVE//DTD XHTML 1.0//EN" "http://www.openwave.com/DTD/xhtml-basic.dtd">';
+						break;
+					
+					case 'softbank':
+						$this->keybutton = array(
+							'1'	=>	chr(27).'$F<'.chr(15),
+							'2'	=>	chr(27).'$F='.chr(15),
+							'3'	=>	chr(27).'$F>'.chr(15),
+							'4'	=>	chr(27).'$F?'.chr(15),
+							'5'	=>	chr(27).'$F@'.chr(15),
+							'6'	=>	chr(27).'$FA'.chr(15),
+							'7'	=>	chr(27).'$FB'.chr(15),
+							'8'	=>	chr(27).'$FC'.chr(15),
+							'9'	=>	chr(27).'$FD'.chr(15),
+							'0'	=>	chr(27).'$FE'.chr(15),
+							'#'	=>	chr(27).'$F0'.chr(15),
+							'*'	=>	'[*]'
+						);
+						if (isset($this->SERVER['HTTP_X_JPHONE_UID'])) $this->vars['ua']['uid'] = $this->SERVER['HTTP_X_JPHONE_UID'];
+						$this->vars['ua']['isKTai'] = TRUE;
+						$this->vars['ua']['carrier'] = $carrier;
+						$this->vars['ua']['allowPNG'] = TRUE;
+						$this->vars['ua']['allowInputImage'] = TRUE;
+						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//JPHONE//DTD XHTML Basic 1.0 Plus//EN" "xhtml-basic10-plus.dtd">';
 						break;
 				}
 			}
