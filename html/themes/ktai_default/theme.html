@@ -23,15 +23,17 @@
 
 <{if $xoops_breadcrumbs}>
 <!--breadcrumbs-->
-<a href="<{$xoops_url}>/">Home</a>
-<{foreach from=$xoops_breadcrumbs item="item"}>
-	&gt;
-	<{if $item.url}>
-		<a href="<{$item.url}>"><{$item.name}></a>
-	<{else}>
-		<{$item.name}>
-	<{/if}>
-<{/foreach}>
+<div style="font-size:small;background-color:#CCFFCC">
+	<a href="<{$xoops_url}>/">Home</a>
+	<{foreach from=$xoops_breadcrumbs item="item"}>
+		&gt;
+		<{if $item.url}>
+			<a href="<{$item.url}>"><{$item.name}></a>
+		<{else}>
+			<{$item.name}>
+		<{/if}>
+	<{/foreach}>
+</div>
 <!--/breadcrumbs-->
 <{/if}>
 
@@ -49,6 +51,9 @@
 <{/if}>
 
 <!--content-->
+<{if $xoops_modulename}>
+<div style="text-align:center;font-size:x-large;background-color:#99CCFF"><{$xoops_modulename}></div>
+<{/if}>
 <{$xoops_contents}>
 <!--/content-->
 
