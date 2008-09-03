@@ -160,7 +160,13 @@ class MPC_Common
        'SoftBank' => '/^(?:(?:SoftBank|Vodafone|J-PHONE)\/\d\.\d|MOT-)/',
        'EZweb'    => '/^(?:KDDI-[A-Z]+\d+[A-Z]? )?UP\.Browser\//',
     );
-
+	
+    /**
+    * ユーザーエージェント
+    * @var string
+    */
+	var $userAgent = NULL;
+	
     /**
     * ユーザーエージェントからキャリアを自動判別し
     * mod_ktai コードから対応する絵文字に自動変換 by nao-pon
@@ -171,7 +177,7 @@ class MPC_Common
     
     function autoConvertModKtai()
     {
-        $useragent = $_SERVER['HTTP_USER_AGENT'];
+        $useragent = (is_null($this->userAgent))? $_SERVER['HTTP_USER_AGENT'] : $this->userAgent;
         if (preg_match($this->getRegexp('DoCoMo'), $useragent)) {
             $to     = MPC_TO_FOMA;
             $option = MPC_TO_OPTION_RAW;
@@ -315,7 +321,7 @@ class MPC_Common
     */
     function autoConvert($toCharset = null)
     {
-        $useragent = $_SERVER['HTTP_USER_AGENT'];
+        $useragent = (is_null($this->userAgent))? $_SERVER['HTTP_USER_AGENT'] : $this->userAgent;
         if (preg_match($this->getRegexp('DoCoMo'), $useragent)) {
             $to     = MPC_TO_FOMA;
             $option = MPC_TO_OPTION_RAW;
