@@ -326,6 +326,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 			// keitai Filter
 			ob_start(array(& $this, 'keitaiFilter'));
+			register_shutdown_function(array(& $this, '_onShutdownKtai'));
 		} else {
 			// <from> Filter
 			if (! $this->wizMobileUse) {
@@ -346,6 +347,23 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 	}
 	
+	function _onShutdownKtai() {
+		if (defined('SID') && SID && !isset($_COOKIE[SID])) {
+			$url = '';
+			foreach (headers_list() as $header) {
+				if (preg_match('/^Location:(.+)$/is', $header, $match)) {
+					$url = trim($match[1]);
+					break;
+				}
+			}
+			if ($url && strpos($url, XOOPS_URL) === 0 && strpos($url, SID) === FALSE) {
+				$url = rtrim($url, '?');
+				$url .= ((strpos($url, '?') === FALSE)? '?' : '&') . SID;
+				header('Location:' . $url, TRUE);
+			}
+		}
+	}
+	
 	function _checkEasyLogin () {
 		if (empty($_SESSION['xoopsUserId'])) {
 			$this->HypKTaiRender->vars['ua']['isGuest'] = TRUE;
@@ -355,7 +373,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				redirect_header(XOOPS_URL, 0, 'Your IP "' . $_SERVER['REMOTE_ADDR'] . '" doesn\'t match to IP range of "'.$this->HypKTaiRender->vars['ua']['carrier'].'".');
 				exit();
 				//exit('Your IP "' . $_SERVER['REMOTE_ADDR'] . '" doesn\'t match to IP range of "'.$this->HypKTaiRender->vars['ua']['carrier'].'".');
-			}			
+			}
+			session_regenerate_id();
 		}
 
 		if (! empty($this->k_tai_conf['easyLogin']) && isset($_GET['_EASYLOGIN'])) {
@@ -691,6 +710,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$r->contents['body'] = $body;
 		$r->contents['footer'] = $footer;
 		
+		$r->inputEncode = $this->encode;
+		$r->outputEncode = 'SJIS';
 		$r->outputMode = 'xhtml';
 		$r->langcode = _LANGCODE;
 		
@@ -885,7 +906,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			                          'below' => ''),
 			'footerbar'     => array( 'above' => '',
 			                          'below' => ''),
-			'easylogin'     => array( 'above' => '<div style="text-align:center;font-size:0.9em">[ ',
+			'easylogin'     => array( 'above' => '<div style="text-align:center;background-color:#DBBCA6;font-size:small">[ ',
 			                          'below' => ' ]</div>'),
 		);
 		
