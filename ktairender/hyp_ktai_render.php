@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.19 2008/08/30 05:53:48 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.20 2008/09/03 08:00:57 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -47,6 +47,7 @@ class HypKTaiRender
 	var $Config_pictSizeMax = '200';
 	var $Config_googleAdSenseConfig = '';
 	var $Config_googleAdSenseBelow = '';
+	var $Config_style = array();
 	
 	function HypKTaiRender () {
 		$this->SERVER = $_SERVER;
@@ -61,6 +62,10 @@ class HypKTaiRender
 		
 		$this->Config_icons['extLink'] = '((i:f8d9))';
 		$this->Config_icons['hTag']    = '((i:f8e4))';
+		
+		$this->Config_style['pageNavi'] = 'text-align:center;background-color:#EEFFBF';
+		$this->Config_style['olul']     = 'margin-left:1em;padding:0';
+		$this->Config_style['li']       = 'padding-left:0;margin-left:0';
 		
 		$this->contents['header'] = '';
 		$this->contents['body'] = '';
@@ -147,6 +152,7 @@ class HypKTaiRender
 					$mpc =& MobilePictogramConverter::factory_common();
 					$mpc->setImagePath($this->Config_emojiDir);
 					$mpc->setFromCharset(MPC_FROM_CHARSET_SJIS);
+					$mpc->userAgent = $this->vars['ua']['agent'];
 				}
 				$mpc->setString($str);
 				$str = $mpc->autoConvertModKtai();
@@ -233,7 +239,7 @@ class HypKTaiRender
 
 			$pager = $this->html_give_session_id($pager);
 			if ($this->outputMode = 'xhtml') {
-				$pager = '<div style="text-align:center">' . join(' ', $pager) . '</div>';
+				$pager = '<div style="' . $this->Config_style['pageNavi'] . '">' . join(' ', $pager) . '</div>';
 			} else {
 				$pager = '<center>' . join(' ', $pager) . '</center>';
 			}
@@ -374,9 +380,18 @@ class HypKTaiRender
 		$pat[] = '#<h([5-6])(.+?)/h\\1>#sS';
 		$rep[] = '<h4$2/h4>';
 
+		$pat[] = '#<(ol|ul)\b#S';
+		$rep[] = '<$1 style="' . $this->Config_style['olul'] . '"';
+
+		//$pat[] = '#<li#sS';
+		//$rep[] = '<li style="' . $this->Config_style['li'] . '"';
+
+		$pat[] = '#\s+(</?(?:p|div|table|tr|td|hr|h[1-4]|ol|ul|li|dl|dt|dd|br|blockquote|form))\b#S';
+		$rep[] = '$1';
+
 		// Add icon
 		if (! empty($this->Config_icons['hTag'])) {
-			$pat[] = '#(<h[1-6][^>]*?>)#S';
+			$pat[] = '#(<h[1-4][^>]*?>)#S';
 			$rep[] = '$1' . $this->Config_icons['hTag'];
 		}
 		
