@@ -521,7 +521,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		
 		// スパムロボット用の罠を仕掛ける
 		if (! empty($this->post_spam_trap_set)) {
-			$insert .= "\n<input name=\"{$this->post_spam_trap}\" type=\"text\" size=\"1\" style=\"display:none;speak:none;\" />";
+			$insert .= "\n<input name=\"{$this->post_spam_trap}\" type=\"text\" size=\"1\" style=\"display:none;speak:none;\" autocomplete=\"off\" />";
 		}
 		// エンコーディング判定用ヒント文字
 		if (! empty($this->encodehint_word)) {
@@ -929,7 +929,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->k_tai_conf['directLinkHosts'] = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com');
 
 		// 外部リンク用リダイレクトスクリプト
-		$this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/redirect.php?l=';
+		$this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/gate.php?way=redirect&amp;_d=0&amp;_u=0&amp;_x=0&l=';
 		
 		// Easy login を有効にする
 		$this->k_tai_conf['easyLogin'] = 1;
