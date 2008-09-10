@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/02/11 by nao-pon http://hypweb.net/
- * $Id: favicon.php,v 1.6 2008/08/20 04:21:30 nao-pon Exp $
+ * $Id: favicon.php,v 1.7 2008/09/10 04:20:36 nao-pon Exp $
  */
 
 /**
@@ -107,14 +107,14 @@ function output_image($url, $time = 0)
     }
 
     if ($time) {
-        header('Expires: ' . gmdate('D, d M Y H:i:s', $time + FAVICON_CACHE_TTL) . ' GMT');
         header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $time) . ' GMT');
         header('Cache-Control: public, max-age=' . FAVICON_CACHE_TTL);
     }
-    header('Content-Disposition: inline');
+    header('Etag: '. $time);
     header('Content-Length: ' . filesize($filename));
     header('Content-Type: image/x-icon');
     readfile($filename);
+    exit();
 }
 
 
@@ -254,14 +254,12 @@ function redirect_icon($url)
 
 function output_icon($icon) {
 
-	if (in_array($icon, array('DefaultIcon', 'ErrorIcon'))) {
-		$time = time();
-	} else {
-		$time = filemtime(get_image_filename($icon));
-	}
-
-	if ($time <= if_modified_since()) {
+	$time = filemtime(get_image_filename($icon));
+	
+	if ((isset($_SERVER['HTTP_IF_NONE_MATCH']) && $time == $_SERVER['HTTP_IF_NONE_MATCH'])
+	   || $time <= if_modified_since()) {
 	    header('HTTP/1.1 304 Not Modified');
+	    header('Etag: '. $time);
 	    header('Cache-Control: public, max-age=' . FAVICON_CACHE_TTL );
 	    exit;
 	}
@@ -289,16 +287,20 @@ if (!function_exists('file_put_contents')) {
 
 if (isset($_GET['icon'])) {
 	output_icon($_GET['icon']);
-	exit;
+	exit();
 }
 
-@ set_time_limit(5);
-$url = get_favicon_url(rawurldecode(@ $_GET['url']));
+$url = false;
+if (isset($_GET['url'])) {
+	$url = get_favicon_url(rawurldecode($_GET['url']));
+}
 
 if ($url === false) {
     output_image('ErrorIcon');
-    exit;
+    exit();
 }
 
-redirect_icon($url);
-exit;
+//redirect_icon($url);
+output_icon($url);
+
+exit();
