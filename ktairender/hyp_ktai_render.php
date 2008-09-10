@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.20 2008/09/03 08:00:57 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.21 2008/09/10 04:24:40 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -112,7 +112,7 @@ class HypKTaiRender
 	}
 	
 	function doOptimize () {
-
+		setlocale( LC_CTYPE, 'C');
 		
 		if ($this->inputHtml) {
 			$this->_extractHeadBody();
@@ -709,6 +709,10 @@ class HypKTaiRender
 	}
 	
 	function _uaSetup () {
+		
+		$locale = setlocale( LC_CTYPE, '0');
+		setlocale( LC_CTYPE, 'C');
+		
 		$this->keybutton = array(
 			'1'	=>	'[1]',
 			'2'	=>	'[2]',
@@ -858,7 +862,7 @@ class HypKTaiRender
 				}
 			}
 		}
-
+		setlocale( LC_CTYPE, $locale);
 		return;
 	}
 	
