@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.48 2008/08/22 08:05:49 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.49 2008/09/16 04:04:23 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1118,8 +1118,7 @@ EOF;
 			}
 			return $param;
 		} else {
-			$removes = array("\0", '&#8203;');
-			$result = str_replace($removes, '', $param);
+			$result = str_replace("\0", '', $param);
 			return $result;
 		}
 	}
