@@ -132,6 +132,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			if ($moduleConfigCubeUtils) {
 	        	$moduleConfigCubeUtils['cubeUtils_use_autologin'] = FALSE;
 			}
+			
+			include_once(dirname(dirname(__FILE__)).'/xc_classes/disabledBlock.php');
+			$this->mRoot->mDelegateManager->add( 'Legacy_Utils.CreateBlockProcedure' , array(& $this , 'blockControlXCL' )) ;
 		}
 	}
 
@@ -143,6 +146,18 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$GLOBALS['xoopsConfig']['template_set'] = $this->k_tai_conf['templateSet'];
 	}
 
+	// Block Control
+	function blockControlXCL (& $retBlock, $block) {
+		if (isset($this->k_tai_conf['disabledBlockIds'])) {
+			if (in_array($block->getVar('bid'), $this->k_tai_conf['disabledBlockIds'])) {
+				$retBlock = new HypXCLDisabledBlock();
+			}
+		}
+	}
+	function blockControlX2 ($bid) {
+	    if (! isset($this->k_tai_conf['disabledBlockIds'])) return TRUE;
+	    return (! in_array($bid, $this->k_tai_conf['disabledBlockIds']));
+	}
 	
 	function postFilter() {
 		// For WizMobile
@@ -172,7 +187,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 		
 		if (! empty($_POST)) {
-			// Input フィルター (remove "\0", "&#8203;")
+			// Input フィルター (remove "\0")
 			$_POST = HypCommonFunc::input_filter($_POST);
 			
 			// POST 文字列の文字エンコードを判定
@@ -724,6 +739,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$r = NULL;
 		unset($r);
 		
+		$s .= $GLOBALS['__bid'];
+		
 		header('Content-Type: ' . $ctype . '; charset=Shift_JIS');
 		header('Content-Length: ' . strlen($s));
 		header('Cache-Control: no-cache');
@@ -918,6 +935,9 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		
 		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';
+		
+		// 非表示にするブロックの bid (Block Id)
+		$this->k_tai_conf['disabledBlockIds'] = array();
 		
 		// インラインイメージのリサイズ最大ピクセル
 		$this->k_tai_conf['pictSizeMax'] = '200';
