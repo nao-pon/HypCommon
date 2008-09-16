@@ -112,6 +112,9 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';
 		
+		// 非表示にするブロックの bid (Block Id)
+		$this->k_tai_conf['disabledBlockIds'] = array();
+
 		// インラインイメージのリサイズ最大ピクセル
 		$this->k_tai_conf['pictSizeMax'] = '200';
 		
