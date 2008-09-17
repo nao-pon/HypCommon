@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/25 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_rss2html.php,v 1.1 2008/06/25 23:51:42 nao-pon Exp $
+ * $Id: hyp_rss2html.php,v 1.2 2008/09/17 08:05:23 nao-pon Exp $
  */
 
 class HypRss2Html
@@ -10,8 +10,14 @@ class HypRss2Html
 	var $is_item = FALSE;
 	var $is_base = FALSE;
 	var $template = 'simple';
+	var $preRemoves = array('content');
 	
 	function HypRss2Html($src) {
+		if ($this->preRemoves) {
+			foreach($this->preRemoves as $tag) {
+				$src = preg_replace('#<' . $tag . '[^>]*?>.+?</' . $tag . '[^>]*?>#isS', '', $src);
+			}
+		}
 		$this->src = $src;
 	}
 	
