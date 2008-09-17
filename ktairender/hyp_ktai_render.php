@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.22 2008/09/17 08:03:42 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.23 2008/09/17 23:49:54 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -113,6 +113,7 @@ class HypKTaiRender
 	
 	function doOptimize () {
 		setlocale( LC_CTYPE, 'C');
+		$this->parsed_base = parse_url($this->myRoot);
 		
 		if ($this->inputHtml) {
 			$this->_extractHeadBody();
@@ -925,14 +926,13 @@ class HypKTaiRender
 			$url = preg_replace($this->Config_urlRewrites['regex'], $this->Config_urlRewrites['tostr'], $url);
 		}
 		
-		$parsed_base = parse_url($this->myRoot);
 		$parsed_url = parse_url($url);
 		
 		if (strtolower(substr($url, 0, 6)) === 'mailto') {
 			$parsed_url['scheme'] = 'mailto';
-			$parsed_url['host'] = $parsed_base['host'];
+			$parsed_url['host'] = $this->parsed_base['host'];
 		}
-		if (empty($parsed_url['host']) || ($parsed_url['host'] === $parsed_base['host'] && $parsed_url['scheme'] === $parsed_base['scheme'])) {
+		if (empty($parsed_url['host']) || ($parsed_url['host'] === $this->parsed_base['host'] && $parsed_url['scheme'] === $this->parsed_base['scheme'])) {
 			$url = preg_replace('/(?:\?|&(?:amp;)?)' . $session_name . '=[^&#>]+/', '', $url);
 			
 			list($href, $hash) = array_pad(explode('#', $url, 2), 2, '');
@@ -952,7 +952,7 @@ class HypKTaiRender
 			}
 			if ($add) $href .= ((strpos($href, "?") === FALSE)? '?' : '&amp;') . (join('&amp;', $add));
 			$url = $href . ($hash? '#' . $hash : '');
-		} else if ($parsed_url['host'] !== $parsed_base['host']) {
+		} else if ($parsed_url['host'] !== $this->parsed_base['host']) {
 			$hostsReg = $this->_getHostsRegex($this->Config_directLinkHosts);
 			if (!preg_match($hostsReg, $parsed_url['host'])) {
 				$url =($this->Config_redirect? $this->Config_redirect : $this->myRoot . '/redirect.php?l=') . rawurlencode(str_replace('&amp;', '&', $url));
@@ -970,7 +970,6 @@ class HypKTaiRender
 		}
 
 		$url = $match[4];
-		$parsed_base = parse_url($this->myRoot);
 		$parsed_url = parse_url($url);
 		
 		$hostsReg = '#(?!)#';
@@ -983,7 +982,7 @@ class HypKTaiRender
 		}
 		
 		if (empty($parsed_url['host'])
-		 || ($parsed_url['host'] === $parsed_base['host'] && $parsed_url['scheme'] === $parsed_base['scheme'])
+		 || ($parsed_url['host'] === $this->parsed_base['host'] && $parsed_url['scheme'] === $this->parsed_base['scheme'])
 		 || preg_match($hostsReg, $parsed_url['host'])) {
 			$png = ($this->vars['ua']['allowPNG'])? '&amp;p' : '';
 			if (! $parsed_url['host']) {
