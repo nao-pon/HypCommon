@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.21 2008/09/10 04:24:40 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.22 2008/09/17 08:03:42 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -146,13 +146,7 @@ class HypKTaiRender
 			$str =& $$var;
 			if (preg_match('/\(\((?:e|i|s):[0-9a-f]{4}\)\)/S', $str)) {
 				if (! isset($mpc)) {
-					if (! class_exists('MobilePictogramConverter')) {
-						HypCommonFunc::loadClass('MobilePictogramConverter');
-					}
-					$mpc =& MobilePictogramConverter::factory_common();
-					$mpc->setImagePath($this->Config_emojiDir);
-					$mpc->setFromCharset(MPC_FROM_CHARSET_SJIS);
-					$mpc->userAgent = $this->vars['ua']['agent'];
+					$mpc =& $this->_getMobilePictogramConverter();
 				}
 				$mpc->setString($str);
 				$str = $mpc->autoConvertModKtai();
@@ -244,8 +238,13 @@ class HypKTaiRender
 				$pager = '<center>' . join(' ', $pager) . '</center>';
 			}
 
-			$mpc->setString($pager);
-			$pager = $mpc->autoConvertModKtai();
+			if (preg_match('/\(\((?:e|i|s):[0-9a-f]{4}\)\)/S', $pager)) {
+				if (! isset($mpc)) {
+					$mpc =& $this->_getMobilePictogramConverter();
+				}
+				$mpc->setString($pager);
+				$pager = $mpc->autoConvertModKtai();
+			}
 			
 		} else {
 			$h_reg = preg_quote($this->hashkey, '/') . '=[^&#]+';
@@ -1067,6 +1066,17 @@ class HypKTaiRender
 			$hostsReg = $dem . '(?!)' . $dem;
 		}
 		return $hostsReg;
+	}
+	
+	function & _getMobilePictogramConverter() {
+		if (! class_exists('MobilePictogramConverter')) {
+			HypCommonFunc::loadClass('MobilePictogramConverter');
+		}
+		$mpc =& MobilePictogramConverter::factory_common();
+		$mpc->setImagePath($this->Config_emojiDir);
+		$mpc->setFromCharset(MPC_FROM_CHARSET_SJIS);
+		$mpc->userAgent = $this->vars['ua']['agent'];
+		return $mpc;
 	}
 	
 /* -------------------------------------------------------------------------
