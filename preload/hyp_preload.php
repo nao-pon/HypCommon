@@ -397,72 +397,87 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				$_SESSION = array();
 				redirect_header(XOOPS_URL, 0, 'Your IP "' . $_SERVER['REMOTE_ADDR'] . '" doesn\'t match to IP range of "'.$this->HypKTaiRender->vars['ua']['carrier'].'".');
 				exit();
-				//exit('Your IP "' . $_SERVER['REMOTE_ADDR'] . '" doesn\'t match to IP range of "'.$this->HypKTaiRender->vars['ua']['carrier'].'".');
 			}
 			session_regenerate_id();
 		}
 
-		if (! empty($this->k_tai_conf['easyLogin']) && isset($_GET['_EASYLOGIN'])) {
-			$uaUid = md5($this->HypKTaiRender->vars['ua']['uid'] . XOOPS_DB_PASS);
-
-			if (empty($this->HypKTaiRender->vars['ua']['uid'])) {
-					exit('Could not got your device ID.');
-			}
+		if (! empty($this->k_tai_conf['easyLogin'])) {
 			
-			// Read data file
-			$myroot = str_replace('/', '_', preg_replace('#https?://#i', '', XOOPS_URL));
-			$datfile = XOOPS_TRUST_PATH . '/cache/' . $myroot . '_easylogin.dat';
-			if (is_file($datfile)) {
-				$uids = unserialize(HypCommonFunc::flock_get_contents($datfile));
-			} else {
-				$uids = array();
-			}
-			
-			if (! empty($_SESSION['xoopsUserId'])) {
-				// Check & save uids data
-				if (! isset($uids[$uaUid]) || $uids[$uaUid] !== $_SESSION['xoopsUserId']) {
-					foreach(array_keys($uids, $_SESSION['xoopsUserId']) as $_key) {
-						unset($uids[$_key]);
-					}
-					$uids[$uaUid] = $_SESSION['xoopsUserId'];
-					if ($fp = fopen($datfile, 'wb')) {
-						flock($fp, LOCK_EX);
-						fwrite($fp, serialize($uids));
-						fclose($fp);
-					}
+			if (isset($_GET['_EASYLOGIN']) || (! empty($_SESSION['xoopsUserId']) && (isset($_GET['_EASYLOGINSET']) || isset($_GET['_EASYLOGINUNSET'])))) {
+				if (empty($this->HypKTaiRender->vars['ua']['uid'])) {
+						exit('Could not got your device ID.');
 				}
-			} else {
-				// Do easy login
+				
 				if (empty($this->k_tai_conf['noCheckIpRange']) && ! $this->HypKTaiRender->checkIp ($_SERVER['REMOTE_ADDR'], $this->HypKTaiRender->vars['ua']['carrier'])) {
 					exit('Your IP "' . $_SERVER['REMOTE_ADDR'] . '" doesn\'t match to IP range of "'.$this->HypKTaiRender->vars['ua']['carrier'].'".');
 				}
-			
-				$uri = $_SERVER['REQUEST_URI'];
-				// Default is login form
-				$url = XOOPS_URL . '/user.php?xoops_redirect=' . rawurlencode($uri);
-				if (! empty($uids[$uaUid])) {
-			        // Login success
-			        $member_handler =& xoops_gethandler('member');
-			        $user =& $member_handler->getUser($uids[$uaUid]);
-					if (false !== $user && $user->getVar('level') > 0) {
-						// Update last login
-						$user->setVar('last_login', time());
-						$member_handler->insertUser($user, TRUE);
-						
-						// Set session vars
-						$_SESSION['xoopsUserId'] = $uids[$uaUid];
-						$_SESSION['xoopsUserGroups'] = $user->getGroups();
-						$user_theme = $user->getVar('theme');
-						if (in_array($user_theme, $GLOBALS['xoopsConfig']['theme_set_allowed'])) {
-							$_SESSION['xoopsUserTheme'] = $user_theme;
-						}
-						
-						$url = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->removeQueryFromUrl($uri, array('guid', '_EASYLOGIN'));
-			        }
+
+				$mode = '';
+				if (isset($_GET['_EASYLOGIN'])) {
+					$mode = 'login';
+				} else if (isset($_GET['_EASYLOGINSET'])) {
+					$mode = 'set';
+				} else if (isset($_GET['_EASYLOGINUNSET'])) {
+					$mode = 'unset';
 				}
-				// Redirect
-				header('Location: ' . $url);
-				exit();
+				
+				$uaUid = md5($this->HypKTaiRender->vars['ua']['uid'] . XOOPS_DB_PASS);
+				
+				// Read data file
+				$myroot = str_replace('/', '_', preg_replace('#https?://#i', '', XOOPS_URL));
+				$datfile = XOOPS_TRUST_PATH . '/cache/' . $myroot . '_easylogin.dat';
+				if (is_file($datfile)) {
+					$uids = unserialize(HypCommonFunc::flock_get_contents($datfile));
+				} else {
+					$uids = array();
+				}
+
+				if (! empty($_SESSION['xoopsUserId'])) {
+					// Check & save uids data
+					if (! isset($uids[$uaUid]) || $uids[$uaUid] !== $_SESSION['xoopsUserId'] || $mode === 'unset') {
+						foreach(array_keys($uids, $_SESSION['xoopsUserId']) as $_key) {
+							unset($uids[$_key]);
+						}
+						if ($mode !== 'unset') {
+							$uids[$uaUid] = $_SESSION['xoopsUserId'];
+						}
+						if ($fp = fopen($datfile, 'wb')) {
+							flock($fp, LOCK_EX);
+							fwrite($fp, serialize($uids));
+							fclose($fp);
+						}
+					}
+				} else if ($mode === 'login') {
+					// Do easy login
+					
+					$uri = $_SERVER['REQUEST_URI'];
+					// Default is login form
+					$url = XOOPS_URL . '/user.php?xoops_redirect=' . rawurlencode($uri);
+					
+					if (! empty($uids[$uaUid])) {
+				        // Login success
+				        $member_handler =& xoops_gethandler('member');
+				        $user =& $member_handler->getUser($uids[$uaUid]);
+						if (false !== $user && $user->getVar('level') > 0) {
+							// Update last login
+							$user->setVar('last_login', time());
+							$member_handler->insertUser($user, TRUE);
+							
+							// Set session vars
+							$_SESSION['xoopsUserId'] = $uids[$uaUid];
+							$_SESSION['xoopsUserGroups'] = $user->getGroups();
+							$user_theme = $user->getVar('theme');
+							if (in_array($user_theme, $GLOBALS['xoopsConfig']['theme_set_allowed'])) {
+								$_SESSION['xoopsUserTheme'] = $user_theme;
+							}
+							
+							$url = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->removeQueryFromUrl($uri, array('guid', '_EASYLOGIN'));
+				        }
+					}
+					// Redirect
+					header('Location: ' . $url);
+					exit();
+				}
 			}
 		}
 	}
@@ -645,7 +660,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 							if ($r->vars['ua']['name'] === 'DoCoMo') {
 								$add .= '&guid=ON';
 							}
-							$url = $r->myRoot . $r->removeSID($_SERVER['REQUEST_URI']);
+							$url = $r->myRoot . $r->removeSID($r->SERVER['REQUEST_URI']);
 							$url .= ((strpos($url, '?') === FALSE)? '?' : '&') . $add;
 							$url = str_replace('&', '&amp;', $url);
 							$easylogin = '<a href="' . $url . '">' . $this->k_tai_conf['msg']['easylogin'] . '</a>';
@@ -656,6 +671,44 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 								$uname = '<a href="' . XOOPS_URL . '/userinfo.php?uid=' . $uid . '">' . $uname . '</a>';
 							}
 							$easylogin = $uname . ' <a href="' . XOOPS_URL . '/user.php?op=logout">' . $this->k_tai_conf['msg']['logout'] . '</a>';
+							
+							// 簡単ログイン:設定 or 解除
+							if (isset($this->k_tai_conf['easyLoginConfPath']) && isset($this->k_tai_conf['easyLoginConfuid'])) {
+								$purl = parse_url(XOOPS_URL);
+								$nowpath = $r->SERVER['PHP_SELF'];
+								if (isset($purl['path'])) {
+									$nowpath = preg_replace('#^' . $purl['path'] . '#', '', $nowpath);
+								}
+								if (strpos($nowpath, $this->k_tai_conf['easyLoginConfPath']) === 0 && $_SESSION['xoopsUserId'] == @ $_GET[$this->k_tai_conf['easyLoginConfuid']]) {
+									
+									$uaUid = md5($r->vars['ua']['uid'] . XOOPS_DB_PASS);
+									
+									// Read easy login data file
+									$myroot = str_replace('/', '_', preg_replace('#https?://#i', '', XOOPS_URL));
+									$datfile = XOOPS_TRUST_PATH . '/cache/' . $myroot . '_easylogin.dat';
+									if (is_file($datfile)) {
+										$uids = unserialize(HypCommonFunc::flock_get_contents($datfile));
+									} else {
+										$uids = array();
+									}
+	
+									if (isset($uids[$uaUid])) {
+										$add = '_EASYLOGINUNSET';
+										$msg = 'easyloginUnset';
+									} else {
+										$add = '_EASYLOGINSET';
+										$msg = 'easyloginSet';
+									}
+									
+									if ($r->vars['ua']['name'] === 'DoCoMo') {
+										$add .= '&guid=ON';
+									}
+									$url = $r->myRoot . $r->removeQueryFromUrl($r->SERVER['REQUEST_URI'], array('_EASYLOGINUNSET', '_EASYLOGINSET'));
+									$url .= ((strpos($url, '?') === FALSE)? '?' : '&') . $add;
+									$url = str_replace('&', '&amp;', $url);
+									$parts[$this->k_tai_conf['easyLoginConfInsert']] = '<hr /><div style="text-align:center">[<a href="' . $url . '">' . $this->k_tai_conf['msg'][$msg] . '</a>]</div>' . @ $parts[$this->k_tai_conf['easyLoginConfInsert']];
+								}
+							}
 						}
 						$parts['easylogin'] = $rebuilds['easylogin']['above'] . $easylogin . $rebuilds['easylogin']['below'];
 					}
@@ -968,6 +1021,12 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// リンクメッセージ
 		$this->k_tai_conf['msg']['easylogin'] = '簡単ログイン';
 		$this->k_tai_conf['msg']['logout'] = 'ログアウト';
+		$this->k_tai_conf['msg']['easyloginSet'] = '簡単ログイン:設定';
+		$this->k_tai_conf['msg']['easyloginUnset'] = '簡単ログイン:解除';
+		// Easy login: 設定 or 解除リンクを表示するURI(XOOPS_URL以降)とuidのGETキーと挿入位置
+		$this->k_tai_conf['easyLoginConfPath'] = '/userinfo.php';
+		$this->k_tai_conf['easyLoginConfuid'] = 'uid';
+		$this->k_tai_conf['easyLoginConfInsert'] = 'content';
 		
 		//// Google Adsense 設定
 		// config ファイルのパス
