@@ -134,6 +134,12 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// リンクメッセージ
 		$this->k_tai_conf['msg']['easylogin'] = '簡単ログイン';
 		$this->k_tai_conf['msg']['logout'] = 'ログアウト';
+		$this->k_tai_conf['msg']['easyloginSet'] = '簡単ログイン:設定';
+		$this->k_tai_conf['msg']['easyloginUnset'] = '簡単ログイン:解除';
+		// Easy login: 設定 or 解除リンクを表示するURI(XOOPS_URL以降)とuidのGETキーと挿入位置
+		$this->k_tai_conf['easyLoginConfPath'] = '/userinfo.php';
+		$this->k_tai_conf['easyLoginConfuid'] = 'uid';
+		$this->k_tai_conf['easyLoginConfInsert'] = 'content';
 
 		//// Google Adsense 設定
 		// config ファイルのパス
