@@ -86,17 +86,19 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				
 				ini_set('session.use_trans_sid', 0);
 				
-				$skey = ini_get('session.name');
-				if(isset($_POST[$skey])) $sid=$_POST[$skey];
-				else if(isset($_GET[$skey])) $sid=$_GET[$skey];
-				else $sid=null;
-				if( preg_match('/^[0-9a-z]{32}$/', $sid) ){
-					session_id($sid);
+				$skey = session_name();
+				if (! isset($_COOKIE[$skey])) {
+					if(isset($_POST[$skey])) $sid=$_POST[$skey];
+					else if(isset($_GET[$skey])) $sid=$_GET[$skey];
+					else $sid=null;
+					if( preg_match('/^[0-9a-z]{32}$/', $sid) ){
+						session_id($sid);
+					}
 				}
 				
 				// Set HypKTaiRender
 				HypCommonFunc::loadClass('HypKTaiRender');
-				$this->HypKTaiRender = new HypKTaiRender();
+				$this->HypKTaiRender =& HypKTaiRender::getSingleton();
 				$this->HypKTaiRender->set_myRoot(XOOPS_URL);
 				$this->HypKTaiRender->Config_emojiDir = XOOPS_URL . '/images/emoji';
 				if (! empty($_POST) && empty($_SERVER['HTTP_REFERER'])) {
@@ -373,18 +375,20 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 	
 	function _onShutdownKtai() {
-		if (defined('SID') && SID && !isset($_COOKIE[SID])) {
-			$url = '';
-			foreach (headers_list() as $header) {
-				if (preg_match('/^Location:(.+)$/is', $header, $match)) {
-					$url = trim($match[1]);
-					break;
+		if (version_compare(PHP_VERSION, '5.0.0', '>=')) {
+			$session_name = session_name();
+			if (defined('SID') && SID && ! isset($_COOKIE[$session_name])) {
+				$url = '';
+				foreach (headers_list() as $header) {
+					if (preg_match('/^Location:(.+)$/is', $header, $match)) {
+						$url = trim($match[1]);
+						break;
+					}
 				}
-			}
-			if ($url && strpos($url, XOOPS_URL) === 0 && strpos($url, SID) === FALSE) {
-				$url = rtrim($url, '?');
-				$url .= ((strpos($url, '?') === FALSE)? '?' : '&') . SID;
-				header('Location:' . $url, TRUE);
+				if ($url) {
+					$url = $this->HypKTaiRender->addSID($url, XOOPS_URL);
+					header('Location:' . $url, TRUE);
+				}
 			}
 		}
 	}
@@ -668,7 +672,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 							if (is_object($GLOBALS['xoopsUser'])) {
 								$uname = htmlspecialchars($GLOBALS['xoopsUser']->getVar('uname'));
 								$uid = $GLOBALS['xoopsUser']->getVar('uid');
-								$uname = '<a href="' . XOOPS_URL . '/userinfo.php?uid=' . $uid . '">' . $uname . '</a>';
+								$guid = ($r->vars['ua']['carrier'] === 'docomo')? '&amp;guid=on' : '';
+								$uname = '<a href="' . XOOPS_URL . '/userinfo.php?uid=' . $uid . $guid . '">' . $uname . '</a>';
 							}
 							$easylogin = $uname . ' <a href="' . XOOPS_URL . '/user.php?op=logout">' . $this->k_tai_conf['msg']['logout'] . '</a>';
 							
@@ -731,7 +736,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if ($head) {
 			// Redirect
 			if (preg_match('#<meta[^>]+http-equiv=("|\')Refresh\\1[^>]+content=("|\')[\d]+;\s*url=(.+)\\2[^>]*>#iUS', $head, $match)) {
-				header('Location: ' . str_replace('&amp;', '&', $match[3]));
+				$url = str_replace('&amp;', '&', $match[3]);
+				$url = $r->addSID($url, XOOPS_URL);
+				header('Location: ' .$url);
 				return '';
 			}
 			

@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.23 2008/09/17 23:49:54 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.24 2008/09/21 01:28:36 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -91,6 +91,14 @@ class HypKTaiRender
 		
 	}
 	
+	function & getSingleton () {
+		static $my = NULL;
+		if (! $my) {
+			$my =& new HypKTaiRender();
+		}
+		return $my;
+	}
+	
 	function set_myRoot ($url) {
 		$parsed_url = parse_url($url);
 		$this->myRoot = $parsed_url['scheme'].'://'.$parsed_url['host'].(isset($parsed_url['port'])? ':' . $parsed_url['port'] : '');
@@ -107,13 +115,37 @@ class HypKTaiRender
 		foreach ($keys as $key) {
 			$url = preg_replace('/(?:(\?)|&(?:amp;)?)' . $key . '(?:=[^&#>]+)?(&(?:amp;)?|$)/', '$1$2', $url);
 		}
-		$url = str_replace('?&', '?', $url);
+		$url = str_replace(array('?&', '?&amp;'), '?', $url);
+		return $url;
+	}
+	
+	function addSID ($url, $rootURL = '') {
+		if (! $rootURL) $rootURL = $this->myRoot;
+		if (strpos($url, $rootURL) === 0) {
+			$session_name = session_name();
+			if (defined('SID') && SID && ! isset($_COOKIE[$session_name])) {
+				$hash = '';
+				if (strpos($url, '#') !== FALSE) {
+					list($url, $hash) = explode('#', $url, 2);
+					$hash = '#' . $hash;
+				}
+				$url = $this->removeSID($url);
+				$url = rtrim($url, '?');
+				$url .= ((strpos($url, '?') === FALSE)? '?' : '&') . SID . $hash;
+			}
+		}
 		return $url;
 	}
 	
 	function doOptimize () {
 		setlocale( LC_CTYPE, 'C');
 		$this->parsed_base = parse_url($this->myRoot);
+		
+		// Need SID ?
+		if (! $this->vars['ua']['allowCookie'] && defined('SID') && SID && empty($_COOKIE[$session_name]) && ! $this->vars['ua']['isBot']) {			$this->vars['needSID'] = TRUE;
+		} else {
+			$this->vars['needSID'] = FALSE;
+		}
 		
 		if ($this->inputHtml) {
 			$this->_extractHeadBody();
@@ -732,6 +764,7 @@ class HypKTaiRender
 		$this->vars['ua']['carrier'] = 'Unknown';
 		$this->vars['ua']['allowPNG'] = FALSE;
 		$this->vars['ua']['allowInputImage'] = FALSE;
+		$this->vars['ua']['allowCookie'] = FALSE;
 		
 		if (isset($this->SERVER['HTTP_USER_AGENT'])) {
 			$this->vars['ua']['isBot'] = preg_match('/Googlebot-Mobile|Y!J-(?:SRD|MBS)/i', $this->SERVER['HTTP_USER_AGENT']);
@@ -811,6 +844,7 @@ class HypKTaiRender
 						$this->vars['ua']['carrier'] = $carrier;
 						$this->vars['ua']['allowPNG'] = FALSE;
 						$this->vars['ua']['allowInputImage'] = FALSE;
+						$this->vars['ua']['allowCookie'] = FALSE;
 						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//i-mode group (ja)//DTD XHTML i-XHTML(Locale/Ver.=ja/2.3) 1.0//EN" "i-xhtml_4ja_10.dtd">';
 						break;
 					
@@ -834,6 +868,7 @@ class HypKTaiRender
 						$this->vars['ua']['carrier'] = $carrier;
 						$this->vars['ua']['allowPNG'] = TRUE;
 						$this->vars['ua']['allowInputImage'] = FALSE;
+						$this->vars['ua']['allowCookie'] = TRUE;
 						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//OPENWAVE//DTD XHTML 1.0//EN" "http://www.openwave.com/DTD/xhtml-basic.dtd">';
 						break;
 					
@@ -857,6 +892,7 @@ class HypKTaiRender
 						$this->vars['ua']['carrier'] = $carrier;
 						$this->vars['ua']['allowPNG'] = TRUE;
 						$this->vars['ua']['allowInputImage'] = TRUE;
+						$this->vars['ua']['allowCookie'] = TRUE;
 						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//JPHONE//DTD XHTML Basic 1.0 Plus//EN" "xhtml-basic10-plus.dtd">';
 						break;
 				}
@@ -943,7 +979,7 @@ class HypKTaiRender
 			};
 
 			$add = array();
-			if (defined('SID') && SID && empty($_COOKIE[$session_name]) && ! $this->vars['ua']['isBot']) {
+			if ($this->vars['needSID']) {
 				$add[] = SID;
 			}
 			if ($hash) {
