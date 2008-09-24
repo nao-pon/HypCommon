@@ -1,5 +1,5 @@
 <?php
-// $Id: header.php,v 1.1 2008/09/16 04:12:25 nao-pon Exp $
+// $Id: header.php,v 1.2 2008/09/24 23:29:35 nao-pon Exp $
 //  ------------------------------------------------------------------------ //
 //                XOOPS - PHP Content Management System                      //
 //                    Copyright (c) 2000 XOOPS.org                           //
@@ -138,7 +138,7 @@ if ($xoopsConfig['theme_set'] != 'default' && file_exists(XOOPS_THEME_PATH.'/'.$
     foreach (array_keys($block_arr) as $i) {
 		// KtaiRender Block control by nao-pon
 		if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
-			if (! $HypCommonPreLoad->blockControlX2($block_arr[$i]->getVar('bid'))) {
+			if (! $GLOBALS['HypCommonPreLoad']->blockControlX2($block_arr[$i]->getVar('bid'))) {
 				unset($block_arr[$i]);
 				continue;
 			}
