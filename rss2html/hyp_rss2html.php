@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/25 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_rss2html.php,v 1.2 2008/09/17 08:05:23 nao-pon Exp $
+ * $Id: hyp_rss2html.php,v 1.3 2008/09/25 00:05:56 nao-pon Exp $
  */
 
 class HypRss2Html
@@ -11,6 +11,7 @@ class HypRss2Html
 	var $is_base = FALSE;
 	var $template = 'simple';
 	var $preRemoves = array('content');
+	var $detect_order = 'ASCII, JIS, UTF-8, eucJP-win, EUC-JP, SJIS-win, SJIS';
 	
 	function HypRss2Html($src) {
 		if ($this->preRemoves) {
@@ -41,7 +42,7 @@ class HypRss2Html
 		if(preg_match('/<\?xml [^>]*\bencoding="([a-z0-9-_]+)"/i', $buf, $matches)) {
 			$this->encoding = $matches[1];
 		} else {
-			$this->encoding = mb_detect_encoding($buf);
+			$this->encoding = mb_detect_encoding($buf, $this->detect_order);
 		}
 
 		// Normalize to UTF-8 / ASCII
