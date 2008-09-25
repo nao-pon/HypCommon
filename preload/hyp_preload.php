@@ -60,9 +60,101 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	var $kakasi_cache_dir;
 	
 	var $wizMobileUse = FALSE;
+	var $detect_order_org = array();
 	
 	// コンストラクタ
 	function HypCommonPreLoadBase (& $controller) {
+		
+		if (! isset($this->use_set_query_words)) $this->use_set_query_words = 0;
+		if (! isset($this->use_words_highlight)) $this->use_words_highlight = 0;
+		if (! isset($this->use_proxy_check )) $this->use_proxy_check = 0;
+		if (! isset($this->use_dependence_filter)) $this->use_dependence_filter = 0;
+		if (! isset($this->use_post_spam_filter)) $this->use_post_spam_filter = 0;
+		if (! isset($this->post_spam_trap_set)) $this->post_spam_trap_set = 0;
+		if (! isset($this->use_k_tai_render)) $this->use_k_tai_render = 0;
+				
+		if (! isset($this->configEncoding)) $this->configEncoding = 'ISO-8859-1';
+		
+		if (! isset($this->encodehint_word)) $this->encodehint_word = '';
+		if (! isset($this->encodehint_name)) $this->encodehint_name = 'HypEncHint';
+		if (! isset($this->detect_order)) $this->detect_order = 'ASCII, JIS, UTF-8, eucJP-win, EUC-JP, SJIS-win, SJIS';
+		
+		if (! isset($this->msg_words_highlight)) $this->msg_words_highlight = 'These key words are highlighted.'; 
+		
+		if (! isset($this->no_proxy_check)) $this->no_proxy_check  = '/^(127\.0\.0\.1|192\.168\.1\.)/';
+		if (! isset($this->msg_proxy_check)) $this->msg_proxy_check = 'Can not post from public proxy.';
+		
+		if (! isset($this->use_mail_notify)) $this->use_mail_notify = 1;
+		if (! isset($this->post_spam_a)) $this->post_spam_a   = 1;
+		if (! isset($this->post_spam_bb)) $this->post_spam_bb  = 1;
+		if (! isset($this->post_spam_url)) $this->post_spam_url = 1;
+		if (! isset($this->post_spam_host)) $this->post_spam_host  = 31;
+		if (! isset($this->post_spam_word)) $this->post_spam_word  = 10;
+		if (! isset($this->post_spam_filed)) $this->post_spam_filed = 51;
+		if (! isset($this->post_spam_trap)) $this->post_spam_trap  = '___url';
+		if (! isset($this->post_spam_user)) $this->post_spam_user  = 50;
+		if (! isset($this->post_spam_guest)) $this->post_spam_guest = 15;
+		if (! isset($this->post_spam_badip)) $this->post_spam_badip = 100;
+		if (! isset($this->post_spam_rules)) $this->post_spam_rules = array(
+			"/((?:ht|f)tps?:\/\/[!~*'();\/?:\@&=+\$,%#\w.-]+).+?\\1.+?\\1/i" => 11,
+			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f\xff]+/' => 31
+		);
+		if (! isset($this->ignore_fileds)) $this->ignore_fileds = array();
+		
+		if (! isset($this->q_word)) $this->q_word  = 'XOOPS_QUERY_WORD';
+		if (! isset($this->q_word2)) $this->q_word2 = 'XOOPS_QUERY_WORD2';
+		if (! isset($this->se_name)) $this->se_name = 'XOOPS_SEARCH_ENGINE_NAME';
+	
+		if (! isset($this->kakasi_cache_dir)) $this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
+		
+		if (! isset($this->k_tai_conf['ua_regex'])) $this->k_tai_conf['ua_regex'] = '#(?:SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser|DDIPOCKET|WILLCOM)#';
+		if (! isset($this->k_tai_conf['rebuilds'])) $this->k_tai_conf['rebuilds'] = array(
+			'headerlogo' => array(	'above' => '<center>',
+									'below' => '</center>'),
+			'headerbar' => array(	'above' => '<hr>',
+									'below' => ''),
+			'breadcrumbs' => array(	'above' => '',
+									'below' => ''),
+			'leftcolumn' => array(	'above' => '<hr>',
+									'below' => ''),
+			'centerCcolumn' => array(	'above' => '<hr>',
+									'below' => ''),
+			'centerLcolumn' => array(	'above' => '',
+									'below' => ''),
+			'centerRcolumn' => array(	'above' => '',
+									'below' => ''),
+			'content' => array(	'above' => '<hr>',
+									'below' => ''),
+			'rightcolumn' => array(	'above' => '<hr>',
+									'below' => ''),
+			'footerbar' => array(	'above' => '',
+									'below' => ''),
+			'easylogin'     => array( 'above' => '<div style="text-align:center;background-color:#DBBCA6;font-size:small">[ ',
+									'below' => ' ]</div>'),
+		);
+		if (! isset($this->k_tai_conf['themeSet'])) $this->k_tai_conf['themeSet'] = 'ktai_default';
+		if (! isset($this->k_tai_conf['templateSet'])) $this->k_tai_conf['templateSet'] = 'ktai';
+		if (! isset($this->k_tai_conf['template'])) $this->k_tai_conf['template'] = 'default';
+		if (! isset($this->k_tai_conf['disabledBlockIds'])) $this->k_tai_conf['disabledBlockIds'] = array();
+		if (! isset($this->k_tai_conf['limitedBlockIds'])) $this->k_tai_conf['limitedBlockIds'] = array();
+		if (! isset($this->k_tai_conf['pictSizeMax'])) $this->k_tai_conf['pictSizeMax'] = '200';
+		if (! isset($this->k_tai_conf['showImgHosts'])) $this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com', 'ad.jp.ap.valuecommerce.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
+		if (! isset($this->k_tai_conf['directLinkHosts'])) $this->k_tai_conf['directLinkHosts'] = array('kaunet.biz', 'amazon.co.jp', 'ck.jp.ap.valuecommerce.com');
+		if (! isset($this->k_tai_conf['redirect'])) $this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/gate.php?way=redirect&amp;_d=0&amp;_u=0&amp;_x=0&l=';
+		if (! isset($this->k_tai_conf['easyLogin'])) $this->k_tai_conf['easyLogin'] = 1;
+		if (! isset($this->k_tai_conf['noCheckIpRange'])) $this->k_tai_conf['noCheckIpRange'] = 0;
+		if (! isset($this->k_tai_conf['msg']['easylogin'])) $this->k_tai_conf['msg']['easylogin'] = 'EasyLogin';
+		if (! isset($this->k_tai_conf['msg']['logout'])) $this->k_tai_conf['msg']['logout'] = 'Logout';
+		if (! isset($this->k_tai_conf['msg']['easyloginSet'])) $this->k_tai_conf['msg']['easyloginSet'] = 'Easylogin:ON';
+		if (! isset($this->k_tai_conf['msg']['easyloginUnset'])) $this->k_tai_conf['msg']['easyloginUnset'] = 'Easylogin:OFF';
+		if (! isset($this->k_tai_conf['easyLoginConfPath'])) $this->k_tai_conf['easyLoginConfPath'] = '/userinfo.php';
+		if (! isset($this->k_tai_conf['easyLoginConfuid'])) $this->k_tai_conf['easyLoginConfuid'] = 'uid';
+		if (! isset($this->k_tai_conf['easyLoginConfInsert'])) $this->k_tai_conf['easyLoginConfInsert'] = 'content';
+		if (! isset($this->k_tai_conf['googleAdsense']['config'])) $this->k_tai_conf['googleAdsense']['config'] = XOOPS_TRUST_PATH . '/class/hyp_common/ktairender/adsenseConf.php';
+		if (! isset($this->k_tai_conf['googleAdsense']['below'])) $this->k_tai_conf['googleAdsense']['below'] = 'header';
+
+		$this->detect_order_org = mb_detect_order();
+		
 		parent::XCube_ActionFilter($controller);
 	}
 	
@@ -84,17 +176,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 				define('HYP_K_TAI_RENDER', TRUE);
 				
-				ini_set('session.use_trans_sid', 0);
-				
-				$skey = session_name();
-				if (! isset($_COOKIE[$skey])) {
-					if(isset($_POST[$skey])) $sid=$_POST[$skey];
-					else if(isset($_GET[$skey])) $sid=$_GET[$skey];
-					else $sid=null;
-					if( preg_match('/^[0-9a-z]{32}$/', $sid) ){
-						session_id($sid);
-					}
-				}
+				@ ini_set('session.use_trans_sid', 0);
 				
 				// Set HypKTaiRender
 				HypCommonFunc::loadClass('HypKTaiRender');
@@ -104,6 +186,20 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				if (! empty($_POST) && empty($_SERVER['HTTP_REFERER'])) {
 					if (! empty($this->k_tai_conf['noCheckIpRange']) || $this->HypKTaiRender->checkIp($_SERVER['REMOTE_ADDR'], $this->HypKTaiRender->vars['ua']['carrier'])) {
 						$_SERVER['HTTP_REFERER'] = XOOPS_URL . '/';
+					}
+				}
+				
+				if (! $this->HypKTaiRender->vars['ua']['allowCookie']) {
+					@ ini_set('session.use_only_cookies', 0);
+				}
+				
+				$skey = session_name();
+				if (! isset($_COOKIE[$skey])) {
+					if(isset($_POST[$skey])) $sid=$_POST[$skey];
+					else if(isset($_GET[$skey])) $sid=$_GET[$skey];
+					else $sid=null;
+					if( preg_match('/^[0-9a-z]{32}$/', $sid) ){
+						session_id($sid);
 					}
 				}
 			} else {
@@ -160,18 +256,39 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 	// Block Control
 	function blockControlXCL (& $retBlock, $block) {
-		if (isset($this->k_tai_conf['disabledBlockIds'])) {
+		if (! empty($this->k_tai_conf['disabledBlockIds']) && is_array($this->k_tai_conf['disabledBlockIds'])) {
 			if (in_array($block->getVar('bid'), $this->k_tai_conf['disabledBlockIds'])) {
 				$retBlock = new HypXCLDisabledBlock();
+				return;
+			}
+		}
+		if (! empty($this->k_tai_conf['limitedBlockIds']) && is_array($this->k_tai_conf['limitedBlockIds'])) {
+			if (! in_array($block->getVar('bid'), $this->k_tai_conf['limitedBlockIds'])) {
+				$retBlock = new HypXCLDisabledBlock();
+				return;
 			}
 		}
 	}
 	function blockControlX2 ($bid) {
-	    if (! isset($this->k_tai_conf['disabledBlockIds'])) return TRUE;
-	    return (! in_array($bid, $this->k_tai_conf['disabledBlockIds']));
+	    if (! empty($this->k_tai_conf['disabledBlockIds']) && is_array($this->k_tai_conf['disabledBlockIds'])) {
+	    	if (in_array($bid, $this->k_tai_conf['disabledBlockIds'])) {
+	    		return FALSE;
+	    	}
+	    }
+	    if (! empty($this->k_tai_conf['limitedBlockIds']) && is_array($this->k_tai_conf['limitedBlockIds'])) {
+	    	if (! in_array($bid, $this->k_tai_conf['limitedBlockIds'])) {
+	    		return FALSE;
+	    	}
+	    }
+	    return TRUE;
 	}
 	
 	function postFilter() {
+		// Set mb_detect_order
+		if ($this->detect_order) {
+			mb_detect_order($this->detect_order);
+		}
+
 		// For WizMobile
 		if (class_exists('Wizin_User')) {
 			$wizinUser = & Wizin_User::getSingleton();
@@ -372,6 +489,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				ob_start(array(& $this, 'obFilter'));
 			}
 		}
+		
+		// Restor mb_detect_order
+		if ($this->detect_order_org) {
+			mb_detect_order($this->detect_order_org);
+		}
 	}
 	
 	function _onShutdownKtai() {
@@ -450,11 +572,20 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 							fwrite($fp, serialize($uids));
 							fclose($fp);
 						}
+						
+						$uri = $this->HypKTaiRender->SERVER['REQUEST_URI'];
+						$url = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->removeQueryFromUrl($uri, array('_EASYLOGIN', '_EASYLOGINSET', '_EASYLOGINUNSET'));
+						if ($mode !== 'set' && $mode !== 'unset') {
+							$url = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->removeQueryFromUrl($uri, 'guid');
+						}
+						header('Location: ' . $url);
+						exit();
 					}
 				} else if ($mode === 'login') {
 					// Do easy login
 					
-					$uri = $_SERVER['REQUEST_URI'];
+					$uri = $this->HypKTaiRender->SERVER['REQUEST_URI'];
+
 					// Default is login form
 					$url = XOOPS_URL . '/user.php?xoops_redirect=' . rawurlencode($uri);
 					
@@ -613,6 +744,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (preg_match('/<(?:feed.+?<entry|(?:(?:rss|rdf).+?<channel))/isS', $s)) {
 			HypCommonFunc::loadClass('HypRss2Html');
 			$r = new HypRss2Html($s);
+			$r->detect_order = $this->detect_order;
 			$s = $r->getHtml();
 			$s = mb_convert_encoding($s, $this->encode, $r->encoding);
 		}
@@ -661,7 +793,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					if (! empty($this->k_tai_conf['easyLogin'])) {
 						if (! empty($r->vars['ua']['isGuest'])) {
 							$add = '_EASYLOGIN';
-							if ($r->vars['ua']['name'] === 'DoCoMo') {
+							if ($r->vars['ua']['carrier'] === 'docomo') {
 								$add .= '&guid=ON';
 							}
 							$url = $r->myRoot . $r->removeSID($r->SERVER['REQUEST_URI']);
@@ -672,7 +804,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 							if (is_object($GLOBALS['xoopsUser'])) {
 								$uname = htmlspecialchars($GLOBALS['xoopsUser']->getVar('uname'));
 								$uid = $GLOBALS['xoopsUser']->getVar('uid');
-								$guid = ($r->vars['ua']['carrier'] === 'docomo')? '&amp;guid=on' : '';
+								$guid = ($r->vars['ua']['carrier'] === 'docomo')? '&amp;guid=ON' : '';
 								$uname = '<a href="' . XOOPS_URL . '/userinfo.php?uid=' . $uid . $guid . '">' . $uname . '</a>';
 							}
 							$easylogin = $uname . ' <a href="' . XOOPS_URL . '/user.php?op=logout">' . $this->k_tai_conf['msg']['logout'] . '</a>';
@@ -705,10 +837,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 										$msg = 'easyloginSet';
 									}
 									
-									if ($r->vars['ua']['name'] === 'DoCoMo') {
+									if ($r->vars['ua']['carrier'] === 'docomo') {
 										$add .= '&guid=ON';
 									}
-									$url = $r->myRoot . $r->removeQueryFromUrl($r->SERVER['REQUEST_URI'], array('_EASYLOGINUNSET', '_EASYLOGINSET'));
+									$url = $r->myRoot . $r->removeQueryFromUrl($r->SERVER['REQUEST_URI'], array('guid', '_EASYLOGINUNSET', '_EASYLOGINSET'));
 									$url .= ((strpos($url, '?') === FALSE)? '?' : '&') . $add;
 									$url = str_replace('&', '&amp;', $url);
 									$parts[$this->k_tai_conf['easyLoginConfInsert']] = '<hr /><div style="text-align:center">[<a href="' . $url . '">' . $this->k_tai_conf['msg'][$msg] . '</a>]</div>' . @ $parts[$this->k_tai_conf['easyLoginConfInsert']];
@@ -736,7 +868,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if ($head) {
 			// Redirect
 			if (preg_match('#<meta[^>]+http-equiv=("|\')Refresh\\1[^>]+content=("|\')[\d]+;\s*url=(.+)\\2[^>]*>#iUS', $head, $match)) {
-				$url = str_replace('&amp;', '&', $match[3]);
+				$url = $r->removeSID(str_replace('&amp;', '&', $match[3]));
 				$url = $r->addSID($url, XOOPS_URL);
 				header('Location: ' .$url);
 				return '';
@@ -766,6 +898,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			if (preg_match('#<title[^>]*>.*</title>#isUS', $head, $match)) {
 				$_head .= mb_convert_encoding($match[0], 'SJIS-win', $this->encode);
 			}
+			if (isset($r->vars['ua']['meta'])) {
+				$_head .= $r->vars['ua']['meta'];
+			}
 			$_head .= '</head>';
 			$head = $_head;
 		}
@@ -782,7 +917,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			$body = preg_replace('#(?:<img |<a href="\#" )onclick=\'xoopsCodeSmilie\(.+?</a>\]#sS', '', $body);
 		}
 		
-		if ($r->vars['ua']['name'] === 'DoCoMo') {
+		if ($r->vars['ua']['carrier'] === 'docomo') {
 			$body = preg_replace('/<form[^>]+?user\.php[^>]+?>/isS', '$0<input type="hidden" name="guid" value="ON">', $body);
 		}
 		
@@ -920,6 +1055,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		
 		$this->encodehint_word = 'ぷ';    // POSTエンコーディング判定用文字
 		$this->encodehint_name = 'HypEncHint'; // POSTエンコーディング判定用 Filed name
+		$this->detect_order = 'ASCII, JIS, UTF-8, eucJP-win, EUC-JP, SJIS-win, SJIS';
 		
 		$this->msg_words_highlight = 'これらのキーワードがハイライトされています'; 
 		
@@ -969,7 +1105,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// 携帯対応レンダー設定
 		
 		// 携帯端末判定用 UA 正規表現
-		$this->k_tai_conf['ua_regex'] = '#(?:SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser)#';
+		$this->k_tai_conf['ua_regex'] = '#(?:SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser|DDIPOCKET|WILLCOM)#';
 		
 		// HTML再構築用タグ設定
 		$this->k_tai_conf['rebuilds'] = array(
@@ -1006,8 +1142,11 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';
 		
-		// 非表示にするブロックの bid (Block Id)
+		// 非表示にするブロックの bid (Block Id) (無指定:フィルタリングしない)
 		$this->k_tai_conf['disabledBlockIds'] = array();
+		
+		// 表示するブロックの bid (Block Id) (無指定:フィルタリングしない)
+		$this->k_tai_conf['limitedBlockIds'] = array();
 		
 		// インラインイメージのリサイズ最大ピクセル
 		$this->k_tai_conf['pictSizeMax'] = '200';

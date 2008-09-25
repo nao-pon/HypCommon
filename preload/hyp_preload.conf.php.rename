@@ -26,6 +26,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		
 		$this->encodehint_word = 'ぷ';    // POSTエンコーディング判定用文字
 		$this->encodehint_name = 'HypEncHint'; // POSTエンコーディング判定用 Filed name
+		$this->detect_order = 'ASCII, JIS, UTF-8, eucJP-win, EUC-JP, SJIS-win, SJIS';
 		
 		$this->msg_words_highlight = 'これらのキーワードがハイライトされています'; 
 		
@@ -112,9 +113,12 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';
 		
-		// 非表示にするブロックの bid (Block Id)
+		// 非表示にするブロックの bid (Block Id) (無指定:フィルタリングしない)
 		$this->k_tai_conf['disabledBlockIds'] = array();
-
+		
+		// 表示するブロックの bid (Block Id) (無指定:フィルタリングしない)
+		$this->k_tai_conf['limitedBlockIds'] = array();
+		
 		// インラインイメージのリサイズ最大ピクセル
 		$this->k_tai_conf['pictSizeMax'] = '200';
 		
