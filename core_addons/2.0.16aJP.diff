@@ -1,0 +1,85 @@
+diff -r -u -x CVS org_2.0.16aJP/class/template.php html_2.0.16aJP/class/template.php
+--- org_2.0.16aJP/class/template.php	Mon Sep 22 14:08:30 2008
++++ html_2.0.16aJP/class/template.php	Thu Jul 17 09:12:49 2008
+@@ -1,5 +1,5 @@
+ <?php
+-// $Id: 2.0.16aJP.diff,v 1.1 2008/09/25 00:10:01 nao-pon Exp $
++// $Id: 2.0.16aJP.diff,v 1.1 2008/09/25 00:10:01 nao-pon Exp $
+ //  ------------------------------------------------------------------------ //
+ //                XOOPS - PHP Content Management System                      //
+ //                    Copyright (c) 2000 XOOPS.org                           //
+@@ -62,7 +62,11 @@
+ 	{
+ 		global $xoopsConfig;
+ 		$this->Smarty();
+-		$this->compile_id = null;
++		// Added compile_id @ nao-pon
++		//$this->compile_id = null;
++		$this->compile_id = $xoopsConfig['template_set'] . '-' . $xoopsConfig['theme_set'];
++		$this->_compile_id = $this->compile_id;
++		// Added compile_id  @ nao-pon (END)
+ 		if ($xoopsConfig['theme_fromfile'] == 1) {
+ 			$this->_canUpdateFromFile = true;
+ 			$this->compile_check = true;
+@@ -76,6 +80,11 @@
+ 		$this->cache_dir = XOOPS_CACHE_PATH;
+ 		$this->compile_dir = XOOPS_COMPILE_PATH;
+ 		$this->plugins_dir = array(XOOPS_ROOT_PATH.'/class/smarty/plugins');
++		// Added costomized smarty plugins dirctory @ nao-pon
++		if (defined('X2_ADD_SMARTYPLUGINS_DIR')) {
++			array_unshift($this->plugins_dir, X2_ADD_SMARTYPLUGINS_DIR);
++		}
++		// Added costomized smarty plugins dirctory @ nao-pon (END)
+ 		$this->default_template_handler_func = 'xoops_template_create';
+ 		
+ 		// Added by goghs on 11-26 to deal with safe mode
+diff -r -u -x CVS org_2.0.16aJP/header.php html_2.0.16aJP/header.php
+--- org_2.0.16aJP/header.php	Mon Sep 22 14:08:21 2008
++++ html_2.0.16aJP/header.php	Mon Sep 22 08:50:32 2008
+@@ -1,5 +1,5 @@
+ <?php
+-// $Id: 2.0.16aJP.diff,v 1.1 2008/09/25 00:10:01 nao-pon Exp $
++// $Id: 2.0.16aJP.diff,v 1.1 2008/09/25 00:10:01 nao-pon Exp $
+ //  ------------------------------------------------------------------------ //
+ //                XOOPS - PHP Content Management System                      //
+ //                    Copyright (c) 2000 XOOPS.org                           //
+@@ -136,6 +136,14 @@
+         }
+     }
+     foreach (array_keys($block_arr) as $i) {
++		// KtaiRender Block control by nao-pon
++		if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
++			if (! $GLOBALS['HypCommonPreLoad']->blockControlX2($block_arr[$i]->getVar('bid'))) {
++				unset($block_arr[$i]);
++				continue;
++			}
++		}
++
+         $bcachetime = $block_arr[$i]->getVar('bcachetime');
+         if (empty($bcachetime)) {
+             $xoopsTpl->xoops_setCaching(0);
+diff -r -u -x CVS org_2.0.16aJP/include/common.php html_2.0.16aJP/include/common.php
+--- org_2.0.16aJP/include/common.php	Mon Sep 22 14:08:38 2008
++++ html_2.0.16aJP/include/common.php	Mon Sep 22 08:19:41 2008
+@@ -73,6 +73,11 @@
+     // ############## Include common functions file ##############
+     include_once XOOPS_ROOT_PATH.'/include/functions.php';
+ 
++    // ############# Set Query Words & Load HypCommonFunction Class #############
++    include_once XOOPS_TRUST_PATH . '/class/hyp_common/preload/hyp_preload.php';
++    $HypCommonPreLoad = @ new HypCommonPreLoad();
++    $HypCommonPreLoad->preFilter();
++
+     // #################### Connect to DB ##################
+     require_once XOOPS_ROOT_PATH.'/class/database/databasefactory.php';
+     if ($_SERVER['REQUEST_METHOD'] != 'POST' || !xoops_refcheck(XOOPS_DB_CHKREF)) {
+@@ -234,6 +239,9 @@
+         }
+         unset($allowed, $group);
+     }
++
++    // ############# POST Filter with HypCommonPreLoad #############
++    $HypCommonPreLoad->postFilter();
+ 
+     if (file_exists('./xoops_version.php')) {
+         $url_arr = explode('/',strstr($xoopsRequestUri,'/modules/'));
