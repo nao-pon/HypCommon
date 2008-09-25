@@ -39,6 +39,7 @@ if ($exec)
 $dat .= "?>\n";
 
 @ chmod(dirname(__FILE__).'/favicon/cache', 0707);
+@ chmod(XOOPS_ROOT_PATH.'/class/hyp_common/cache', 0707);
 
 $filename = dirname(__FILE__)."/execpath.inc.php";
 
