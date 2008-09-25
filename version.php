@@ -1,8 +1,8 @@
 <?php
 /*
  * Created on 2007/05/30 by nao-pon http://hypweb.net/
- * $Id: version.php,v 1.74 2008/09/21 01:29:08 nao-pon Exp $
+ * $Id: version.php,v 1.75 2008/09/25 00:11:36 nao-pon Exp $
  */
 
-$version = '20080921';
+$version = '20080925';
 ?>
