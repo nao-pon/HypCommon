@@ -183,6 +183,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				$this->HypKTaiRender =& HypKTaiRender::getSingleton();
 				$this->HypKTaiRender->set_myRoot(XOOPS_URL);
 				$this->HypKTaiRender->Config_emojiDir = XOOPS_URL . '/images/emoji';
+				$this->HypKTaiRender->Config_redirect = $this->k_tai_conf['redirect'];
+				$this->HypKTaiRender->Config_showImgHosts = $this->k_tai_conf['showImgHosts'];
+				$this->HypKTaiRender->Config_directLinkHosts = $this->k_tai_conf['directLinkHosts'];
+				$this->HypKTaiRender->Config_hypCommonURL = XOOPS_URL . '/class/hyp_common';
+				if (! empty($this->k_tai_conf['pictSizeMax'])) $this->HypKTaiRender->Config_pictSizeMax = $this->k_tai_conf['pictSizeMax'];
+
 				if (! empty($_POST) && empty($_SERVER['HTTP_REFERER'])) {
 					if (! empty($this->k_tai_conf['noCheckIpRange']) || $this->HypKTaiRender->checkIp($_SERVER['REMOTE_ADDR'], $this->HypKTaiRender->vars['ua']['carrier'])) {
 						$_SERVER['HTTP_REFERER'] = XOOPS_URL . '/';
@@ -891,7 +897,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				}
 			}
 			if ($rss) {
-				$body = '<div style="font-size:0.9em">[ ' . join(' ', $rss) . ' ]</div>' . $body;
+				$body = '<div style="font-size:0.9em">' . $r->Config_icons['RSS'] . join('<br />' . $r->Config_icons['RSS'], $rss) . '</div>' . $body;
 			}
 			
 			$_head = '<head>';
@@ -921,11 +927,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			$body = preg_replace('/<form[^>]+?user\.php[^>]+?>/isS', '$0<input type="hidden" name="guid" value="ON">', $body);
 		}
 		
-		$r->Config_redirect = $this->k_tai_conf['redirect'];
-		$r->Config_showImgHosts = $this->k_tai_conf['showImgHosts'];
-		$r->Config_directLinkHosts = $this->k_tai_conf['directLinkHosts'];
-		$r->Config_hypCommonURL = XOOPS_URL . '/class/hyp_common';
-		if (! empty($this->k_tai_conf['pictSizeMax'])) $r->Config_pictSizeMax = $this->k_tai_conf['pictSizeMax'];
 		$r->contents['header'] = $header;
 		$r->contents['body'] = $body;
 		$r->contents['footer'] = $footer;
