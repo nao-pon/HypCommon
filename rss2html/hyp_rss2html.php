@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/25 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_rss2html.php,v 1.3 2008/09/25 00:05:56 nao-pon Exp $
+ * $Id: hyp_rss2html.php,v 1.4 2008/09/26 08:36:52 nao-pon Exp $
  */
 
 class HypRss2Html
@@ -10,16 +10,24 @@ class HypRss2Html
 	var $is_item = FALSE;
 	var $is_base = FALSE;
 	var $template = 'simple';
-	var $preRemoves = array('content');
+	var $preRemoves = array();
 	var $detect_order = 'ASCII, JIS, UTF-8, eucJP-win, EUC-JP, SJIS-win, SJIS';
 	
 	function HypRss2Html($src) {
 		if ($this->preRemoves) {
 			foreach($this->preRemoves as $tag) {
-				$src = preg_replace('#<' . $tag . '[^>]*?>.+?</' . $tag . '[^>]*?>#isS', '', $src);
+				// PHP might down in the regular expression. 
+				$_tmp = '';
+				$_arr = explode('</' . $tag . '>', $src);
+				if (isset($arr[1])) {
+					foreach($_arr as $_) {
+						$_tmp .= strstr($_, '<' . $tag, true);
+					}
+					$src = $_tmp;
+				}
 			}
 		}
-		$this->src = $src;
+		$this->src = preg_replace('/([\x00-\x08]|[\x0b\x0c]|[\x0e-\x1f]|[\x7f])+/', '', $src);
 	}
 	
 	function getHtml() {
