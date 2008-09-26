@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.25 2008/09/24 23:33:43 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.26 2008/09/26 08:31:22 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -48,6 +48,7 @@ class HypKTaiRender
 	var $Config_googleAdSenseConfig = '';
 	var $Config_googleAdSenseBelow = '';
 	var $Config_style = array();
+	var $Config_botReg = '/Googlebot-Mobile|Y!J-(?:SRD|MBS)|froute\.jp/i';
 	
 	function HypKTaiRender () {
 		
@@ -61,6 +62,7 @@ class HypKTaiRender
 		
 		$this->Config_icons['extLink'] = '((i:f8d9))';
 		$this->Config_icons['hTag']    = '((i:f8e4))';
+		$this->Config_icons['RSS']     = '((e:f699))';
 		
 		$this->Config_style['pageNavi'] = 'text-align:center;background-color:#EEFFBF';
 		$this->Config_style['olul']     = 'margin-left:1em;padding:0';
@@ -783,7 +785,7 @@ class HypKTaiRender
 		$this->vars['ua']['contentType'] = 'text/html';
 		
 		if (isset($this->SERVER['HTTP_USER_AGENT'])) {
-			$this->vars['ua']['isBot'] = preg_match('/Googlebot-Mobile|Y!J-(?:SRD|MBS)/i', $this->SERVER['HTTP_USER_AGENT']);
+			$this->vars['ua']['isBot'] = preg_match($this->Config_botReg, $this->SERVER['HTTP_USER_AGENT']);
 			
 			if ( preg_match('#(?:^(?:KDDI-[^\s]+ |Mozilla/[0-9.]+\s*\()?|\b)([a-zA-Z.-]+)(?:/([0-9.]+))?#', $this->SERVER['HTTP_USER_AGENT'], $match) ) {
 			
