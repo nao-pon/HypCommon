@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.50 2008/09/25 00:07:59 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.51 2008/09/26 08:28:59 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -81,7 +81,7 @@ class HypCommonFunc
 				$arr =array();
 				foreach($v as $k=>$m)
 				{
-					$arr[$k] = self::stripslashes_gpc($m);
+					$arr[$k] = HypCommonFunc::stripslashes_gpc($m);
 				}
 				$v = $arr;
 			}
@@ -126,7 +126,7 @@ class HypCommonFunc
 		global $xoopsConfig;
 		
 		//RSSキャッシュファイルを削除
-		self::clear_rss_cache();
+		HypCommonFunc::clear_rss_cache();
 		
 		$update_ping2 = $default_update;
 		$update_ping = preg_split ( "/[\s,]+/" , $update_ping2 );
@@ -269,14 +269,14 @@ EOF;
 		//GD のバージョンを取得
 		static $gd_ver = null;
 		if (is_null($gd_ver)) {
-			$gd_ver = self::gdVersion();
+			$gd_ver = HypCommonFunc::gdVersion();
 		}
 		
 		// gd fuction のチェック
 		if ($gd_ver < 1 || !function_exists("imagecreate")) return FALSE;//gdをサポートしていない
 		
 		// リサイズ
-		$resized = self::ImageResize($file, $maxsize . 'x' . $maxsize, 50);
+		$resized = HypCommonFunc::ImageResize($file, $maxsize . 'x' . $maxsize, 50);
 
 		$size = @ getimagesize($file);
 		if (! $size) return FALSE;
@@ -379,16 +379,16 @@ EOF;
 		if (defined('HYP_IMAGEMAGICK_PATH') && HYP_IMAGEMAGICK_PATH)
 		{
 			// ImageMagick を使用
-			return self::make_thumb_imagemagick($o_file, $s_file, $zoom, $quality, $size[2], $org_w, $org_h);
+			return HypCommonFunc::make_thumb_imagemagick($o_file, $s_file, $zoom, $quality, $size[2], $org_w, $org_h);
 		}
 		else
 		{
-			if (!self::check_memory4gd($org_w,$org_h))
+			if (!HypCommonFunc::check_memory4gd($org_w,$org_h))
 			{
 				// メモリー制限に引っ掛かりそう。（マージン 1MB）
 				return $o_file;
 			}
-			return self::make_thumb_gd($o_file, $s_file, $zoom, $quality, $size[2], $org_w, $org_h);
+			return HypCommonFunc::make_thumb_gd($o_file, $s_file, $zoom, $quality, $size[2], $org_w, $org_h);
 		}
 	}
 	
@@ -398,7 +398,7 @@ EOF;
 		static $gd_ver = null;
 		if (is_null($gd_ver))
 		{
-			$gd_ver = self::gdVersion();
+			$gd_ver = HypCommonFunc::gdVersion();
 		}
 		
 		// gd fuction のチェック
@@ -547,7 +547,7 @@ EOF;
 					"&o=".rawurlencode($ro_file).
 					"&s=".rawurlencode($rs_file);
 						
-			self::exec_image_magick_cgi($cmds);
+			HypCommonFunc::exec_image_magick_cgi($cmds);
 		}
 		
 		if( ! is_readable( $s_file ) )
@@ -584,7 +584,7 @@ EOF;
 		$h = round($size[1] * $zoom);
 		
 		$tmp = $img . '.tmp';
-		$done = self::make_thumb($img, $tmp, $w, $h, '1,99', TRUE, $quality);
+		$done = HypCommonFunc::make_thumb($img, $tmp, $w, $h, '1,99', TRUE, $quality);
 		
 		if ($done === $img) return false;
 		
@@ -653,7 +653,7 @@ EOF;
 					"&o=".rawurlencode($ro_file).
 					"&s=".rawurlencode($rs_file);
 			
-			self::exec_image_magick_cgi($cmds);
+			HypCommonFunc::exec_image_magick_cgi($cmds);
 		}
 		
 		if( ! is_readable( $rs_file ) ) {
@@ -715,7 +715,7 @@ EOF;
 		static $memory_limit = NULL;
 		if (is_null($memory_limit))
 		{
-			$memory_limit = self::return_bytes(ini_get('memory_limit'));
+			$memory_limit = HypCommonFunc::return_bytes(ini_get('memory_limit'));
 		}
 		if ($memory_limit)
 		{
@@ -779,7 +779,7 @@ EOF;
 						"&q=".$quality.
 						"&s=".rawurlencode($src);
 							
-				return self::exec_image_magick_cgi($cmds);
+				return HypCommonFunc::exec_image_magick_cgi($cmds);
 			}
 		}
 		else if (defined('HYP_IMAGEMAGICK_PATH') && HYP_IMAGEMAGICK_PATH)
@@ -808,7 +808,7 @@ EOF;
 						"&q=".$quality.
 						"&s=".rawurlencode($src);
 							
-				return self::exec_image_magick_cgi($cmds);				
+				return HypCommonFunc::exec_image_magick_cgi($cmds);				
 			}
 		}
 		else
@@ -816,7 +816,7 @@ EOF;
 			// GD を使用
 			
 			// メモリーチェック
-			if (!self::check_memory4gd($w,$h)) return false;
+			if (!HypCommonFunc::check_memory4gd($w,$h)) return false;
 			
 			$angle = 360 - $angle;
 			if (($in = imageCreateFromJpeg($src)) === false) {
@@ -896,9 +896,9 @@ EOF;
 	// 外部実行コマンドのパスを設定
 	function set_exec_path($dir)
 	{
-		self::set_jpegtran_path($dir);
-		self::set_imagemagick_path($dir);
-		self::set_hyp_image_magic_url();
+		HypCommonFunc::set_jpegtran_path($dir);
+		HypCommonFunc::set_imagemagick_path($dir);
+		HypCommonFunc::set_hyp_image_magic_url();
 	}
 	
 	// Image Magick のパスを設定(定数化)
@@ -997,7 +997,7 @@ EOF;
 	{
 		if ($_SERVER['REQUEST_METHOD'] == 'POST')
 		{
-			$_msg = self::IsBBQListed($safe_reg, $msg, $ip, $checker);
+			$_msg = HypCommonFunc::IsBBQListed($safe_reg, $msg, $ip, $checker);
 			if ($_msg !== false)
 			{
 				exit ($_msg);
@@ -1035,7 +1035,7 @@ EOF;
 		}
 		
 		static $filters = NULL;
-		if (is_null($filters)) {$filters = self::PostSpam_filter();}
+		if (is_null($filters)) {$filters = HypCommonFunc::PostSpam_filter();}
 		$counts = array();
 		$counts[0] = $counts[1] = $counts[2] = $counts[3] = 0;
 		foreach($post as $key => $dat)
@@ -1044,7 +1044,7 @@ EOF;
 			$tmp['a'] = $tmp['bb'] = $tmp['url'] = $tmp['filter'] = 0;
 			if (is_array($dat))
 			{
-				list($tmp['a'],$tmp['bb'],$tmp['url'],$tmp['filter']) = self::PostSpam_Check($dat);
+				list($tmp['a'],$tmp['bb'],$tmp['url'],$tmp['filter']) = HypCommonFunc::PostSpam_Check($dat);
 			}
 			else
 			{
@@ -1101,7 +1101,7 @@ EOF;
 	{
 		if ($_SERVER['REQUEST_METHOD'] == 'POST')
 		{
-			list($a_p,$bb_p,$url_p,$filter_p) = self::PostSpam_Check($_POST, $encode, $encodehint);
+			list($a_p,$bb_p,$url_p,$filter_p) = HypCommonFunc::PostSpam_Check($_POST, $encode, $encodehint);
 			return $a_p * $alink + $bb_p * $bb + $url_p * $url + $filter_p;
 		}
 		else
@@ -1114,7 +1114,7 @@ EOF;
 	function input_filter($param) {
 		if (is_array($param)) {
 			foreach ($param as $key => $val) {
-				$param[$key] = self::input_filter($val);
+				$param[$key] = HypCommonFunc::input_filter($val);
 			}
 			return $param;
 		} else {
@@ -1162,7 +1162,7 @@ EOF;
 		{
 			foreach ($post as $_key=>$_val)
 			{
-				$post[$_key] = self::dependence_filter($_val);
+				$post[$_key] = HypCommonFunc::dependence_filter($_val);
 			}	
 		}
 		else
@@ -1191,7 +1191,7 @@ EOF;
 		if (is_array($arg)) {
 			foreach (array_keys($arg) as $key) {
 				if (!$keys || in_array($key, $keys)) {
-					self::encode_numericentity($arg[$key], $toencode, $fromencode, $keys);
+					HypCommonFunc::encode_numericentity($arg[$key], $toencode, $fromencode, $keys);
 				}
 			}
 		} else {
@@ -1284,7 +1284,7 @@ EOF;
 			$reg_words = array_unique($reg_words);
 			sort($reg_words, SORT_STRING);
 
-			$result = self::get_reg_pattern_sub($reg_words, 0, count($reg_words), 0);
+			$result = HypCommonFunc::get_reg_pattern_sub($reg_words, 0, count($reg_words), 0);
 		}
 		
 		return $result;
@@ -1329,7 +1329,7 @@ EOF;
 			else
 			{
 				$result .= str_replace(' ', '\\ ', preg_quote($char, '/')) .
-					self::get_reg_pattern_sub($words, $i, $j, $pos + 1);
+					HypCommonFunc::get_reg_pattern_sub($words, $i, $j, $pos + 1);
 			}
 			
 			++$count;
@@ -1442,7 +1442,7 @@ EOF;
 			}
 			// Do decode
 			$decoded = $idn->decode($encoded);
-			self::encode_numericentity($decoded, $encode, 'UTF-8');
+			HypCommonFunc::encode_numericentity($decoded, $encode, 'UTF-8');
 			$decoded = mb_convert_encoding($decoded, $encode, 'UTF-8');
 			$converted[$encode][$decoded] = $encoded;
 			return $decoded;
@@ -1463,7 +1463,7 @@ EOF;
 			if (! empty($match[5])) $ret['query'] = $match[5];
 			if (! empty($match[6])) $ret['fragment'] = $match[6];
 			if (preg_match('/[^A-Za-z0-9.-]/', $ret['host'])) {
-				$ret['host'] = self::convertIDN($ret['host'], 'encode');
+				$ret['host'] = HypCommonFunc::convertIDN($ret['host'], 'encode');
 			}
 			return $ret;
 		} else {
