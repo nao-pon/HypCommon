@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.26 2008/09/26 08:31:22 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.27 2008/10/02 10:17:40 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -97,6 +97,10 @@ class HypKTaiRender
 		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?ie=UTF8&amp;k=$3&amp;uid=NULLGWDOCOMO&amp;at=$2&amp;m=Blended&amp;url=%2Fgp%2Faw%2Fs.html&amp;lc=mqs';	
 		$this->Config_urlRewrites['regex'][] = '#^(http://(?:www\.)?amazon.[^/]+?)/gp/search\?.+?keywords=([^& \'"]+).+?tag=([a-z0-9]+).*$#iS';
 		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?ie=UTF8&amp;k=$2&amp;uid=NULLGWDOCOMO&amp;at=$3&amp;m=Blended&amp;url=%2Fgp%2Faw%2Fs.html&amp;lc=mqs';	
+		
+		// Rakuten
+		$this->Config_urlRewrites['regex'][] = '#^(http://hb\.afl\.rakuten\.co\.jp/hgc/[^/]+?/\?)pc=.+?&amp;m=#';
+		$this->Config_urlRewrites['tostr'][] = '$1m=';
 		
 		// Remove control keys
 		if (isset($_SERVER['QUERY_STRING'])) {
