@@ -34,7 +34,8 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->msg_proxy_check = 'Can not post from public proxy.';
 		
 		// POST SPAM
-		$this->use_mail_notify = 1;       // POST SPAM メール通知 0:なし, 1:SPAM判定のみ, 2:すべて
+		$this->use_mail_notify    = 1;    // POST SPAM メール通知 0:なし, 1:SPAM判定のみ, 2:すべて
+		$this->send_mail_interval = 60;   // まとめ送りのインターバル(分) (0 で随時送信)
 		$this->post_spam_a   = 1;         // <a> タグ 1個あたりのポイント
 		$this->post_spam_bb  = 1;         // BBリンク 1個あたりのポイント
 		$this->post_spam_url = 1;         // URL      1個あたりのポイント
