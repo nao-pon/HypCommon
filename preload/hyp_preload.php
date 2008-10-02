@@ -85,6 +85,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->msg_proxy_check)) $this->msg_proxy_check = 'Can not post from public proxy.';
 		
 		if (! isset($this->use_mail_notify)) $this->use_mail_notify = 1;
+		if (! isset($this->send_mail_interval)) $this->send_mail_interval = 60;
 		if (! isset($this->post_spam_a)) $this->post_spam_a   = 1;
 		if (! isset($this->post_spam_bb)) $this->post_spam_bb  = 1;
 		if (! isset($this->post_spam_url)) $this->post_spam_url = 1;
@@ -388,13 +389,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					$cachefile = XOOPS_TRUST_PATH . '/cache/hyp_spamsites.dat';
 					if (filemtime($datfile) > @ filemtime($cachefile)) {
 						$regs = HypCommonFunc::get_reg_pattern(array_map('trim',file($datfile)));
-						if ($fp = @ fopen($cachefile, 'wb')) {
-							if (flock($fp, LOCK_EX)) {
-								fwrite($fp, $regs);
-								flock($fp, LOCK_UN);
-							}
-							fclose($fp);
-						}
+						HypCommonFunc::flock_put_contents($cachefile, $regs);
 					} else {
 						$regs = join('', file($cachefile));
 					}
@@ -409,13 +404,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					$cachefile = XOOPS_TRUST_PATH . '/cache/hyp_spamwords.dat';
 					if (filemtime($datfile) > @ filemtime($cachefile)) {
 						$regs = HypCommonFunc::get_reg_pattern(array_map('trim',file($datfile)));
-						if ($fp = @ fopen($cachefile, 'wb')) {
-							if (flock($fp, LOCK_EX)) {
-								fwrite($fp, $regs);
-								flock($fp, LOCK_UN);
-							}
-							fclose($fp);
-						}
+						HypCommonFunc::flock_put_contents($cachefile, $regs);
 					} else {
 						$regs = join('', file($cachefile));
 					}
@@ -567,23 +556,16 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				if (! empty($_SESSION['xoopsUserId'])) {
 					// Check & save uids data
 					if (! isset($uids[$uaUid]) || $uids[$uaUid] !== $_SESSION['xoopsUserId'] || $mode === 'unset') {
-						foreach(array_keys($uids, $_SESSION['xoopsUserId']) as $_key) {
-							unset($uids[$_key]);
-						}
-						if ($mode !== 'unset') {
+						if ($mode === 'unset') {
+							unset($uids[$uaUid]);
+						} else {
 							$uids[$uaUid] = $_SESSION['xoopsUserId'];
 						}
-						if ($fp = fopen($datfile, 'wb')) {
-							flock($fp, LOCK_EX);
-							fwrite($fp, serialize($uids));
-							fclose($fp);
-						}
+						HypCommonFunc::flock_put_contents($datfile, serialize($uids));
 						
 						$uri = $this->HypKTaiRender->SERVER['REQUEST_URI'];
-						$url = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->removeQueryFromUrl($uri, array('_EASYLOGIN', '_EASYLOGINSET', '_EASYLOGINUNSET'));
-						if ($mode !== 'set' && $mode !== 'unset') {
-							$url = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->removeQueryFromUrl($uri, 'guid');
-						}
+						$url = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->removeQueryFromUrl($uri, array('guid', '_EASYLOGIN', '_EASYLOGINSET', '_EASYLOGINUNSET'));
+
 						header('Location: ' . $url);
 						exit();
 					}
@@ -653,6 +635,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				case 'SJIS':
 				case 'SHIFT-JIS':
 				case 'SHIFT_JIS':
+				case 'SJIS-WIN':
 					$from_encode = MPC_FROM_CHARSET_SJIS;
 					break;
 			}
@@ -974,8 +957,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	function sendMail ($spamlev) {
 		
 		global $xoopsUser;
+		$info = array();
 		
-		
+		$info['TIME'] = date('r', time());
 		if (is_object($xoopsUser)) {
 			$info['UID'] = (int)$xoopsUser->uid();
 			$info['UNAME'] = $xoopsUser->uname();
@@ -1012,6 +996,26 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 		
 		$message = $_info . '$_POST :' . "\n" . print_r($post, TRUE);
+		$message .= "\n" . str_repeat('=', 30) . "\n\n";
+		
+		if ($this->send_mail_interval) {
+			$mail_tmp = XOOPS_TRUST_PATH . '/cache/' . str_replace('/', '_', preg_replace('#https?://#i', '', XOOPS_URL)) . '.SPAM.hyp';
+			if (! file_exists($mail_tmp)) {
+				HypCommonFunc::flock_put_contents($mail_tmp, $message);
+				return;
+			} else {
+				$mtime = filemtime($mail_tmp);
+				if ($mtime + $this->send_mail_interval * 60 > time()) {
+					if (HypCommonFunc::flock_put_contents($mail_tmp, $message, 'ab')) {
+						touch($mail_tmp, $mtime);
+					}
+					return;
+				} else {
+					$message = HypCommonFunc::flock_get_contents($mail_tmp) . $message;
+					unlink($mail_tmp);
+				}
+			}
+		}
 		
 		$config_handler =& xoops_gethandler('config');
 		$xoopsConfig =& $config_handler->getConfigsByCat(XOOPS_CONF);
@@ -1064,7 +1068,8 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->msg_proxy_check = 'Can not post from public proxy.';
 		
 		// POST SPAM
-		$this->use_mail_notify = 1;       // POST SPAM メール通知 0:なし, 1:SPAM判定のみ, 2:すべて
+		$this->use_mail_notify    = 1;    // POST SPAM メール通知 0:なし, 1:SPAM判定のみ, 2:すべて
+		$this->send_mail_interval = 60;   // まとめ送りのインターバル(分) (0 で随時送信)
 		$this->post_spam_a   = 1;         // <a> タグ 1個あたりのポイント
 		$this->post_spam_bb  = 1;         // BBリンク 1個あたりのポイント
 		$this->post_spam_url = 1;         // URL      1個あたりのポイント
