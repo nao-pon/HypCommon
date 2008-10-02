@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.51 2008/09/26 08:28:59 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.52 2008/10/02 10:25:16 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1488,6 +1488,24 @@ EOF;
 					}
 					fclose($handle);
 				}
+			}
+		}
+		return $return;
+	}
+	
+	function flock_put_contents ($filename, $src, $mode = 'wb', $maxRetry = 10) {
+		$return = FALSE;
+		if (is_string($filename) && ! empty($filename)) {
+			if ($handle = @ fopen($filename, $mode)) {
+				$i = 0;
+				while ($return === FALSE && $maxRetry > $i++) {
+					if (flock($handle, LOCK_EX)) {
+						$return = fwrite($handle, $src);
+						fclose($handle);
+					}
+					if ($return === FALSE) usleep(50000); // Wait 500ms
+				}
+				fclose($handle);
 			}
 		}
 		return $return;
