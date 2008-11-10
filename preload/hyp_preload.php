@@ -98,7 +98,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->post_spam_badip)) $this->post_spam_badip = 100;
 		if (! isset($this->post_spam_rules)) $this->post_spam_rules = array(
 			"/((?:ht|f)tps?:\/\/[!~*'();\/?:\@&=+\$,%#\w.-]+).+?\\1.+?\\1/i" => 11,
-			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f\xff]+/' => 31
+			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f]+/' => 31
 		);
 		if (! isset($this->ignore_fileds)) $this->ignore_fileds = array();
 		
@@ -291,6 +291,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 	
 	function postFilter() {
+		
+		if (defined('HYP_COMMON_SKIP_POST_FILTER')) return;
+		
 		// Set mb_detect_order
 		if ($this->detect_order) {
 			mb_detect_order($this->detect_order);
@@ -345,7 +348,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 			
 			// 文字エンコーディング外の文字を数値エンティティに変換
-			//$_POST = HypCommonFunc::encode_numericentity($_POST, _CHARSET, HYP_POST_ENCODING);
+			if (defined('HYP_POST_ENCODING') && HYP_POST_ENCODING === 'UTF-8' && $this->encode !== 'UTF-8') {
+				HypCommonFunc::encode_numericentity($_POST, $this->encode, 'UTF-8');
+			}
 
 			// 機種依存文字フィルター
 			if ($this->encode === 'EUC-JP' && $this->use_dependence_filter) {
@@ -1091,7 +1096,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			// '/^[\x00-\x7f\s]{65,}$/' => 15,
 			
 			// 無効な文字コードがある 31pt
-			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f\xff]+/' => 31
+			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f]+/' => 31
 		);
 		
 		// 無効なフィールド定義
