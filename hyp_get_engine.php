@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_get_engine.php,v 1.7 2008/06/04 08:33:04 nao-pon Exp $
+// $Id: hyp_get_engine.php,v 1.8 2008/11/10 00:03:56 nao-pon Exp $
 // HypGetQueryWord Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -148,7 +148,7 @@ class HypGetQueryWord
 
 	// 日本語(EUC-JP)対応のurldecode by nao-pon
 	function se_urldecode_euc($str,$enc,$encfrom){
-		if (function_exists('mb_convert_encoding')) {
+		if (function_exists('mb_convert_encoding') && $encfrom) {
 			if (eregi("%u[0-9A-F][0-9A-F][0-9A-F][0-9A-F]",$str)){
 				$query = HypGetQueryWord::se_escuni2euc(urldecode($str));//for IE unicode+urlencoding
 			} else {
