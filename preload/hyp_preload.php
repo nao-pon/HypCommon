@@ -72,6 +72,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->use_post_spam_filter)) $this->use_post_spam_filter = 0;
 		if (! isset($this->post_spam_trap_set)) $this->post_spam_trap_set = 0;
 		if (! isset($this->use_k_tai_render)) $this->use_k_tai_render = 0;
+		if (! isset($this->use_smart_redirect)) $this->use_smart_redirect = 0;
 				
 		if (! isset($this->configEncoding)) $this->configEncoding = 'ISO-8859-1';
 		
@@ -108,6 +109,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	
 		if (! isset($this->kakasi_cache_dir)) $this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
 		
+		if (! isset($this->smart_redirect_min_sec)) $this->smart_redirect_min_sec = 5;
+		
 		if (! isset($this->k_tai_conf['ua_regex'])) $this->k_tai_conf['ua_regex'] = '#(?:SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser|DDIPOCKET|WILLCOM)#';
 		if (! isset($this->k_tai_conf['rebuilds'])) $this->k_tai_conf['rebuilds'] = array(
 			'headerlogo' => array(	'above' => '<center>',
@@ -141,7 +144,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->k_tai_conf['pictSizeMax'])) $this->k_tai_conf['pictSizeMax'] = '200';
 		if (! isset($this->k_tai_conf['showImgHosts'])) $this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com', 'ad.jp.ap.valuecommerce.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
 		if (! isset($this->k_tai_conf['directLinkHosts'])) $this->k_tai_conf['directLinkHosts'] = array('kaunet.biz', 'amazon.co.jp', 'ck.jp.ap.valuecommerce.com');
-		if (! isset($this->k_tai_conf['redirect'])) $this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/gate.php?way=redirect&amp;_d=0&amp;_u=0&amp;_x=0&l=';
+		if (! isset($this->k_tai_conf['redirect'])) $this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/gate.php?way=redirect&amp;_d=0&amp;_u=0&amp;_x=0&amp;l=';
 		if (! isset($this->k_tai_conf['easyLogin'])) $this->k_tai_conf['easyLogin'] = 1;
 		if (! isset($this->k_tai_conf['noCheckIpRange'])) $this->k_tai_conf['noCheckIpRange'] = 0;
 		if (! isset($this->k_tai_conf['msg']['easylogin'])) $this->k_tai_conf['msg']['easylogin'] = 'EasyLogin';
@@ -472,6 +475,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			ob_start(array(& $this, 'keitaiFilter'));
 			register_shutdown_function(array(& $this, '_onShutdownKtai'));
 		} else {
+			// smart redirection
+			if (! empty($this->use_smart_redirect)) {
+				ob_start(array(& $this, 'smartRedirect'));
+			}
+			
 			// <from> Filter
 			if (! $this->wizMobileUse) {
 				ob_start(array(& $this, 'formFilter'));
@@ -681,7 +689,69 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 		return HypGetQueryWord::word_highlight($s, constant($this->q_word2), $this->encode, $this->msg_words_highlight);
 	}
-
+	
+	function smartRedirect( $s ) {
+		$part = substr($s, 0, 4096);
+		if ($s === '' || strpos($part, '<html') === FALSE) return $s;
+		if (strpos($part, 'http-equiv') !== FALSE && preg_match('#<meta[^>]+http-equiv=("|\')Refresh\\1[^>]+content=("|\')([\d]+);\s*url=(.+)\\2[^>]*>#iUS', $part, $match)) {
+			$wait = $match[3];
+			$s_url = $match[4];
+			$url = strtr(str_replace('&amp;', '&', $s_url), "\r\n\0", "   ");
+			if (preg_match('#<body[^>]*?>(.+?)</body>#is', $s, $body)) {
+				$body = $body[1];
+				$body = preg_replace('#<p>.*?<a[^>]*?href="'.preg_quote($s_url, '#').'".*?</p>#', '', $body);
+				$_SESSION['hyp_redirect_message'] = $body;
+				$_SESSION['hyp_redirect_wait'] = $wait;
+			}
+			header('Location: ' .$url);
+			return '';
+		} else {
+			if (!empty($_SESSION['hyp_redirect_message'])) {
+				$wait = max($this->smart_redirect_min_sec, $_SESSION['hyp_redirect_wait']);
+				$msg = '<div id="redirect_message" style="text-align:center;">' . $_SESSION['hyp_redirect_message'] . '</div>';
+				$js = <<<EOD
+<script type="text/javascript">
+//<![CDATA[
+(function(wait){
+	var elm = document.getElementById('redirect_message');
+	var stl = elm.style;
+	stl.position = 'fixed';
+	stl.top = '30%';
+	stl.left = '10%';
+	stl.width = '80%';
+	stl.zIndex = '10000';
+	stl.textAlign = 'center';
+	stl.backgroundColor = 'white';
+	stl.filter = 'alpha(opacity=85)';
+	stl.MozOpacity = '0.85';
+	stl.opacity = '0.85';
+	stl.border = '1px solid gray';
+	stl.cursor = 'pointer';
+	elm.onclick = function(){elm.style.display = 'none'};
+	var btn = document.createElement('INPUT');
+	btn.type = 'button';
+	btn.style.width = '100%';
+	btn.style.cursor = 'pointer';
+	btn.value = 'OK ( ' + wait + ' sec to Close )';
+	btn.onclick = function(){elm.style.display = 'none'};
+	elm.appendChild(btn);	
+	var org_onload = (!!window.onload)? window.onload : false;
+	window.onload = function() {
+		setTimeout(function(){elm.style.display = 'none'} ,(wait * 1000));
+		if (org_onload) org_onload();
+	}
+}($wait));
+//]]>
+</script>
+EOD;
+				$s = preg_replace('#<body[^>]*?>#is', '$0' . $msg, $s);
+				$s = preg_replace('#</body>#i', $js . '$0', $s);
+			}
+			unset($_SESSION['hyp_redirect_message'], $_SESSION['hyp_redirect_wait']);
+			return $s;
+		}
+	}
+	
 	function formFilter( $s ) {
 		
 		if ($s === '' || strpos($s, '<html') === FALSE) return $s;
@@ -1059,6 +1129,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->use_post_spam_filter  = 0; // POST SPAM フィルター
 		$this->post_spam_trap_set    = 0; // 無効フィールドのBot罠を自動で仕掛ける
 		$this->use_k_tai_render      = 0; // 携帯対応レンダーを有効にする
+		$this->use_smart_redirect    = 0; // スマートリダイレクトを有効にする
 				
 		// 各種設定
 		$this->configEncoding = 'EUC-JP'; // このファイルの文字コード
@@ -1111,6 +1182,9 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 	
 		// KAKASI での分かち書き結果のキャッシュ先
 		$this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
+		
+		// スマートリダイレクトのポップアップ最短秒数
+		$this->smart_redirect_min_sec = 5;
 		
 		/////////////////////////
 		// 携帯対応レンダー設定
@@ -1169,7 +1243,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->k_tai_conf['directLinkHosts'] = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com');
 
 		// 外部リンク用リダイレクトスクリプト
-		$this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/gate.php?way=redirect&amp;_d=0&amp;_u=0&amp;_x=0&l=';
+		$this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/gate.php?way=redirect&amp;_d=0&amp;_u=0&amp;_x=0&amp;l=';
 		
 		// Easy login を有効にする
 		$this->k_tai_conf['easyLogin'] = 1;
