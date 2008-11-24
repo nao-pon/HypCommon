@@ -709,7 +709,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			if (!empty($_SESSION['hyp_redirect_message'])) {
 				$wait = max($this->smart_redirect_min_sec, $_SESSION['hyp_redirect_wait']);
 				$msg = '<div id="redirect_message" style="text-align:center;">' . $_SESSION['hyp_redirect_message'] . '</div>';
-				$js = <<<EOD
+				$js_head = <<<EOD
 <script type="text/javascript">
 //<![CDATA[
 (function(wait){
@@ -735,6 +735,15 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	btn.value = 'OK ( ' + wait + ' sec to Close )';
 	btn.onclick = function(){elm.style.display = 'none'};
 	elm.appendChild(btn);	
+}($wait));
+//]]>
+</script>
+EOD;
+				$js_foot = <<<EOD
+<script type="text/javascript">
+//<![CDATA[
+(function(wait){
+	var elm = document.getElementById('redirect_message');
 	var org_onload = (!!window.onload)? window.onload : false;
 	window.onload = function() {
 		setTimeout(function(){elm.style.display = 'none'} ,(wait * 1000));
@@ -744,8 +753,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 //]]>
 </script>
 EOD;
-				$s = preg_replace('#<body[^>]*?>#is', '$0' . $msg, $s);
-				$s = preg_replace('#</body>#i', $js . '$0', $s);
+				$s = preg_replace('#<body[^>]*?>#is', '$0' . $msg . $js_head, $s);
+				$s = preg_replace('#</body>#i', $js_foot . '$0', $s);
 			}
 			unset($_SESSION['hyp_redirect_message'], $_SESSION['hyp_redirect_wait']);
 			return $s;
