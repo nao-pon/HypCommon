@@ -402,7 +402,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 						$regs = join('', file($cachefile));
 					}
 					foreach(explode("\x08", $regs) as $reg) {
-						HypCommonFunc::PostSpam_filter('/((ht|f)tps?:\/\/(.+\.)*|@)' . $reg . '/i', $this->post_spam_host);
+						HypCommonFunc::PostSpam_filter('/((ht|f)tps?:\/\/(.+\.)*|@|url=)' . $reg . '/i', $this->post_spam_host);
 					}
 				}
 
