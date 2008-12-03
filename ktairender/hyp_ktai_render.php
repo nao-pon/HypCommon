@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.27 2008/10/02 10:17:40 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.28 2008/12/03 23:42:23 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -1066,8 +1066,13 @@ class HypKTaiRender
 		if (is_null($session_name)) {
 			$session_name = session_name();
 		}
+		
 		$url = $match[3];
 		$ext_icon = '';
+				
+		// Decode numericentity (only ASCII)
+		$url = preg_replace('/&#([0-9]{2,3});/e', '($1 > 31 && $1 < 128)? chr($1) : "$0"', $url);
+		
 		// Url rewrite
 		if (! empty($this->Config_urlRewrites['regex']) && ! empty($this->Config_urlRewrites['tostr'])) {
 			$url = preg_replace($this->Config_urlRewrites['regex'], $this->Config_urlRewrites['tostr'], $url);
@@ -1140,7 +1145,7 @@ class HypKTaiRender
 					$pices = explode('/', $base);
 					if (strpos($url, '../') === 0) {
 						$count = substr_count($url, '../');
-						$url = $this->myRoot . join('/', array_slice($pices, $count + 1)) . substr($url, $count * 3 - 1);
+						$url = $this->myRoot . join('/', array_slice($pices, 0, count($pices) - $count)) . substr($url, $count * 3 - 1);
 					} else if (strpos($url, './') === 0) {
 						$url = $this->myRoot . $base . substr($url, 1);
 					} else {
