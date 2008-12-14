@@ -97,6 +97,14 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->post_spam_user)) $this->post_spam_user  = 50;
 		if (! isset($this->post_spam_guest)) $this->post_spam_guest = 15;
 		if (! isset($this->post_spam_badip)) $this->post_spam_badip = 100;
+		if (! isset($this->post_spam_checkers)) $this->post_spam_checkers = array(
+			'list.dsbl.org',
+			'niku.2ch.net',
+			array(
+				'dnsbl.spam-champuru.livedoor.com',
+				'/^192\.168\.1\.2/'
+			)
+		);
 		if (! isset($this->post_spam_rules)) $this->post_spam_rules = array(
 			"/((?:ht|f)tps?:\/\/[!~*'();\/?:\@&=+\$,%#\w.-]+).+?\\1.+?\\1/i" => 11,
 			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f]+/' => 31
@@ -1177,6 +1185,16 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			
 			// 無効な文字コードがある 31pt
 			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f]+/' => 31
+		);
+		
+		// SPAM Checkers
+		$this->post_spam_checkers = array(
+			'list.dsbl.org',
+			'niku.2ch.net',
+			array(
+				'dnsbl.spam-champuru.livedoor.com',
+				'/^192\.168\.1\.2/'
+			)
 		);
 		
 		// 無効なフィールド定義

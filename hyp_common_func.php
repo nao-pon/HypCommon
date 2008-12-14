@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.52 2008/10/02 10:25:16 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.53 2008/12/14 23:24:01 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -983,10 +983,16 @@ EOF;
 		{
 			$host = array_reverse(explode('.', $ip));
 			foreach($checker as $chk) {
+				if (is_array($chk)) {
+					$reg = $chk[1];
+					$chk = $chk[0];
+				} else {
+					$reg = '/^127\.0\.0/';
+				}
 				$addr = sprintf("%d.%d.%d.%d.". $chk,
 					$host[0],$host[1],$host[2],$host[3]);
 				$addr = gethostbyname($addr);
-				if(preg_match("/^127\.0\.0/",$addr)) return $msg;
+				if(preg_match($reg,$addr)) return $msg;
 			}
 		}
 		return false;
