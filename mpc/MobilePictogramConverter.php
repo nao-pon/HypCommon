@@ -1,4 +1,8 @@
 <?php
+/* 変換後の絵文字タイプ */
+define('MPC_TO_FOMA'    , 'FOMA');
+define('MPC_TO_EZWEB'   , 'EZWEB');
+define('MPC_TO_SOFTBANK', 'SOFTBANK');
 /* 変換前の絵文字タイプ */
 define('MPC_FROM_FOMA'    , 'FOMA');
 define('MPC_FROM_EZWEB'   , 'EZWEB');
