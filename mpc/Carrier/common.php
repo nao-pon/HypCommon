@@ -1,8 +1,4 @@
 <?php
-/* 変換後の絵文字タイプ */
-define('MPC_TO_FOMA'    , 'FOMA');
-define('MPC_TO_EZWEB'   , 'EZWEB');
-define('MPC_TO_SOFTBANK', 'SOFTBANK');
 /* 変換後の絵文字体系 */
 define('MPC_TO_OPTION_RAW' , 'RAW'); // バイナリコード
 define('MPC_TO_OPTION_WEB' , 'WEB'); // Web入力コード
@@ -167,6 +163,110 @@ class MPC_Common
     */
 	var $userAgent = NULL;
 	
+    function mail2ModKtai($str ,$mail, $charset) {
+		$to = $this->mail_host = '';
+		if (preg_match('/docomo\.ne\.jp$/i', $mail)) {
+			$to = MPC_TO_FOMA;
+			$this->mail_host = MPC_FROM_FOMA;
+		} else if (preg_match('/ezweb\.ne\.jp$/i', $mail)) {
+			$to = MPC_TO_EZWEB;
+			$this->mail_host = MPC_FROM_EZWEB;
+		} else if (preg_match('/(?:softbank|vodafone|disney)\.ne\.jp$/i', $mail)) {
+			$to = MPC_TO_SOFTBANK;
+			$this->mail_host = MPC_FROM_SOFTBANK;
+		}
+		if ($this->mail_host) {
+			$charset = strtolower($charset);
+			if ($charset === 'shift-jis') $charset = 'shift_jis';
+			if ($charset === 'iso-2022-jp') {
+				$_sub = mb_substitute_character();
+				mb_substitute_character("long");
+				$str = mb_convert_encoding($str, 'UTF-8', 'JIS');
+				mb_substitute_character($_sub);
+
+				$str = preg_replace_callback('/JIS\+[0-9A-F]{4}/i', array($this, 'jis2ktaimod'), $str);
+
+				$str = mb_convert_encoding($str, 'JIS', 'UTF-8');
+			} else if ($charset === 'shift_jis' || $charset === 'utf-8') {
+				$from_encode = ($charset === 'shift_jis')? MPC_FROM_CHARSET_SJIS : MPC_FROM_CHARSET_UTF8;
+				$mpc = MobilePictogramConverter::factory('', $this->mail_host, $from_encode, MPC_FROM_OPTION_RAW);
+				$mpc->setString($str);
+				$str = $mpc->Convert($to, MPC_TO_OPTION_MODKTAI);
+				$mpc = null;
+			}
+		}
+		return $str;
+    }
+    
+    function jis2ktaimod ($match) {
+		$str = strtolower(substr($match[0], 4));
+		$_str = $str;
+		switch ($this->mail_host) {
+			case MPC_FROM_FOMA:
+				if (empty($this->i_mail2modktai_table)) {
+		        	require 'map/i_mail2modktai_table.php';
+				}
+				if (isset($this->i_mail2modktai_table[$str])) {
+					return '((i:' . $this->i_mail2modktai_table[$str] . '))';
+				} else {
+					return $_str;
+				}
+			case MPC_FROM_SOFTBANK:
+				if (empty($this->s_mail2modktai_table)) {
+		        	require 'map/s_mail2modktai_table.php';
+				}
+				if (isset($this->s_mail2modktai_table[$str])) {
+					return '((s:' . $this->s_mail2modktai_table[$str] . '))';
+				} else {
+					return $_str;
+				}
+			case MPC_FROM_EZWEB:
+			    $first = substr($str, 0, 2 );
+			    $second = substr( $str, 2, 2);
+			
+			    // 最初の2文字を変換
+				$sjis1 = hexdec($first);
+				$sjis1 = ($sjis1 - hexdec("21"))/2 + hexdec("81");
+				if($sjis1 >= hexdec("9e")) {
+		    		$sjis1 += hexdec("40");
+		    	}
+			
+			    //最後の2文字を変換
+			    $buf = hexdec($first) % 2;
+			    $sjis2 = hexdec($second);
+			    if ( $buf == 1 ) {
+			    	$sjis2 += hexdec("1f");
+			    } else {
+			    	$sjis2 += hexdec("7d");
+			    }
+			    if ($sjis2 >= hexdec("7f")) {
+			    	$sjis2++;
+			    }
+			
+			    // 16進数に変換
+			    $sjis1 = strtolower(dechex($sjis1));
+			    $sjis2 = strtolower(dechex($sjis2));
+		
+			    // Eメール送出用SJISからKDDI絵文字用SJISに変換
+			    if ( $sjis1 === 'eb' ) {
+			        $sjis1 = 'f6';
+			    } else if ($sjis1 === "ec" ) {
+			        $sjis1 = "f7";
+			    } else if ($sjis1 === "ed" ) {
+			        $sjis1 = "f3";
+			    } else if ($sjis1 === "ee" ) {
+			        $sjis1 = "f4";
+			    }
+		    
+			    $buf = $sjis1 . $sjis2;
+					
+			    return '((e:' . $buf . '))';
+
+		}
+		return $_str;
+    }
+    
+    
     /**
     * ユーザーエージェントからキャリアを自動判別し
     * mod_ktai コードから対応する絵文字に自動変換 by nao-pon
