@@ -147,6 +147,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->k_tai_conf['themeSet'])) $this->k_tai_conf['themeSet'] = 'ktai_default';
 		if (! isset($this->k_tai_conf['templateSet'])) $this->k_tai_conf['templateSet'] = 'ktai';
 		if (! isset($this->k_tai_conf['template'])) $this->k_tai_conf['template'] = 'default';
+		if (! isset($this->k_tai_conf['bodyAttribute'])) $this->k_tai_conf['bodyAttribute'] = '';
 		if (! isset($this->k_tai_conf['disabledBlockIds'])) $this->k_tai_conf['disabledBlockIds'] = array();
 		if (! isset($this->k_tai_conf['limitedBlockIds'])) $this->k_tai_conf['limitedBlockIds'] = array();
 		if (! isset($this->k_tai_conf['pictSizeMax'])) $this->k_tai_conf['pictSizeMax'] = '200';
@@ -209,6 +210,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				
 				if (! $this->HypKTaiRender->vars['ua']['allowCookie']) {
 					@ ini_set('session.use_only_cookies', 0);
+				} else {
+					@ ini_set('session.use_only_cookies', 1);
 				}
 				
 				$skey = session_name();
@@ -524,6 +527,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					}
 				}
 				if ($url) {
+					$url = $this->HypKTaiRender->getRealUrl($url);
 					$url = $this->HypKTaiRender->addSID($url, XOOPS_URL);
 					header('Location:' . $url, TRUE);
 				}
@@ -540,7 +544,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				redirect_header(XOOPS_URL, 0, 'Your IP "' . $_SERVER['REMOTE_ADDR'] . '" doesn\'t match to IP range of "'.$this->HypKTaiRender->vars['ua']['carrier'].'".');
 				exit();
 			}
-			session_regenerate_id();
 		}
 
 		if (! empty($this->k_tai_conf['easyLogin'])) {
@@ -949,7 +952,8 @@ EOD;
 		if ($head) {
 			// Redirect
 			if (preg_match('#<meta[^>]+http-equiv=("|\')Refresh\\1[^>]+content=("|\')[\d]+;\s*url=(.+)\\2[^>]*>#iUS', $head, $match)) {
-				$url = $r->removeSID(str_replace('&amp;', '&', $match[3]));
+				$url = str_replace('&amp;', '&', $match[3]);
+				$url = $r->getRealUrl($url);
 				$url = $r->addSID($url, XOOPS_URL);
 				header('Location: ' .$url);
 				return '';
@@ -1013,14 +1017,18 @@ EOD;
 		
 		$r->doOptimize();
 		
-		$s = $r->getHtmlDeclaration() . $head . '<body>' . $r->outputBody . '</body></html>';
+		// Set <body> attribute
+		$bodyAttr = ($this->k_tai_conf['bodyAttribute'])? ' ' . trim($this->k_tai_conf['bodyAttribute']) : '';
+		if (! empty($r->vars['ua']['bodyAttribute'])) {
+			$bodyAttr = ' ' . trim($r->vars['ua']['bodyAttribute']);
+		}
+		
+		$s = $r->getHtmlDeclaration() . $head . '<body' . $bodyAttr . '>' . $r->outputBody . '</body></html>';
 		
 		$ctype = $r->getOutputContentType();
 
 		$r = NULL;
 		unset($r);
-		
-		$s .= $GLOBALS['__bid'];
 		
 		header('Content-Type: ' . $ctype . '; charset=Shift_JIS');
 		header('Content-Length: ' . strlen($s));
@@ -1033,7 +1041,7 @@ EOD;
 		
 		if ($str === '' || strpos($str, '<html') === FALSE) return $str;
 		
-		if (preg_match('/\(\((?:e|i|s):[0-9a-f]{4}\)\)/S', $str)) {
+		if (preg_match('/\(\([eis]:[0-9a-f]{4}\)\)/S', $str)) {
 			if (! class_exists('MobilePictogramConverter')) {
 				HypCommonFunc::loadClass('MobilePictogramConverter');
 			}
@@ -1253,6 +1261,9 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		
 		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';
+		
+		// <body> attributes
+		$this->k_tai_conf['bodyAttribute'] = '';
 		
 		// 非表示にするブロックの bid (Block Id) (無指定:フィルタリングしない)
 		$this->k_tai_conf['disabledBlockIds'] = array();
