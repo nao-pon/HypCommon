@@ -118,6 +118,9 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';
 		
+		// <body> attributes
+		$this->k_tai_conf['bodyAttribute'] = '';
+		
 		// 非表示にするブロックの bid (Block Id) (無指定:フィルタリングしない)
 		$this->k_tai_conf['disabledBlockIds'] = array();
 		
