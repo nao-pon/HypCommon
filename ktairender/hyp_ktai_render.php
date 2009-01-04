@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.28 2008/12/03 23:42:23 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.29 2009/01/04 11:27:22 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -198,7 +198,7 @@ class HypKTaiRender
 		
 		foreach(array('header', 'body', 'footer') as $var) {
 			$str =& $$var;
-			if (preg_match('/\(\((?:e|i|s):[0-9a-f]{4}\)\)/S', $str)) {
+			if (preg_match('/\(\([eis]:[0-9a-f]{4}\)\)/S', $str)) {
 				if (! isset($mpc)) {
 					$mpc =& $this->_getMobilePictogramConverter();
 				}
@@ -292,7 +292,7 @@ class HypKTaiRender
 				$pager = '<center>' . join(' ', $pager) . '</center>';
 			}
 
-			if (preg_match('/\(\((?:e|i|s):[0-9a-f]{4}\)\)/S', $pager)) {
+			if (preg_match('/\(\([eis]:[0-9a-f]{4}\)\)/S', $pager)) {
 				if (! isset($mpc)) {
 					$mpc =& $this->_getMobilePictogramConverter();
 				}
@@ -634,6 +634,26 @@ class HypKTaiRender
 		return $ctype;
 	}
 	
+	function getRealUrl ($url) {
+		if (strpos($url, 'http') !== 0) {
+			if ($url[0] === '/') {
+				$url = $this->myRoot . $url;
+			} else {
+				$base = preg_replace('#/[^/]*$#', '',$this->SERVER['REQUEST_URI']);
+				$pices = explode('/', $base);
+				if (strpos($url, '../') === 0) {
+					$count = substr_count($url, '../');
+					$url = $this->myRoot . join('/', array_slice($pices, 0, count($pices) - $count)) . substr($url, $count * 3 - 1);
+				} else if (strpos($url, './') === 0) {
+					$url = $this->myRoot . $base . substr($url, 1);
+				} else {
+					$url = $this->myRoot . $base . '/' . $url;
+				}
+			}
+		}
+		return $url;
+	}
+	
 	function _extractHeadBody () {
 
 		$this->inputHead = '';
@@ -916,6 +936,7 @@ class HypKTaiRender
 						$this->vars['ua']['allowPNG'] = TRUE;
 						$this->vars['ua']['allowInputImage'] = FALSE;
 						$this->vars['ua']['allowCookie'] = TRUE;
+						$this->vars['ua']['meta'] = '<meta http-equiv="Cache-Control" content="no-cache" />';
 						$this->vars['ua']['contentType'] = 'application/xhtml+xml';
 						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//OPENWAVE//DTD XHTML 1.0//EN" "http://www.openwave.com/DTD/xhtml-basic.dtd">';
 						break;
@@ -1138,20 +1159,7 @@ class HypKTaiRender
 		 || preg_match($hostsReg, $parsed_url['host'])) {
 			$png = ($this->vars['ua']['allowPNG'])? '&amp;p' : '';
 			if (! $parsed_url['host']) {
-				if ($url[0] === '/') {
-					$url = $this->myRoot . $url;
-				} else {
-					$base = preg_replace('#/[^/]*$#', '',$this->SERVER['REQUEST_URI']);
-					$pices = explode('/', $base);
-					if (strpos($url, '../') === 0) {
-						$count = substr_count($url, '../');
-						$url = $this->myRoot . join('/', array_slice($pices, 0, count($pices) - $count)) . substr($url, $count * 3 - 1);
-					} else if (strpos($url, './') === 0) {
-						$url = $this->myRoot . $base . substr($url, 1);
-					} else {
-						$url = $this->myRoot . $base . '/' . $url;
-					}
-				}
+				$url = $this->getRealUrl($url);
 			}
 			
 			// Size tag
