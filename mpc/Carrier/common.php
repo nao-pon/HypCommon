@@ -296,7 +296,7 @@ class MPC_Common
         $this->setOption($option);
         $str = $this->getString();
         
-        $str = preg_replace_callback('/(<head.+?\/head>|<script.+?\/script>|<style.+?\/style>|<textarea.+?\/textarea>|<[^<>]+?>)|\(\((e|i|s):([0-9a-f]{4})\)\)/isS', array(& $this, '_decodeModKtai'), $str);
+        $str = preg_replace_callback('/(<head.+?\/head>|<script.+?\/script>|<style.+?\/style>|<textarea.+?\/textarea>|<[^<>]+?>)|\(\(([eis]):([0-9a-f]{4})\)\)/isS', array(& $this, '_decodeModKtai'), $str);
 
         return $str;
     }
