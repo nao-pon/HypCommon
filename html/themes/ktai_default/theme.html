@@ -10,15 +10,7 @@
 <!--/headerlogo-->
 
 <!--headerbar-->
-<center>
-| <a href="#mainmenu">Main Menu</a> |
-<{if $xoops_lblocks}>
- <a href="#leftcolumn">Left Block</a> |
-<{/if}>
-<{if $xoops_rblocks}>
- <a href="#rightcolumn">Right Block</a> |
-<{/if}>
-</center>
+
 <!--/headerbar-->
 
 <{if $xoops_breadcrumbs}>
@@ -37,14 +29,20 @@
 <!--/breadcrumbs-->
 <{/if}>
 
-<{if $xoops_showcblock == 1}>
+<{if $xoops_showcblock == 1 && $xoops_ccblocks}>
 <!--centerCcolumn-->
 <div class="centercolumn">
 <{foreach item=block from=$xoops_ccblocks}>
+	<!--KTaiBlock_<{$block.id}>-->
 	<ns>
-	<div style="text-align:center;background-color:#ccccff"><h2><{$block.title}></h2></div>
+	<div style="text-align:center;background-color:#ccccff">
+		<h2 style="text-align:center;background-color:#ccccff">
+		<!--KTaiTitle--><{$block.title}><!--/KTaiTitle-->
+		</h2>
+	</div>
 	<div><{$block.content}></div>
 	</ns>
+	<!--/KTaiBlock-->
 <{/foreach}>
 </div>
 <!--/centerCcolumn-->
@@ -60,10 +58,16 @@
 <{if $xoops_clblocks}>
 <!--centerLcolumn-->
 <{foreach item=block from=$xoops_clblocks}>
+	<!--KTaiBlock_<{$block.id}>-->
 	<ns>
-	<div style="text-align:center;background-color:#ccccff"><h2><{$block.title}></h2></div>
+	<div style="text-align:center;background-color:#ccccff">
+		<h2 style="text-align:center;background-color:#ccccff">
+		<!--KTaiTitle--><{$block.title}><!--/KTaiTitle-->
+		</h2>
+	</div>
 	<div><{$block.content}></div>
 	</ns>
+	<!--/KTaiBlock-->
 <{/foreach}>
 <!--/centerLcolumn-->
 <{/if}>
@@ -71,10 +75,16 @@
 <{if $xoops_crblocks}>
 <!--centerRcolumn-->
 <{foreach item=block from=$xoops_crblocks}>
+	<!--KTaiBlock_<{$block.id}>-->
 	<ns>
-	<div style="text-align:center;background-color:#ccccff"><h2><{$block.title}></h2></div>
+	<div style="text-align:center;background-color:#ccccff">
+		<h2 style="text-align:center;background-color:#ccccff">
+		<!--KTaiTitle--><{$block.title}><!--/KTaiTitle-->
+		</h2>
+	</div>
 	<div><{$block.content}></div>
 	</ns>
+	<!--/KTaiBlock-->
 <{/foreach}>
 <!--/centerRcolumn-->
 <{/if}>
@@ -83,10 +93,16 @@
 <!--leftcolumn-->
 <div id="leftcolumn">
 <{foreach item=block from=$xoops_lblocks}>
+	<!--KTaiBlock_<{$block.id}>-->
 	<ns>
-	<div style="text-align:center;background-color:#ccccff"><h2><{$block.title}></h2></div>
+	<div style="text-align:center;background-color:#ccccff">
+		<h2 style="text-align:center;background-color:#ccccff">
+		<!--KTaiTitle--><{$block.title}><!--/KTaiTitle-->
+		</h2>
+	</div>
 	<div><{$block.content}></div>
 	</ns>
+	<!--/KTaiBlock-->
 <{/foreach}>
 </div>
 <!--/leftcolumn-->
@@ -96,10 +112,16 @@
 <!--rightcolumn-->
 <div id="rightcolumn">
 <{foreach item=block from=$xoops_rblocks}>
+	<!--KTaiBlock_<{$block.id}>-->
 	<ns>
-	<div style="text-align:center;background-color:#ccccff"><h2><{$block.title}></h2></div>
+	<div style="text-align:center;background-color:#ccccff">
+		<h2 style="text-align:center;background-color:#ccccff">
+		<!--KTaiTitle--><{$block.title}><!--/KTaiTitle-->
+		</h2>
+	</div>
 	<div><{$block.content}></div>
 	</ns>
+	<!--/KTaiBlock-->
 <{/foreach}>
 </div>
 <!--/rightcolumn-->

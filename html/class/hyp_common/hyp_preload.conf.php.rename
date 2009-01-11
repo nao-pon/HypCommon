@@ -81,34 +81,44 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// 携帯対応レンダー設定
 		
 		// 携帯端末判定用 UA 正規表現
-		$this->k_tai_conf['ua_regex'] = '#(?:SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser)#';
+		$this->k_tai_conf['ua_regex'] = '#(?:SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser|DDIPOCKET|WILLCOM)#';
 		
 		// HTML再構築用タグ設定
 		$this->k_tai_conf['rebuilds'] = array(
-			'headerlogo'    => array( 'above' => '<center>',
+			'headerlogo'     => array( 'above' => '<center>',
 			                          'below' => '</center>'),
-			'headerbar'     => array( 'above' => '<hr>',
+			'headerbar'      => array( 'above' => '<hr>',
 			                          'below' => ''),
-			'breadcrumbs'   => array( 'above' => '',
+			'breadcrumbs'    => array( 'above' => '',
 			                          'below' => ''),
-			'leftcolumn'    => array( 'above' => '<hr>',
+			'leftcolumn'     => array( 'above' => '<hr>',
 			                          'below' => ''),
-			'centerCcolumn' => array( 'above' => '<hr>',
+			'centerCcolumn'  => array( 'above' => '<hr>',
 			                          'below' => ''),
-			'centerLcolumn' => array( 'above' => '',
+			'centerLcolumn'  => array( 'above' => '',
 			                          'below' => ''),
-			'centerRcolumn' => array( 'above' => '',
+			'centerRcolumn'  => array( 'above' => '',
 			                          'below' => ''),
-			'content'       => array( 'above' => '<hr>',
+			'content'        => array( 'above' => '<hr>',
 			                          'below' => ''),
-			'rightcolumn'   => array( 'above' => '<hr>',
+			'rightcolumn'    => array( 'above' => '<hr>',
 			                          'below' => ''),
-			'footerbar'     => array( 'above' => '',
+			'footerbar'      => array( 'above' => '',
 			                          'below' => ''),
-			'easylogin'     => array( 'above' => '<div style="text-align:center;font-size:0.9em">[ ',
+			'easylogin'      => array( 'above' => '<div style="text-align:center;background-color:#DBBCA6;font-size:small">[ ',
 			                          'below' => ' ]</div>'),
+			'redirectMessage'=> array( 'above' => '<marquee loop="3">',
+			                          'below' => '</marquee>'),
+			'blockMenu'      => array( 'above' => '<div style="background-color:#E0EEEE;font-size:small">',
+			                          'below' => '</div>'),
+			'blockContent'   => array( 'above' => '',
+			                          'below' => ''),
+			'toMain'         => array( 'above' => '<hr /><div style="text-align:center">',
+			                          'below' => '</div>'),
+			'subMenu'        => array( 'above' => '<div id="submenu" style="background-color:#ccccff"><h2 style="text-align:center">サブメニュー</h2></div>',
+			                          'below' => ''),
 		);
-
+		
 		// 携帯用XOOPSテーマセット
 		$this->k_tai_conf['themeSet'] = 'ktai_default';
 		
@@ -121,20 +131,26 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// <body> attributes
 		$this->k_tai_conf['bodyAttribute'] = '';
 		
-		// 非表示にするブロックの bid (Block Id) (無指定:フィルタリングしない)
+		// 無効にするブロックの bid (Block Id) (無指定:フィルタリングしない)
 		$this->k_tai_conf['disabledBlockIds'] = array();
 		
-		// 表示するブロックの bid (Block Id) (無指定:フィルタリングしない)
+		// 有効にするブロックの bid (Block Id) (無指定:フィルタリングしない)
 		$this->k_tai_conf['limitedBlockIds'] = array();
 		
+		// 常に表示するブロックの bid (Block Id) (メインメニューなど)
+		$this->k_tai_conf['showBlockIds'] = array();
+
 		// インラインイメージのリサイズ最大ピクセル
 		$this->k_tai_conf['pictSizeMax'] = '200';
 		
 		// インラインイメージを表示するホスト名(後方一致)
-		$this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
+		$this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com', 'ad.jp.ap.valuecommerce.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com', 'google.com');
+		
+		// 直接画像を表示するホスト名(後方一致)
+		$this->k_tai_conf['directImgHosts'] = array('google-analytics.com');
 		
 		// リダイレクトスクリプトを経由しないホスト名(後方一致)
-		$this->k_tai_conf['directLinkHosts'] = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com');
+		$this->k_tai_conf['directLinkHosts'] = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com', 'afl.rakuten.co.jp', 'maps.google.com');
 
 		// 外部リンク用リダイレクトスクリプト
 		$this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/gate.php?way=redirect&amp;_d=0&amp;_u=0&amp;_x=0&amp;l=';
@@ -143,21 +159,48 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->k_tai_conf['easyLogin'] = 1;
 		// Easy login で IP アドレス帯域をチェックしない
 		$this->k_tai_conf['noCheckIpRange'] = 0;
+		
 		// リンクメッセージ
 		$this->k_tai_conf['msg']['easylogin'] = '簡単ログイン';
 		$this->k_tai_conf['msg']['logout'] = 'ログアウト';
 		$this->k_tai_conf['msg']['easyloginSet'] = '簡単ログイン:設定';
 		$this->k_tai_conf['msg']['easyloginUnset'] = '簡単ログイン:解除';
+		$this->k_tai_conf['msg']['toMain'] = '本文を表示';
+		$this->k_tai_conf['msg']['mainMenu'] = 'メインメニュー';
+		$this->k_tai_conf['msg']['subMenu'] = 'サブメニュー';
+		
+		// アイコン
+		$this->k_tai_conf['icon']['first']   = '((s:465d))';
+		$this->k_tai_conf['icon']['prev']    = '((s:465b))';
+		$this->k_tai_conf['icon']['next']    = '((s:465a))';
+		$this->k_tai_conf['icon']['last']    = '((s:465c))';
+		$this->k_tai_conf['icon']['extLink'] = '((i:f8d9))';
+		$this->k_tai_conf['icon']['hTag']    = '((i:f8e4))';
+		$this->k_tai_conf['icon']['RSS']     = '((e:f699))';
+		
+		$this->k_tai_conf['icon']['toMain']  = '((e:f7e4))';
+		
+		// style
+		$this->k_tai_conf['style']['highlight'] = 'background-color:#ffc0cb';
+		
 		// Easy login: 設定 or 解除リンクを表示するURI(XOOPS_URL以降)とuidのGETキーと挿入位置
 		$this->k_tai_conf['easyLoginConfPath'] = '/userinfo.php';
 		$this->k_tai_conf['easyLoginConfuid'] = 'uid';
 		$this->k_tai_conf['easyLoginConfInsert'] = 'content';
-
+		
+		// GET query keys
+		$this->k_tai_conf['getKeys']['page'] = '_p_';
+		$this->k_tai_conf['getKeys']['hash'] = '_h_';
+		$this->k_tai_conf['getKeys']['block'] = '_b_';
+		
 		//// Google Adsense 設定
 		// config ファイルのパス
 		$this->k_tai_conf['googleAdsense']['config'] = '';
 		// 挿入場所 ('header', 'body', 'footer') の下、無指定時はページ最上部
 		$this->k_tai_conf['googleAdsense']['below'] = '';
+		
+		// Google Analytics 設定
+		$this->k_tai_conf['googleAnalyticsId'] = '';
 		
 		// 携帯対応レンダー設定 以上
 		/////////////////////////////

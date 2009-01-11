@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.29 2009/01/04 11:27:22 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.30 2009/01/11 13:57:47 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -35,6 +35,7 @@ class HypKTaiRender
 	var $keybutton = array();
 	var $SERVER = array();
 	var $Config_showImgHosts = array('amazon.com', 'yimg.jp', 'yimg.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
+	var $Config_directImgHosts = array('google-analytics.com');
 	var $Config_directLinkHosts = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com');
 	var $Config_redirect = '';
 	var $Config_urlRewrites = array();
@@ -73,6 +74,8 @@ class HypKTaiRender
 		$this->contents['footer'] = '';
 		
 		$this->SERVER = $_SERVER;
+		
+		$this->session_name = session_name();
 		
 		// モジュールなどで、mainfile.php を呼ぶ前に$_SERVER['REQUEST_URI'] を書き換える場合
 		// $_SERVER['_REQUEST_URI'] に元の値が保存されていることがある
@@ -125,7 +128,7 @@ class HypKTaiRender
 	}
 	
 	function removeSID ($url) {
-		return $this->removeQueryFromUrl($url, session_name());
+		return $this->removeQueryFromUrl($url, $this->session_name);
 	}
 
 	function removeQueryFromUrl ($url, $keys) {
@@ -133,7 +136,10 @@ class HypKTaiRender
 			$keys = array($keys);
 		}
 		foreach ($keys as $key) {
-			$url = preg_replace('/(?:(\?)|&(?:amp;)?)' . $key . '(?:=[^&#>]+)?(&(?:amp;)?|$)/', '$1$2', $url);
+			$reg = '/(?:(\?)|&(?:amp;)?)' . $key . '(?:=[^&#>]+)?(&(?:amp;)?|$)/';
+			while(preg_match($reg, $url)) {
+				$url = preg_replace($reg, '$1$2', $url);
+			}
 		}
 		$url = str_replace(array('?&', '?&amp;'), '?', $url);
 		$url = rtrim($url, '?');
@@ -143,8 +149,7 @@ class HypKTaiRender
 	function addSID ($url, $rootURL = '') {
 		if (! $rootURL) $rootURL = $this->myRoot;
 		if (strpos($url, $rootURL) === 0) {
-			$session_name = session_name();
-			if (defined('SID') && SID && ! isset($_COOKIE[$session_name])) {
+			if (defined('SID') && SID && ! isset($_COOKIE[$this->session_name])) {
 				$hash = '';
 				if (strpos($url, '#') !== FALSE) {
 					list($url, $hash) = explode('#', $url, 2);
@@ -163,7 +168,8 @@ class HypKTaiRender
 		$this->parsed_base = parse_url($this->myRoot);
 		
 		// Need SID ?
-		if (! $this->vars['ua']['allowCookie'] && defined('SID') && SID && empty($_COOKIE[$session_name]) && ! $this->vars['ua']['isBot']) {			$this->vars['needSID'] = TRUE;
+		if (! $this->vars['ua']['allowCookie'] && defined('SID') && SID && empty($_COOKIE[$this->session_name]) && ! $this->vars['ua']['isBot']) {			
+			$this->vars['needSID'] = TRUE;
 		} else {
 			$this->vars['needSID'] = FALSE;
 		}
@@ -264,7 +270,7 @@ class HypKTaiRender
 			if ($querys) {
 				$querys = preg_replace('/(?:^|&)' . preg_quote($this->pagekey, '/').'=[^&]+/', '', $querys);
 				$querys = preg_replace('/(?:^|&)' . preg_quote($this->hashkey, '/').'=[^&]+/', '', $querys);
-				$querys = preg_replace('/(?:^|&)' . preg_quote(session_name(), '/') . '=[^&]+/', '', $querys);
+				$querys = preg_replace('/(?:^|&)' . preg_quote($this->session_name, '/') . '=[^&]+/', '', $querys);
 				if ($querys) {
 					$base .= str_replace('&', '&amp;', $querys);
 					$this->pagekey = '&amp;' . $this->pagekey;
@@ -452,6 +458,7 @@ class HypKTaiRender
 			$pat[] = '#(<(?:[bh]r|img)\b[^>]*?[^/])>#S';
 			$rep[] = '$1/>';
 		}
+
 		
 		$body = preg_replace($pat, $rep, $body);
 
@@ -463,6 +470,24 @@ class HypKTaiRender
 			$rep = array('>'  , '>' , ''     , '[/del]');
 		}
 		$body = str_replace($pat, $rep, $body);
+		
+		// marquee for docomo xhtml
+		if ($this->outputMode === 'xhtml' && $this->vars['ua']['carrier'] === 'docomo') {
+			$body = preg_replace_callback(
+				'#<marquee([^>]*?)>#',
+				create_function(
+					'$matches',
+					'$matches[1] = str_replace("\'", \'"\', $matches[1]);
+					$prms = array();
+					if (preg_match(\'#loop="?(\d+)#\', $matches[1], $m)) {
+						$prms[] = \'-wap-marquee-loop:\' . intval($m[1]);
+					}
+					return \'<div style="display:-wap-marquee;\' . join(\';\', $prms) . \'">\';'
+				),
+				$body
+			);
+			$body = str_replace('</marquee>', '</div>', $body);
+		}
 
 		// <table>を正規化
 		// 入れ子テーブルを展開
@@ -592,16 +617,21 @@ class HypKTaiRender
 	}
 
 	function checkIp ($address, $carrier) {
-		$ret = FALSE;
+		static $results = array();
+		if (isset($results[$carrier][$address])) {
+			return $results[$carrier][$address];
+		}
+		
+		$results[$carrier][$address] = FALSE;
 		$ip_file = dirname(__FILE__) . '/ipranges/' . strtolower($carrier) . '.ip';
 		
 		if (file_exists($ip_file)) {
 			$iprange = file($ip_file);
 			$iprange = array_diff(array_map('trim', $iprange), array(''));
 			$address = $this->_dumpAddress($address);
-			$ret = $this->_compareIp($address, $iprange);
+			$results[$carrier][$address] = $this->_compareIp($address, $iprange);
 		}
-		return $ret;
+		return $results[$carrier][$address];
 	}
 
 	function getHtmlDeclaration () {
@@ -627,7 +657,7 @@ class HypKTaiRender
 	function getOutputContentType () {
 		$ctype = 'text/html';
 		if ($this->outputMode === 'xhtml') {
-			if ($this->checkIp($this->SERVER['REMOTE_ADDR'], $this->vars['ua']['carrier']) || strpos($this->SERVER['HTTP_USER_AGENT'], 'DoCoMo/2.0 ISIM') === 0) {
+			if ($this->vars['ua']['isBot'] || $this->vars['ua']['inIPRange'] || strpos($this->SERVER['HTTP_USER_AGENT'], 'DoCoMo/2.0 ISIM') === 0) {
 				$ctype = $this->vars['ua']['contentType'];
 			}
 		}
@@ -653,7 +683,114 @@ class HypKTaiRender
 		}
 		return $url;
 	}
+
+	function googleAnalyticsGetImgTag($gaid, $title = '-') {
+		if (! $this->vars['ua']['inIPRange']) {
+			return '';
+		}
+		$url = $this->googleAnalyticsGetImgSrc($gaid, $title);
+		$url = str_replace('&', '&amp;', $url);;
+		return '<img src="' . $url . '" width="1" height="1" />';
+	}	
 	
+	function googleAnalyticsGetImgSrc($id, $title = '-') {
+		
+		$parsedUrl = parse_url($this->myRoot);
+
+		$host = $parsedUrl['host'];
+		$hash = $this->_getUHash($host);
+		$random = rand(1000000000, 2147483647);
+		$now = time();
+		if (isset($_COOKIE['___utma'])) {
+			$utma = $_COOKIE['___utma'];
+		} else if (isset($_SESSION['__utma'])) {
+			$utma = $_SESSION['__utma'];
+		} else {
+			$utma = $hash.'.'.$random.'.'.$now.'.'.$now.'.'.$now.'.1';
+			setcookie('___utma', $utma,  $now + 63072000, '/', $host);
+		}
+		if (isset($_COOKIE['___utmz'])) {
+			$utmz = $_COOKIE['___utmz'];
+		} else if (isset($_SESSION['__utmz'])) {
+			$utmz = $_SESSION['__utmz'];
+		} else {
+			$utmz = $hash.'.'.$now.'.1.1';
+			setcookie('___utmz', $utmz,  $now + 15768000, '/', $host);
+		}
+		
+		$utma_arr = explode('.', $utma);
+		$utmz_arr = explode('.', $utmz);
+		
+		if ($utma_arr[3] + 1800 < $now) {
+			$utmz_arr[1] = $utma_arr[3] = $utma_arr[4] =$now;
+			$utmz_arr[2] = ++$utma_arr[5];
+			$utma = join('.', $utma_arr);
+			$utmz = join('.', $utmz_arr);
+			setcookie('___utma', $utma,  $now + 63072000, '/', $host);
+			setcookie('___utmz', $utmz,  $now + 15768000, '/', $host);
+		}
+		
+		$_SESSION['__utma'] = $utma;
+		$_SESSION['__utmz'] = $utmz;
+		
+		$cookie = '__utma%3D'.$utma.'%3B%2B__utmz%3D'.$utmz.'.utmccn%3D(direct)%7Cutmcsr%3D(direct)%7Cutmcmd%3D(none)%3B%2B';
+
+		if (! $title) $title = '-';
+		$title = rawurlencode(mb_convert_encoding($title, 'UTF-8', $this->inputEncode));
+
+		if (isset($_SERVER['HTTP_REFERER'])) {
+			$ph = parse_url($_SERVER['HTTP_REFERER']);
+			if (@ $_SERVER['SERVER_NAME'] == @ $ph['host']) {
+				$referer = '0';
+			} else {
+				$referer = @ $ph['host'];
+			}
+		} else {
+			$referer = '-';
+		}
+		
+		$querys = array();
+		
+		$querys['utmwv'] = '1.3';
+		$querys['qutmn'] = rand(1000000000, 9999999999);
+		$querys['utmcs'] = $this->outputEncode;
+		$querys['utmsr'] = '-'; //reso
+		$querys['utmsc'] = '-'; //color
+		$querys['utmul'] = preg_replace('/^([a-zA-Z0-9_-]+).*?$/', '$1', @ $_SERVER['HTTP_ACCEPT_LANGUAGE']); //lang
+		$querys['utmje'] = '0'; // java
+		$querys['utmfl'] = '-' ; // flash version 
+		$querys['utmdt'] = $title;
+		$querys['utmhn'] = $host;
+		$querys['utmhid'] = rand(1000000000, 2147483647);
+		$querys['utmr'] = $referer;
+		$querys['utmp'] = str_replace('&', '%26', @ $_SERVER['REQUEST_URI']);
+		$querys['utmac'] = $id;
+		$querys['utmcc'] = $cookie;
+
+		$data = array();
+		foreach($querys as $key => $val) {
+			$data[] = $key . '=' . $val;
+		}
+		
+		return $parsedUrl['scheme'] . '://www.google-analytics.com/__utm.gif?' . join('&', $data);
+	}
+	
+	function _getUHash($d) {
+	    if (empty($d)) {
+	        return 1;
+	    }
+	    $h = 0;
+	    $g = 0;
+	    for ($i = strlen($d) - 1; $i >= 0; $i--) {
+	        $c = intval(ord((string)$d[$i]));
+	        $h = (($h << 6) & 0xfffffff) + $c + ($c << 14);
+	        if (($g = $h & 0xfe00000) != 0) {
+	            $h = ($h ^ ($g >> 21));
+	        }
+	    }
+	    return $h;
+	}
+
 	function _extractHeadBody () {
 
 		$this->inputHead = '';
@@ -802,6 +939,7 @@ class HypKTaiRender
 		);
 		$this->vars['ua']['isBot'] = FALSE;
 		$this->vars['ua']['isKTai'] = FALSE;
+		$this->vars['ua']['inIPRange'] = FALSE;
 		$this->vars['ua']['carrier'] = 'Unknown';
 		$this->vars['ua']['allowPNG'] = FALSE;
 		$this->vars['ua']['allowInputImage'] = FALSE;
@@ -1029,6 +1167,7 @@ class HypKTaiRender
 						break;
 				}
 			}
+			$this->vars['ua']['inIPRange'] = $this->checkIp($_SERVER['REMOTE_ADDR'], $this->vars['ua']['carrier']);
 		}
 		setlocale( LC_CTYPE, $locale);
 		return;
@@ -1082,12 +1221,6 @@ class HypKTaiRender
 	
 	function _href_give_session_id ($match) {
 		
-		static $session_name = NULL;
-		
-		if (is_null($session_name)) {
-			$session_name = session_name();
-		}
-		
 		$url = $match[3];
 		$ext_icon = '';
 				
@@ -1106,13 +1239,13 @@ class HypKTaiRender
 			$parsed_url['host'] = $this->parsed_base['host'];
 		}
 		if (empty($parsed_url['host']) || ($parsed_url['host'] === $this->parsed_base['host'] && $parsed_url['scheme'] === $this->parsed_base['scheme'])) {
-			$url = preg_replace('/(?:\?|&(?:amp;)?)' . $session_name . '=[^&#>]+/', '', $url);
+			$url = preg_replace('/(?:\?|&(?:amp;)?)' . $this->session_name . '=[^&#>]+/', '', $url);
 			
 			list($href, $hash) = array_pad(explode('#', $url, 2), 2, '');
 			
 			if (!$href) {
 				$href = isset($this->SERVER['QUERY_STRING'])? '?' . $this->SERVER['QUERY_STRING'] : '';
-				$href = preg_replace('/(?:\?|&(?:amp;)?)' . $session_name . '=[^&]+/', '', $href);
+				$href = preg_replace('/(?:\?|&(?:amp;)?)' . $this->session_name . '=[^&]+/', '', $href);
 			};
 
 			$add = array();
@@ -1136,6 +1269,26 @@ class HypKTaiRender
 	}
 	
 	function _html_check_img_src ($match) {
+		static $showHostReg = NULL;
+		static $directHostReg = NULL;
+
+		if (is_null($showHostReg)) {
+			$showHostReg = '#(?!)#';
+			if ($this->Config_showImgHosts) {
+				if ($this->Config_showImgHosts === 'all') {
+					$showHostReg = '#(?=)#';
+				} else {
+					$showHostReg = $this->_getHostsRegex($this->Config_showImgHosts);
+				}
+			}
+		}
+		if (is_null($directHostReg)) {
+			$directHostReg = '#(?!)#';
+			if ($this->Config_directImgHosts) {
+				$directHostReg = $this->_getHostsRegex($this->Config_directImgHosts);
+			}
+		}
+		
 		$type = strtolower($match[2]);
 
 		if (! $this->vars['ua']['allowInputImage'] && $type === 'input') {
@@ -1145,18 +1298,9 @@ class HypKTaiRender
 		$url = $match[4];
 		$parsed_url = parse_url($url);
 		
-		$hostsReg = '#(?!)#';
-		if ($this->Config_showImgHosts) {
-			if ($this->Config_showImgHosts === 'all') {
-				$hostsReg = '#(?=)#';
-			} else {
-				$hostsReg = $this->_getHostsRegex($this->Config_showImgHosts);
-			}
-		}
-		
 		if (empty($parsed_url['host'])
 		 || ($parsed_url['host'] === $this->parsed_base['host'] && $parsed_url['scheme'] === $this->parsed_base['scheme'])
-		 || preg_match($hostsReg, $parsed_url['host'])) {
+		 || preg_match($showHostReg, $parsed_url['host'])) {
 			$png = ($this->vars['ua']['allowPNG'])? '&amp;p' : '';
 			if (! $parsed_url['host']) {
 				$url = $this->getRealUrl($url);
@@ -1205,10 +1349,15 @@ class HypKTaiRender
 			if ($type === 'input') {
 				return str_replace('image', 'submit', $match[1] . $match[5]) . (isset($match[6])? $match[6] : '');
 			} else {
-				if (! isset($match[6])) {
-					return "\x08" . ' href="' . $url . '">[PIC]</a>';
+				if (empty($parsed_url['host'])
+				 || preg_match($directHostReg, $parsed_url['host'])) {
+					return $match[0];
 				} else {
-					return htmlspecialchars($parsed_url['host']) . $match[6];
+					if (! isset($match[6])) {
+						return "\x08" . ' href="' . $url . '">[PIC]</a>';
+					} else {
+						return htmlspecialchars($parsed_url['host']) . $match[6];
+					}
 				}
 			}
 		}
