@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.54 2009/01/04 11:12:55 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.55 2009/01/11 13:47:36 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -235,8 +235,9 @@ EOF;
 	}
 	
 	// HTML の meta タグから文字エンコーディングを取得する
-	function get_encoding_by_meta($html)
+	function get_encoding_by_meta($html, $ret_empty = FALSE)
 	{
+		$ret = $ret_empty? '' : 'EUC-JP,UTF-8,Shift_JIS,JIS';
 		$codesets = array(
 			'shift_jis' => 'Shift_JIS',
 			'x-sjis' => 'Shift_JIS',
@@ -244,6 +245,7 @@ EOF;
 			'x-euc-jp' => 'EUC-JP',
 			'iso-2022-jp' => 'JIS',
 			'utf-8' => 'UTF-8',
+			'iso-8859-1' => 'ISO-8859-1',
 		);
 		$match = array();
 		if (preg_match("/<meta[^>]*content=(?:\"|')[^\"'>]*charset=([^\"'>]+)(?:\"|')[^>]*>/is",$html,$match))
@@ -255,12 +257,12 @@ EOF;
 			}
 			else
 			{
-				return "EUC-JP,UTF-8,Shift_JIS,JIS";
+				return $ret;
 			}
 		}
 		else
 		{
-			return "EUC-JP,UTF-8,Shift_JIS,JIS";
+			return $ret;
 		}
 	}
 	
@@ -1507,7 +1509,6 @@ EOF;
 				while ($return === FALSE && $maxRetry > $i++) {
 					if (flock($handle, LOCK_EX)) {
 						$return = fwrite($handle, $src);
-						fclose($handle);
 					}
 					if ($return === FALSE) usleep(50000); // Wait 500ms
 				}
