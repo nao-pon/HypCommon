@@ -1,5 +1,5 @@
 <?php
-// $Id: header.php,v 1.2 2008/09/24 23:29:35 nao-pon Exp $
+// $Id: header.php,v 1.3 2009/01/12 23:51:25 nao-pon Exp $
 //  ------------------------------------------------------------------------ //
 //                XOOPS - PHP Content Management System                      //
 //                    Copyright (c) 2000 XOOPS.org                           //
@@ -188,35 +188,35 @@ if ($xoopsConfig['theme_set'] != 'default' && file_exists(XOOPS_THEME_PATH.'/'.$
                 $xoopsTpl->assign('xoops_showlblock', 1);
                 $show_lblock = 1;
             }
-            $xoopsTpl->append('xoops_lblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight')));
+            $xoopsTpl->append('xoops_lblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight'), 'id' => $block_arr[$i]->getVar('bid')));
             break;
         case XOOPS_CENTERBLOCK_LEFT:
             if (!isset($show_cblock)) {
                 $xoopsTpl->assign('xoops_showcblock', 1);
                 $show_cblock = 1;
             }
-            $xoopsTpl->append('xoops_clblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight')));
+            $xoopsTpl->append('xoops_clblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight'), 'id' => $block_arr[$i]->getVar('bid')));
             break;
         case XOOPS_CENTERBLOCK_RIGHT:
             if (!isset($show_cblock)) {
                 $xoopsTpl->assign('xoops_showcblock', 1);
                 $show_cblock = 1;
             }
-            $xoopsTpl->append('xoops_crblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight')));
+            $xoopsTpl->append('xoops_crblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight'), 'id' => $block_arr[$i]->getVar('bid')));
             break;
         case XOOPS_CENTERBLOCK_CENTER:
             if (!isset($show_cblock)) {
                 $xoopsTpl->assign('xoops_showcblock', 1);
                 $show_cblock = 1;
             }
-            $xoopsTpl->append('xoops_ccblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight')));
+            $xoopsTpl->append('xoops_ccblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight'), 'id' => $block_arr[$i]->getVar('bid')));
             break;
         case XOOPS_SIDEBLOCK_RIGHT:
             if (!isset($show_rblock)) {
                 $xoopsTpl->assign('xoops_showrblock', 1);
                 $show_rblock = 1;
             }
-            $xoopsTpl->append('xoops_rblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight')));
+            $xoopsTpl->append('xoops_rblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight'), 'id' => $block_arr[$i]->getVar('bid')));
             break;
         }
         unset($bcontent);
