@@ -1,5 +1,5 @@
 <?php
-// $Id: header.php,v 1.1 2008/09/25 00:11:00 nao-pon Exp $
+// $Id: header.php,v 1.1 2009/01/12 23:53:20 nao-pon Exp $
 //  ------------------------------------------------------------------------ //
 //                XOOPS - PHP Content Management System                      //
 //                    Copyright (c) 2000 XOOPS.org                           //
@@ -60,6 +60,7 @@ if ($xoopsConfig['theme_set'] != 'default' && file_exists(XOOPS_THEME_PATH.'/'.$
         $pm_handler =& xoops_gethandler('privmessage');
         $pm_criterias = new CriteriaCompo(new Criteria('read_msg', 0));
         $pm_criterias->add(new Criteria('to_userid', $xoopsUser->getVar('uid')));
+        $pm_criterias->add(new Criteria('send', 0));
         $pm_num = $pm_handler->getCount($pm_criterias);
 
         $xoopsTpl->assign(array('xoops_isuser' => true, 'xoops_userid' => $xoopsUser->getVar('uid'), 'xoops_uname' => $xoopsUser->getVar('uname'), 'xoops_isadmin' => $xoopsUserIsAdmin, 'xoops_pm_num' => $pm_num));
@@ -107,6 +108,7 @@ if ($xoopsConfig['theme_set'] != 'default' && file_exists(XOOPS_THEME_PATH.'/'.$
         $pm_handler =& xoops_gethandler('privmessage');
         $pm_criterias = new CriteriaCompo(new Criteria('read_msg', 0));
         $pm_criterias->add(new Criteria('to_userid', $xoopsUser->getVar('uid')));
+        $pm_criterias->add(new Criteria('send', 0));
         $pm_num = $pm_handler->getCount($pm_criterias);
 
         $xoopsTpl->assign(array('xoops_isuser' => true, 'xoops_userid' => $xoopsUser->getVar('uid'), 'xoops_uname' => $xoopsUser->getVar('uname'), 'xoops_isadmin' => $xoopsUserIsAdmin, 'xoops_pm_num' => $pm_num));
@@ -192,41 +194,44 @@ if ($xoopsConfig['theme_set'] != 'default' && file_exists(XOOPS_THEME_PATH.'/'.$
                 $bcontent = $xoopsTpl->fetch('db:system_dummy.html', 'blk_'.$bid);
             }
         }
+        
+        if($xoopsConfigSearch['highlighting']) $bcontent = xoops_word_highlight($bcontent, XOOPS_QUERY_WORD, false);
+        
         switch ($block_arr[$i]->getVar('side')) {
             case XOOPS_SIDEBLOCK_LEFT:
                 if (!isset($show_lblock)) {
                     $xoopsTpl->assign('xoops_showlblock', 1);
                     $show_lblock = 1;
                 }
-                $xoopsTpl->append('xoops_lblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight')));
+                $xoopsTpl->append('xoops_lblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight'), 'id' => $block_arr[$i]->getVar('bid')));
                 break;
             case XOOPS_CENTERBLOCK_LEFT:
                 if (!isset($show_cblock)) {
                     $xoopsTpl->assign('xoops_showcblock', 1);
                     $show_cblock = 1;
                 }
-                $xoopsTpl->append('xoops_clblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight')));
+                $xoopsTpl->append('xoops_clblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight'), 'id' => $block_arr[$i]->getVar('bid')));
                 break;
             case XOOPS_CENTERBLOCK_RIGHT:
                 if (!isset($show_cblock)) {
                     $xoopsTpl->assign('xoops_showcblock', 1);
                     $show_cblock = 1;
                 }
-                $xoopsTpl->append('xoops_crblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight')));
+                $xoopsTpl->append('xoops_crblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight'), 'id' => $block_arr[$i]->getVar('bid')));
                 break;
             case XOOPS_CENTERBLOCK_CENTER:
                 if (!isset($show_cblock)) {
                     $xoopsTpl->assign('xoops_showcblock', 1);
                     $show_cblock = 1;
                 }
-                $xoopsTpl->append('xoops_ccblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight')));
+                $xoopsTpl->append('xoops_ccblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight'), 'id' => $block_arr[$i]->getVar('bid')));
                 break;
             case XOOPS_SIDEBLOCK_RIGHT:
                 if (!isset($show_rblock)) {
                     $xoopsTpl->assign('xoops_showrblock', 1);
                     $show_rblock = 1;
                 }
-                $xoopsTpl->append('xoops_rblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight')));
+                $xoopsTpl->append('xoops_rblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight'), 'id' => $block_arr[$i]->getVar('bid')));
                 break;
         }
         unset($bcontent);

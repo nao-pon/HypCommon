@@ -1,5 +1,5 @@
 <?php
-// $Id: common.php,v 1.1 2008/09/25 00:11:00 nao-pon Exp $
+// $Id: common.php,v 1.1 2009/01/12 23:53:20 nao-pon Exp $
 //  ------------------------------------------------------------------------ //
 //                XOOPS - PHP Content Management System                      //
 //                    Copyright (c) 2000 XOOPS.org                           //
@@ -70,20 +70,15 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
     } else {
         define('XOOPS_DB_CHKREF', 0);
     }
-    if(file_exists(XOOPS_ROOT_PATH . '/include/ini_settings.php')){
+    if(!defined('XOOPS_CHARCODE') && file_exists(XOOPS_ROOT_PATH . '/include/ini_settings.php')){
         $ini_settings = parse_ini_file(XOOPS_ROOT_PATH . '/include/ini_settings.php');
         if(isset($ini_settings['charcode']) && $ini_settings['charcode'] != ''){
-            define("XOOPS_CHARCODE", $ini_settings['charcode']);
+            define('XOOPS_CHARCODE', $ini_settings['charcode']);
         }
     }
 
     // ############## Include common functions file ##############
     include_once XOOPS_ROOT_PATH.'/include/functions.php';
-
-    // ############# Set Query Words & Load HypCommonFunction Class #############
-    include_once XOOPS_TRUST_PATH . '/class/hyp_common/preload/hyp_preload.php';
-    $HypCommonPreLoad = @ new HypCommonPreLoad();
-    $HypCommonPreLoad->preFilter();
 
     // #################### Connect to DB ##################
     require_once XOOPS_ROOT_PATH.'/class/database/databasefactory.php';
@@ -272,7 +267,7 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
             if ($xoopsConfig['use_mysession'] && $xoopsConfig['session_name'] != '') {
                 setcookie($xoopsConfig['session_name'], session_id(), time()+(60*$xoopsConfig['session_expire']), '/',  '', 0);
             }
-            $xoopsUser->setGroups($_SESSION['xoopsUserGroups']);
+            // $xoopsUser->setGroups($_SESSION['xoopsUserGroups']);
             $xoopsUserIsAdmin = $xoopsUser->isAdmin();
         }
     }
@@ -315,9 +310,6 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
         }
         unset($allowed, $group);
     }
-
-    // ############# POST Filter with HypCommonPreLoad #############
-    $HypCommonPreLoad->postFilter();
 
     if (file_exists('./xoops_version.php')) {
         $url_arr = explode('/',strstr($xoopsRequestUri,'/modules/'));
