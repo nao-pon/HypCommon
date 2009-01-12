@@ -3,8 +3,8 @@ diff -r -u -x CVS org_2.0.16aJP/class/template.php html_2.0.16aJP/class/template
 +++ html_2.0.16aJP/class/template.php	Thu Jul 17 09:12:49 2008
 @@ -1,5 +1,5 @@
  <?php
--// $Id: 2.0.16aJP.diff,v 1.1 2008/09/25 00:10:01 nao-pon Exp $
-+// $Id: 2.0.16aJP.diff,v 1.1 2008/09/25 00:10:01 nao-pon Exp $
+-// $Id: 2.0.16aJP.diff,v 1.2 2009/01/12 23:51:45 nao-pon Exp $
++// $Id: 2.0.16aJP.diff,v 1.2 2009/01/12 23:51:45 nao-pon Exp $
  //  ------------------------------------------------------------------------ //
  //                XOOPS - PHP Content Management System                      //
  //                    Copyright (c) 2000 XOOPS.org                           //
@@ -35,11 +35,11 @@ diff -r -u -x CVS org_2.0.16aJP/class/template.php html_2.0.16aJP/class/template
  		// Added by goghs on 11-26 to deal with safe mode
 diff -r -u -x CVS org_2.0.16aJP/header.php html_2.0.16aJP/header.php
 --- org_2.0.16aJP/header.php	Mon Sep 22 14:08:21 2008
-+++ html_2.0.16aJP/header.php	Mon Sep 22 08:50:32 2008
++++ html_2.0.16aJP/header.php	Tue Jan 13 08:22:59 2009
 @@ -1,5 +1,5 @@
  <?php
--// $Id: 2.0.16aJP.diff,v 1.1 2008/09/25 00:10:01 nao-pon Exp $
-+// $Id: 2.0.16aJP.diff,v 1.1 2008/09/25 00:10:01 nao-pon Exp $
+-// $Id: 2.0.16aJP.diff,v 1.2 2009/01/12 23:51:45 nao-pon Exp $
++// $Id: 2.0.16aJP.diff,v 1.2 2009/01/12 23:51:45 nao-pon Exp $
  //  ------------------------------------------------------------------------ //
  //                XOOPS - PHP Content Management System                      //
  //                    Copyright (c) 2000 XOOPS.org                           //
@@ -58,9 +58,57 @@ diff -r -u -x CVS org_2.0.16aJP/header.php html_2.0.16aJP/header.php
          $bcachetime = $block_arr[$i]->getVar('bcachetime');
          if (empty($bcachetime)) {
              $xoopsTpl->xoops_setCaching(0);
+@@ -180,35 +188,35 @@
+                 $xoopsTpl->assign('xoops_showlblock', 1);
+                 $show_lblock = 1;
+             }
+-            $xoopsTpl->append('xoops_lblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight')));
++            $xoopsTpl->append('xoops_lblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight'), 'id' => $block_arr[$i]->getVar('bid')));
+             break;
+         case XOOPS_CENTERBLOCK_LEFT:
+             if (!isset($show_cblock)) {
+                 $xoopsTpl->assign('xoops_showcblock', 1);
+                 $show_cblock = 1;
+             }
+-            $xoopsTpl->append('xoops_clblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight')));
++            $xoopsTpl->append('xoops_clblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight'), 'id' => $block_arr[$i]->getVar('bid')));
+             break;
+         case XOOPS_CENTERBLOCK_RIGHT:
+             if (!isset($show_cblock)) {
+                 $xoopsTpl->assign('xoops_showcblock', 1);
+                 $show_cblock = 1;
+             }
+-            $xoopsTpl->append('xoops_crblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight')));
++            $xoopsTpl->append('xoops_crblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight'), 'id' => $block_arr[$i]->getVar('bid')));
+             break;
+         case XOOPS_CENTERBLOCK_CENTER:
+             if (!isset($show_cblock)) {
+                 $xoopsTpl->assign('xoops_showcblock', 1);
+                 $show_cblock = 1;
+             }
+-            $xoopsTpl->append('xoops_ccblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight')));
++            $xoopsTpl->append('xoops_ccblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight'), 'id' => $block_arr[$i]->getVar('bid')));
+             break;
+         case XOOPS_SIDEBLOCK_RIGHT:
+             if (!isset($show_rblock)) {
+                 $xoopsTpl->assign('xoops_showrblock', 1);
+                 $show_rblock = 1;
+             }
+-            $xoopsTpl->append('xoops_rblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight')));
++            $xoopsTpl->append('xoops_rblocks', array('title' => $block_arr[$i]->getVar('title'), 'content' => $bcontent, 'weight' => $block_arr[$i]->getVar('weight'), 'id' => $block_arr[$i]->getVar('bid')));
+             break;
+         }
+         unset($bcontent);
 diff -r -u -x CVS org_2.0.16aJP/include/common.php html_2.0.16aJP/include/common.php
 --- org_2.0.16aJP/include/common.php	Mon Sep 22 14:08:38 2008
-+++ html_2.0.16aJP/include/common.php	Mon Sep 22 08:19:41 2008
++++ html_2.0.16aJP/include/common.php	Thu Sep 25 09:08:44 2008
+@@ -1,5 +1,5 @@
+ <?php
+-// $Id: 2.0.16aJP.diff,v 1.2 2009/01/12 23:51:45 nao-pon Exp $
++// $Id: 2.0.16aJP.diff,v 1.2 2009/01/12 23:51:45 nao-pon Exp $
+ //  ------------------------------------------------------------------------ //
+ //                XOOPS - PHP Content Management System                      //
+ //                    Copyright (c) 2000 XOOPS.org                           //
 @@ -73,6 +73,11 @@
      // ############## Include common functions file ##############
      include_once XOOPS_ROOT_PATH.'/include/functions.php';
