@@ -1,5 +1,5 @@
 <?php
-// $Id: template.php,v 1.1 2008/09/25 00:11:00 nao-pon Exp $
+// $Id: template.php,v 1.1 2009/01/12 23:53:19 nao-pon Exp $
 //  ------------------------------------------------------------------------ //
 //                XOOPS - PHP Content Management System                      //
 //                    Copyright (c) 2000 XOOPS.org                           //
@@ -62,11 +62,7 @@ class XoopsTpl extends Smarty
 	{
 		global $xoopsConfig;
 		$this->Smarty();
-		// Added compile_id @ nao-pon
-		//$this->compile_id = null;
-		$this->compile_id = $xoopsConfig['template_set'] . '-' . $xoopsConfig['theme_set'];
-		$this->_compile_id = $this->compile_id;
-		// Added compile_id  @ nao-pon (END)
+		$this->compile_id = null;
 		if ($xoopsConfig['theme_fromfile'] == 1) {
 			$this->_canUpdateFromFile = true;
 			$this->compile_check = true;
@@ -80,11 +76,6 @@ class XoopsTpl extends Smarty
 		$this->cache_dir = XOOPS_CACHE_PATH;
 		$this->compile_dir = XOOPS_COMPILE_PATH;
 		$this->plugins_dir = array(XOOPS_ROOT_PATH.'/class/smarty/plugins');
-		// Added costomized smarty plugins dirctory @ nao-pon
-		if (defined('X2_ADD_SMARTYPLUGINS_DIR')) {
-			array_unshift($this->plugins_dir, X2_ADD_SMARTYPLUGINS_DIR);
-		}
-		// Added costomized smarty plugins dirctory @ nao-pon (END)
 		$this->default_template_handler_func = 'xoops_template_create';
 		
 		// Added by goghs on 11-26 to deal with safe mode
