@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.30 2009/01/11 13:57:47 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.31 2009/01/15 02:42:39 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -622,16 +622,16 @@ class HypKTaiRender
 			return $results[$carrier][$address];
 		}
 		
-		$results[$carrier][$address] = FALSE;
+		$ret = FALSE;
 		$ip_file = dirname(__FILE__) . '/ipranges/' . strtolower($carrier) . '.ip';
 		
 		if (file_exists($ip_file)) {
 			$iprange = file($ip_file);
 			$iprange = array_diff(array_map('trim', $iprange), array(''));
 			$address = $this->_dumpAddress($address);
-			$results[$carrier][$address] = $this->_compareIp($address, $iprange);
+			$ret = $results[$carrier][$address] = $this->_compareIp($address, $iprange);
 		}
-		return $results[$carrier][$address];
+		return $ret;
 	}
 
 	function getHtmlDeclaration () {
