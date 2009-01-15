@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.55 2009/01/11 13:47:36 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.56 2009/01/15 02:43:22 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -187,39 +187,97 @@ EOF;
 		return ;
 	}
 	
-	function make_context($text,$words=array(),$l=255)
+	function make_context($text, $words=array(), $l=255, $parts=3, $delimiter='...')
 	{
-		static $strcut = "";
+		static $strcut = '';
 		if (!$strcut)
 			$strcut = create_function ( '$a,$b,$c', (function_exists('mb_strcut'))?
 				'return mb_strcut($a,$b,$c);':
-				'return strcut($a,$b,$c);');
+				'return substr($a,$b,$c);');
 		
-		$text = str_replace(array('&lt;','&gt;','&amp;','&quot;','&#039;'),array('<','>','&','"',"'"),$text);
+		$limit = $parts + 1;
+		$text = str_replace(array('&lt;','&gt;','&quot;','&#039;','&amp;'),array('<','>','"',"'",'&'),$text);
 		
-		if (!is_array($words)) $words = array();
-		
-		$ret = "";
-		$q_word = str_replace(" ","|",preg_quote(join(' ',$words),"/"));
+		if (is_array($words)) {
+			$words = join(' ', $words);
+		}
+		$words = preg_replace('/\s+/', ' ', $words);
+		if ($words) {
+			$q_word = str_replace(' ', '|', preg_quote($words, '/'));
+		} else {
+			$q_word = '?!';
+		}
 		
 		$match = array();
-		if (preg_match("/$q_word/i",$text,$match)) {
+		$ret = $text;
+		$reg = '/(' . $q_word . ')/iS';
+		if (preg_match($reg, $text, $match)) {
 			$ret = ltrim(preg_replace('/\s+/', ' ', $text));
-			list($pre, $aft) = array_pad(preg_split("/$q_word/i", $ret, 2), 2, "");
-			$m = intval($l/2);
-			$ret = (strlen($pre) > $m)? "... " : "";
-			$ret .= $strcut($pre, max(strlen($pre)-$m+1,0),$m).$match[0];
-			$m = $l-strlen($ret);
-			$ret .= $strcut($aft, 0, min(strlen($aft),$m));
-			if (strlen($aft) > $m) $ret .= " ...";
+			$arr = preg_split($reg, $ret, $limit, PREG_SPLIT_DELIM_CAPTURE);
+			$count = count($arr);
+			
+			$ret = '';
+			if ($count === 1) {
+				$ret = $arr[0];
+			} else {
+				$m = intval($l / max((($count - 1) / 2), 2));
+				$add = 0;
+				for($i = 0; $i < $count; $i = $i + 2) {
+					$mc = $m;
+					if ($add) {
+						$mc += $add;
+					}
+					$key = $i + 1;
+					if (isset($arr[$key])) {
+						$mc = $mc - strlen($arr[$key]);
+					}
+					if (isset($arr[$i-1]) && isset($arr[$key])) {
+						$type = 'middle';
+					} else {
+						if (isset($arr[$key])) {
+							$type = 'first';
+							if ($count > 3) $mc = $mc / 2;
+						} else if (isset($arr[$i-1])) {
+							$type = 'last';
+						}
+					}
+					$len = strlen($arr[$i]);
+					if ($len > $mc && $type !== 'last') {
+						if ($type === 'middle') {
+							// キーワードとキーワードで挟まれた部分
+							$mc = $mc - strlen($delimiter);
+							$ret .= $strcut($arr[$i], 0, $mc / 2);
+							$ret .= $delimiter;
+							$ret .= $strcut($arr[$i], max($len - $mc / 2 + 1, 0), $mc / 2);
+						} else {
+							// 最初の部分
+							$mc = $mc - strlen($delimiter);
+							$ret .= $delimiter;
+							$ret .= $strcut($arr[$i], max($len - $mc + 1 , 0), $mc);
+						}
+						$add = 0;
+					} else {
+						$add += $mc - $len;
+						$ret .= $arr[$i];
+					}
+					if (isset($arr[$key])) {
+						$ret .= $arr[$key];
+					}
+				}
+			}
+		}
+
+		if (strlen($ret) > $l) {
+			$l = $l - strlen($delimiter);
+			$ret = $strcut($ret, 0, $l);
+			$ret = preg_replace('/&#?[A-Za-z0-9]{2,6}$/', '', $ret);
+			$ret .= $delimiter;
 		}
 		
-		if (!$ret) {
-			$ret = $strcut($text, 0, $l);
-			$ret = preg_replace('/&([^;]+)?$/', '', $ret);
-		}
+		$ret = htmlspecialchars($ret, ENT_NOQUOTES);
+		$ret = preg_replace('/&amp;(#?[A-Za-z0-9]{2,6}?;)/', '&$1', $ret);
 		
-		return htmlspecialchars($ret, ENT_NOQUOTES);
+		return $ret;
 	}
 	
 	function set_need_refresh($mode)
