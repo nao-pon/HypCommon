@@ -608,7 +608,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 						exit('Could not got your device ID.');
 				}
 				
-				if (empty($this->k_tai_conf['noCheckIpRange']) && ! $this->HypKTaiRender->checkIp ($_SERVER['REMOTE_ADDR'], $this->HypKTaiRender->vars['ua']['carrier'])) {
+				if (empty($this->k_tai_conf['noCheckIpRange']) && ! $this->HypKTaiRender->vars['ua']['inIPRange']) {
 					exit('Your IP "' . $_SERVER['REMOTE_ADDR'] . '" doesn\'t match to IP range of "'.$this->HypKTaiRender->vars['ua']['carrier'].'".');
 				}
 
