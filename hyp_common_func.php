@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.56 2009/01/15 02:43:22 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.57 2009/01/25 00:36:44 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -187,7 +187,7 @@ EOF;
 		return ;
 	}
 	
-	function make_context($text, $words=array(), $l=255, $parts=3, $delimiter='...')
+	function make_context($text, $words=array(), $l=255, $parts=3, $delimiter='...', $caseInsensitive = TRUE, $whitespaceCompress = TRUE)
 	{
 		static $strcut = '';
 		if (!$strcut)
@@ -210,9 +210,14 @@ EOF;
 		
 		$match = array();
 		$ret = $text;
-		$reg = '/(' . $q_word . ')/iS';
+		$reg = '/(' . $q_word . ')/S';
+		if ($caseInsensitive) {
+			$reg .= 'i';
+		}
 		if (preg_match($reg, $text, $match)) {
-			$ret = ltrim(preg_replace('/\s+/', ' ', $text));
+			if ($whitespaceCompress) {
+				$ret = ltrim(preg_replace('/\s+/', ' ', $text));
+			}
 			$arr = preg_split($reg, $ret, $limit, PREG_SPLIT_DELIM_CAPTURE);
 			$count = count($arr);
 			
