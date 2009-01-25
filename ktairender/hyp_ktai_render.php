@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.31 2009/01/15 02:42:39 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.32 2009/01/25 00:38:43 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -1300,7 +1300,7 @@ class HypKTaiRender
 		
 		if (empty($parsed_url['host'])
 		 || ($parsed_url['host'] === $this->parsed_base['host'] && $parsed_url['scheme'] === $this->parsed_base['scheme'])
-		 || preg_match($showHostReg, $parsed_url['host'])) {
+		 || (preg_match($showHostReg, $parsed_url['host']) && ! preg_match($directHostReg, $parsed_url['host']))) {
 			$png = ($this->vars['ua']['allowPNG'])? '&amp;p' : '';
 			if (! $parsed_url['host']) {
 				$url = $this->getRealUrl($url);
