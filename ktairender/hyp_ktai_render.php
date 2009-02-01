@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.32 2009/01/25 00:38:43 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.33 2009/02/01 07:43:32 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -75,8 +75,8 @@ class HypKTaiRender
 		
 		$this->SERVER = $_SERVER;
 		
-		$this->session_name = session_name();
-		
+		$this->session_name = '';
+
 		// モジュールなどで、mainfile.php を呼ぶ前に$_SERVER['REQUEST_URI'] を書き換える場合
 		// $_SERVER['_REQUEST_URI'] に元の値が保存されていることがある
 		if (isset($_SERVER['_REQUEST_URI'])) {
@@ -128,6 +128,7 @@ class HypKTaiRender
 	}
 	
 	function removeSID ($url) {
+		if (! $this->session_name) $this->session_name = session_name();
 		return $this->removeQueryFromUrl($url, $this->session_name);
 	}
 
@@ -147,6 +148,7 @@ class HypKTaiRender
 	}
 	
 	function addSID ($url, $rootURL = '') {
+		if (! $this->session_name) $this->session_name = session_name();
 		if (! $rootURL) $rootURL = $this->myRoot;
 		if (strpos($url, $rootURL) === 0) {
 			if (defined('SID') && SID && ! isset($_COOKIE[$this->session_name])) {
@@ -166,6 +168,7 @@ class HypKTaiRender
 	function doOptimize () {
 		setlocale( LC_CTYPE, 'C');
 		$this->parsed_base = parse_url($this->myRoot);
+		$this->session_name = session_name();
 		
 		// Need SID ?
 		if (! $this->vars['ua']['allowCookie'] && defined('SID') && SID && empty($_COOKIE[$this->session_name]) && ! $this->vars['ua']['isBot']) {			
@@ -407,6 +410,11 @@ class HypKTaiRender
 		}
 		$body = str_replace("\x08", '\\"', $body);
 		
+		// form enctype="multipart/form-data"
+		if (! $this->vars['ua']['allowFormData']) {
+			$body = preg_replace('#(<form.+?)enctype=("|\')multipart/form-data\\2(.+?</form>)#s', '$1$3', $body);
+		}
+		
 		// css property
 		$reg = '#(<[^>]+?style=[\'"][^\'"]*?)\s*(?<!-)(?:display:\s*non|width|height|margin|padding|float|position|left|top|right|bottom|clear|overflow)[^;\'"]+(?:[ ;]+)?([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
@@ -603,13 +611,13 @@ class HypKTaiRender
 		$html = str_replace("\x08", '<a', $html);
 		
 		// Check FORM
-		if (defined('SID') && SID) {
-			list($sid_key, $sid_val) = explode('=', SID);
+		if ($this->vars['needSID']) {
+			$sid_val = session_id();
 			$html = preg_replace_callback('#(<form[^>]*?\baction=([\'"])?)([^\s"\'>]+)((?:\\2)?[^>]*>)#isS',
 				create_function(
 					'$match',
 					'if (strpos($match[3], "'.$this->myRoot.'") !== 0 && preg_match("#^https?://#i", $match[3])) return $match[0];
-					return $match[0] . \'<input type="hidden" name="'.$sid_key.'" value="'.$sid_val.'">\';'
+					return $match[0] . \'<input type="hidden" name="'.$this->session_name.'" value="'.$sid_val.'" />\';'
 				), $html);
 		}
 		
@@ -861,7 +869,9 @@ class HypKTaiRender
 		);
 		$regs = array();
 		foreach($oneps as $onep) {
-			$regs[] = '<'.$onep.'(?:.(?!<'.$onep.'))+?</'.$onep.'>';
+			//$regs[] = '<'.$onep.'(?:.(?!<'.$onep.'))+?</'.$onep.'>';
+			//$regs[] = '<'.$onep.'(?:.(?!<(?:'.$onep.'|table)))+?</'.$onep.'>';
+			$regs[] = '<'.$onep.'(?:.(?!<'.$onep.')){,'.($this->splitMaxSize * .8).'}?</'.$onep.'>';
 		}
 		
 		$first = '';
@@ -879,7 +889,7 @@ class HypKTaiRender
 			'(?><form.+?/form>)|' .
 			''.join('|', $regs) . '|' .
 			'<a.+?/a>|' .
-			'<[^>]+>|' .
+			'<[^>]+?>|' .
 			'&(?:[a-zA-Z]{2,8}|\#[0-9]{1,6}|\#x[0-9a-fA-F]{2,4});|' .
 			'\s|' .
 			$p . '{,80}' .
@@ -895,7 +905,7 @@ class HypKTaiRender
 				} else {
 					if ($arg === $html) {
 						if ($arg[0] === '<') {
-							if (preg_match('/^<([a-z]+)/i', $arg, $match)) {
+							if (preg_match('/^<([a-z]+)/', $arg, $match)) {
 								$close = '</'.$match[1].'>';
 								list($arg1, $arg2) = explode($close, $arg, 2);
 								$arg1 .= $close;
@@ -904,7 +914,8 @@ class HypKTaiRender
 								continue;
 							}
 						}
-						$out[] = '<div>[ Rendering error. ]</div>';
+						$out[] = '<div>[ Rendering error. ('.strlen($arg).') ]</div>';
+						//$out = array_merge($out, $this->_html_split_make_array($arg1));
 						continue;
 					}
 					$out = array_merge($out, $this->_html_split_make_array($arg));
@@ -944,6 +955,7 @@ class HypKTaiRender
 		$this->vars['ua']['allowPNG'] = FALSE;
 		$this->vars['ua']['allowInputImage'] = FALSE;
 		$this->vars['ua']['allowCookie'] = FALSE;
+		$this->vars['ua']['allowFormData'] = TRUE;
 		$this->vars['ua']['contentType'] = 'text/html';
 		
 		if (isset($this->SERVER['HTTP_USER_AGENT'])) {
@@ -1074,6 +1086,7 @@ class HypKTaiRender
 						$this->vars['ua']['allowPNG'] = TRUE;
 						$this->vars['ua']['allowInputImage'] = FALSE;
 						$this->vars['ua']['allowCookie'] = TRUE;
+						$this->vars['ua']['allowFormData'] = FALSE;
 						$this->vars['ua']['meta'] = '<meta http-equiv="Cache-Control" content="no-cache" />';
 						$this->vars['ua']['contentType'] = 'application/xhtml+xml';
 						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//OPENWAVE//DTD XHTML 1.0//EN" "http://www.openwave.com/DTD/xhtml-basic.dtd">';
