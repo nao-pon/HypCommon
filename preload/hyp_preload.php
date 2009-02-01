@@ -211,7 +211,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 				define('HYP_K_TAI_RENDER', TRUE);
 				
-				@ ini_set('session.use_trans_sid', 0);
 				
 				// Set HypKTaiRender
 				HypCommonFunc::loadClass('HypKTaiRender');
@@ -228,6 +227,16 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				$this->HypKTaiRender->hashkey = $this->k_tai_conf['getKeys']['hash'];
 				if (! empty($this->k_tai_conf['pictSizeMax'])) $this->HypKTaiRender->Config_pictSizeMax = $this->k_tai_conf['pictSizeMax'];
 
+				// Session setting
+				@ ini_set('session.use_trans_sid', 0);
+				if (! $this->HypKTaiRender->vars['ua']['allowCookie']) {
+					@ ini_set('session.use_cookies',      '0');
+					@ ini_set('session.use_only_cookies', '0');
+				} else {
+					@ ini_set('session.use_cookies',      '1');
+					@ ini_set('session.use_only_cookies', '1');
+				}
+				
 				// Remove control keys
 				$skey = session_name();
 				$this->k_tai_conf['getKeys'][] = $skey;
@@ -248,21 +257,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 						$_SERVER['HTTP_REFERER'] = XOOPS_URL . '/';
 					}
 				}
-				
-				if (! $this->HypKTaiRender->vars['ua']['allowCookie']) {
-					@ ini_set('session.use_only_cookies', 0);
-				} else {
-					@ ini_set('session.use_only_cookies', 1);
-				}
-				
-				if (! isset($_COOKIE[$skey])) {
-					if(isset($_POST[$skey])) $sid=$_POST[$skey];
-					else if(isset($_GET[$skey])) $sid=$_GET[$skey];
-					else $sid=null;
-					if( preg_match('/^[0-9a-z]{32}$/', $sid) ){
-						session_id($sid);
-					}
-				}
 			} else {
 				define('HYP_K_TAI_RENDER', FALSE);
 			}
@@ -273,15 +267,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	{
 		// Use K_TAI Render (XCL only)
 		if (defined('XOOPS_CUBE_LEGACY') && defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
-			// Set session key
-			$skey = ($GLOBALS['xoopsConfig']['use_mysession'] && $GLOBALS['xoopsConfig']['session_name'] !== '')? $GLOBALS['xoopsConfig']['session_name'] : session_name();
-			if(isset($_POST[$skey])) $sid=$_POST[$skey];
-			else if(isset($_GET[$skey])) $sid=$_GET[$skey];
-			else $sid=null;
-			if( preg_match('/^[0-9a-z]{32}$/', $sid) ){
-				session_id($sid);
-			}
-
+			
 			// Set theme set
 			if (isset($this->k_tai_conf['themeSet']) && is_file(XOOPS_THEME_PATH . '/' . $this->k_tai_conf['themeSet'] . '/theme.html')) {
 				$GLOBALS['xoopsConfig']['theme_set'] = $this->k_tai_conf['themeSet'];
@@ -491,6 +477,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		
 		// Use K_TAI Render
 		if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
+			
+			$this->HypKTaiRender->session_name = session_name();
+			
 			// $this->k_tai_conf['msg'] 文字コード変換
 			if ($this->encode !== strtoupper($this->configEncoding)) {
 				if (function_exists('mb_convert_encoding') && $this->configEncoding && $this->encode !== $this->configEncoding) {
@@ -571,21 +560,33 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 	
 	function _onShutdownKtai() {
-		if (version_compare(PHP_VERSION, '5.0.0', '>=')) {
-			$session_name = session_name();
-			if (defined('SID') && SID && ! isset($_COOKIE[$session_name])) {
-				$url = '';
+		$session_name = session_name();
+		if (defined('SID') && SID && ! isset($_COOKIE[$session_name])) {
+			$url = '';
+			$arh = FALSE;
+			if (function_exists('apache_response_headers')) {
+				$arh = apache_response_headers();
+				if (is_array($arh)) {
+					foreach(array('Location', 'location', 'LOCATION') as $key) {
+						if (isset($arh[$key])) {
+							$url = trim($arh[$key]);
+							break;
+						}
+					}
+				}
+			}
+			if ($arh === FALSE && function_exists('headers_list')) {
 				foreach (headers_list() as $header) {
 					if (preg_match('/^Location:(.+)$/is', $header, $match)) {
 						$url = trim($match[1]);
 						break;
 					}
 				}
-				if ($url) {
-					$url = $this->HypKTaiRender->getRealUrl($url);
-					$url = $this->HypKTaiRender->addSID($url, XOOPS_URL);
-					header('Location:' . $url, TRUE);
-				}
+			}
+			if ($url) {
+				$url = $this->HypKTaiRender->getRealUrl($url);
+				$url = $this->HypKTaiRender->addSID($url, XOOPS_URL);
+				header('Location:' . $url, TRUE);
 			}
 		}
 	}
