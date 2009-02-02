@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.33 2009/02/01 07:43:32 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.34 2009/02/02 05:28:35 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -412,7 +412,8 @@ class HypKTaiRender
 		
 		// form enctype="multipart/form-data"
 		if (! $this->vars['ua']['allowFormData']) {
-			$body = preg_replace('#(<form.+?)enctype=("|\')multipart/form-data\\2(.+?</form>)#s', '$1$3', $body);
+			$body = preg_replace('#(<form[^>]+?)enctype=("|\')multipart/form-data\\2([^>]*?>)#', '$1$3', $body);
+			$body = preg_replace('#<input[^>]+?type=("|\')file\\1[^>]*?>#', '', $body);
 		}
 		
 		// css property
