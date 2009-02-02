@@ -236,21 +236,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					@ ini_set('session.use_cookies',      '1');
 					@ ini_set('session.use_only_cookies', '1');
 				}
-				
-				// Remove control keys
-				$skey = session_name();
-				$this->k_tai_conf['getKeys'][] = $skey;
-				if (isset($_SERVER['QUERY_STRING'])) {
-					$_SERVER['QUERY_STRING'] = ltrim($this->HypKTaiRender->removeQueryFromUrl('?' . $_SERVER['QUERY_STRING'], $this->k_tai_conf['getKeys']), '?');
-				}
-				if (isset($_SERVER['argv'][0])) {
-					$_SERVER['argv'][0] = ltrim($this->HypKTaiRender->removeQueryFromUrl('?' . $_SERVER['argv'][0], $this->k_tai_conf['getKeys']), '?');
-				}
-				foreach(array('REQUEST_URI', '_REQUEST_URI') as $_key) {
-					if (isset($_SERVER[$_key])) {
-						$_SERVER[$_key] = $this->HypKTaiRender->removeQueryFromUrl($_SERVER[$_key], $this->k_tai_conf['getKeys']);
-					}
-				}
 
 				if (! empty($_POST) && empty($_SERVER['HTTP_REFERER'])) {
 					if (! empty($this->k_tai_conf['noCheckIpRange']) || $this->HypKTaiRender->checkIp($_SERVER['REMOTE_ADDR'], $this->HypKTaiRender->vars['ua']['carrier'])) {
@@ -479,6 +464,20 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
 			
 			$this->HypKTaiRender->session_name = session_name();
+
+			// Remove control keys
+			$this->k_tai_conf['getKeys'][] = $this->HypKTaiRender->session_name;
+			if (isset($_SERVER['QUERY_STRING'])) {
+				$_SERVER['QUERY_STRING'] = ltrim($this->HypKTaiRender->removeQueryFromUrl('?' . $_SERVER['QUERY_STRING'], $this->k_tai_conf['getKeys']), '?');
+			}
+			if (isset($_SERVER['argv'][0])) {
+				$_SERVER['argv'][0] = ltrim($this->HypKTaiRender->removeQueryFromUrl('?' . $_SERVER['argv'][0], $this->k_tai_conf['getKeys']), '?');
+			}
+			foreach(array('REQUEST_URI', '_REQUEST_URI') as $_key) {
+				if (isset($_SERVER[$_key])) {
+					$_SERVER[$_key] = $this->HypKTaiRender->removeQueryFromUrl($_SERVER[$_key], $this->k_tai_conf['getKeys']);
+				}
+			}
 			
 			// $this->k_tai_conf['msg'] 文字コード変換
 			if ($this->encode !== strtoupper($this->configEncoding)) {
@@ -942,11 +941,11 @@ EOD;
 				}
 			}
 			if ($submenu) {
-				$body .= '<!--subMenu--><ns><ul>';
+				$body .= '<!--subMenu--><ul>';
 				foreach($submenu as $sub) {
 					$body .= '<li>' . $sub . '</li>';
 				}
-				$body .= '</ul></ns><!--/subMenu-->';
+				$body .= '</ul><!--/subMenu-->';
 				$showblocks['submenu'] = $this->k_tai_conf['msg']['subMenu'];
 			}
 			if ($showblocks) {
