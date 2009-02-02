@@ -115,8 +115,8 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			                          'below' => ''),
 			'toMain'         => array( 'above' => '<hr /><div style="text-align:center">',
 			                          'below' => '</div>'),
-			'subMenu'        => array( 'above' => '<div id="submenu" style="background-color:#ccccff"><h2 style="text-align:center">サブメニュー</h2></div>',
-			                          'below' => ''),
+			'subMenu'        => array( 'above' => '<ns><div id="submenu" style="background-color:#ccccff"><h2 style="text-align:center">サブメニュー</h2></div>',
+			                          'below' => '</ns>'),
 		);
 		
 		// 携帯用XOOPSテーマセット
