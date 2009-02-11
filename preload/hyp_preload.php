@@ -466,18 +466,16 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		// Use K_TAI Render
 		if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
 			
-			if (empty($_POST)) {
-				// docomo i-mode ID のチェック
-				$idCheck = $this->HypKTaiRender->checkDeviceId( XOOPS_DB_PASS );
-				if ($idCheck === 'redirect') {
-					exit();
-				} else if (! $idCheck) {
-					$_SESSION = array();
-					exit('Device ID does not match.');					
-				}
-				// Redirect 指定ファイルの確認 ( by _onShutdownKtai() )
-				$this->_checkRedirectFile();
+			// docomo i-mode ID のチェック
+			$idCheck = $this->HypKTaiRender->checkDeviceId( XOOPS_DB_PASS );
+			if ($idCheck === 'redirect') {
+				exit();
+			} else if (! $idCheck) {
+				$_SESSION = array();
+				exit('Device ID does not match.');					
 			}
+			// Redirect 指定ファイルの確認 ( by _onShutdownKtai() )
+			$this->_checkRedirectFile();
 			
 			// Check login
 			$this->_checkEasyLogin();
