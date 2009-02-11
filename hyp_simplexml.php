@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_simplexml.php,v 1.2 2008/02/25 01:46:58 nao-pon Exp $
+// $Id: hyp_simplexml.php,v 1.3 2009/02/11 05:54:05 nao-pon Exp $
 // HypSimpleXML Class by nao-pon http://hypweb.net
 // Based on SimpleXML
 // added function 'XMLstr_in()'
@@ -101,6 +101,8 @@ class HypSimpleXML
 	 * @access private
 	 */
 	var $output = array();
+	
+	var $error = '';
 
 	/**
 	 * @access private
@@ -163,7 +165,11 @@ class HypSimpleXML
 		}
 	}
 
-
+	function _die($msg, $ret = array()) {
+		$this->error = $msg;
+		return $ret;
+	}
+	
 	/**
 	 * @access private
 	 * @param mixed $parser
@@ -196,14 +202,14 @@ class HypSimpleXML
 		xml_set_character_data_handler($this->xml_parser, "characterData");
 
 		if (!($fp = fopen($file, "r")))
-			die("could not open XML input");
+			$this->_die("could not open XML input");
 
 
 		while ($data = fread($fp, 4096))
 		{
 			if (!xml_parse($this->xml_parser, $data, feof($fp)))
 			{
-				die(sprintf("XML error: %s at line %d",
+				$this->_die(sprintf("XML error: %s at line %d",
 				xml_error_string(xml_get_error_code($this->xml_parser)),
 				xml_get_current_line_number($this->xml_parser)));
 			}
@@ -236,7 +242,7 @@ class HypSimpleXML
 		{
 			if (!xml_parse($this->xml_parser, $data))
 			{
-				die(sprintf("XML error: %s at line %d",
+				$this->_die(sprintf("XML error: %s at line %d",
 				xml_error_string(xml_get_error_code($this->xml_parser)),
 				xml_get_current_line_number($this->xml_parser)));
 			}
@@ -273,7 +279,7 @@ class HypSimpleXML
 			if ($this->options["filename"])
 			{
 				if (!($fp = fopen($this->options["filename"], "w")))
-					die("could not open XML input");
+					$this->_die("could not open XML input", '');
 				
 				fwrite($fp, $xmlcode);
 				fclose($fp);
