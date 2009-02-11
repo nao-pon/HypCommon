@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.35 2009/02/11 06:03:41 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.36 2009/02/11 06:48:13 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -174,20 +174,21 @@ class HypKTaiRender
 		
 		if ($this->vars['ua']['carrier'] === 'docomo') {
 			// docomo only
-			$now = time();
-			if (! isset($_SESSION['hypKtaiStartTime'])) $_SESSION['hypKtaiStartTime'] = 0;
-			
-			if ($_SESSION['hypKtaiStartTime'] + $this->Config_docomoGuidTTL < $now && strpos(strtolower($this->SERVER['REQUEST_URI']), 'guid=') === FALSE) {
-				$_SESSION['hypKtaiStartTime'] = $now;
-				// 未取得なので guid=on をつけてリダイレクト
-				$joint = (strpos($this->SERVER['REQUEST_URI'], '?') === FALSE)? '?' : '&';
-				$url = $this->myRoot . $this->SERVER['REQUEST_URI'] . $joint . 'guid=on';
-				$url = $this->removeSID($url);
-				$sid = $this->session_name . '=' . session_id();
-				header('Location: ' . $url . '&' . $sid);
-				return 'redirect';
+			if (empty($_POST)) {
+				$now = time();
+				if (! isset($_SESSION['hypKtaiStartTime'])) $_SESSION['hypKtaiStartTime'] = 0;
+				
+				if ($_SESSION['hypKtaiStartTime'] + $this->Config_docomoGuidTTL < $now && strpos(strtolower($this->SERVER['REQUEST_URI']), 'guid=') === FALSE) {
+					$_SESSION['hypKtaiStartTime'] = $now;
+					// 未取得なので guid=on をつけてリダイレクト
+					$joint = (strpos($this->SERVER['REQUEST_URI'], '?') === FALSE)? '?' : '&';
+					$url = $this->myRoot . $this->SERVER['REQUEST_URI'] . $joint . 'guid=on';
+					$url = $this->removeSID($url);
+					$sid = $this->session_name . '=' . session_id();
+					header('Location: ' . $url . '&' . $sid);
+					return 'redirect';
+				}
 			}
-			
 			// PEAR
 			$incPath = ini_get('include_path');
 			$addPath = XOOPS_TRUST_PATH . '/PEAR';
