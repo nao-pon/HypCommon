@@ -168,6 +168,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->k_tai_conf['redirect'])) $this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/gate.php?way=redirect&amp;_d=0&amp;_u=0&amp;_x=0&amp;l=';
 		if (! isset($this->k_tai_conf['easyLogin'])) $this->k_tai_conf['easyLogin'] = 1;
 		if (! isset($this->k_tai_conf['noCheckIpRange'])) $this->k_tai_conf['noCheckIpRange'] = 0;
+		if (! isset($this->k_tai_conf['docomoGuidTTL'])) $this->k_tai_conf['docomoGuidTTL'] = 300;
+
 		if (! isset($this->k_tai_conf['msg']['easylogin'])) $this->k_tai_conf['msg']['easylogin'] = 'EasyLogin';
 		if (! isset($this->k_tai_conf['msg']['logout'])) $this->k_tai_conf['msg']['logout'] = 'Logout';
 		if (! isset($this->k_tai_conf['msg']['easyloginSet'])) $this->k_tai_conf['msg']['easyloginSet'] = 'Easylogin:ON';
@@ -175,7 +177,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->k_tai_conf['msg']['toMain'])) $this->k_tai_conf['msg']['toMain'] = 'Show main contents';
 		if (! isset($this->k_tai_conf['msg']['mainMenu'])) $this->k_tai_conf['msg']['mainMenu'] = 'Main Menu';
 		if (! isset($this->k_tai_conf['msg']['subMenu'])) $this->k_tai_conf['msg']['subMenu'] = 'Sub Menu';
-
+		
 		if (! isset($this->k_tai_conf['icon']['toMain'])) $this->k_tai_conf['icon']['toMain'] = '((e:f7e4))';
 		if (! isset($this->k_tai_conf['style']['highlight'])) $this->k_tai_conf['style']['highlight'] = 'background-color:#ffc0cb';
 		if (! isset($this->k_tai_conf['easyLoginConfPath'])) $this->k_tai_conf['easyLoginConfPath'] = '/userinfo.php';
@@ -211,7 +213,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 				define('HYP_K_TAI_RENDER', TRUE);
 				
-				
 				// Set HypKTaiRender
 				HypCommonFunc::loadClass('HypKTaiRender');
 				$this->HypKTaiRender =& HypKTaiRender::getSingleton();
@@ -225,8 +226,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				$this->HypKTaiRender->Config_icons = array_merge($this->HypKTaiRender->Config_icons, $this->k_tai_conf['icon']);
 				$this->HypKTaiRender->pagekey = $this->k_tai_conf['getKeys']['page'];
 				$this->HypKTaiRender->hashkey = $this->k_tai_conf['getKeys']['hash'];
-				if (! empty($this->k_tai_conf['pictSizeMax'])) $this->HypKTaiRender->Config_pictSizeMax = $this->k_tai_conf['pictSizeMax'];
-
+				$this->HypKTaiRender->Config_pictSizeMax = $this->k_tai_conf['pictSizeMax'];
+				$this->HypKTaiRender->Config_docomoGuidTTL = $this->k_tai_conf['docomoGuidTTL'];
+					
 				// Session setting
 				@ ini_set('session.use_trans_sid', 0);
 				if (! $this->HypKTaiRender->vars['ua']['allowCookie']) {
@@ -237,6 +239,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					@ ini_set('session.use_only_cookies', '1');
 				}
 
+				// HTTP_REFERER
 				if (! empty($_POST) && empty($_SERVER['HTTP_REFERER'])) {
 					if (! empty($this->k_tai_conf['noCheckIpRange']) || $this->HypKTaiRender->checkIp($_SERVER['REMOTE_ADDR'], $this->HypKTaiRender->vars['ua']['carrier'])) {
 						$_SERVER['HTTP_REFERER'] = XOOPS_URL . '/';
@@ -463,10 +466,37 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		// Use K_TAI Render
 		if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
 			
-			$this->HypKTaiRender->session_name = session_name();
-
+			if (empty($_POST)) {
+				// docomo i-mode ID のチェック
+				$idCheck = $this->HypKTaiRender->checkDeviceId( XOOPS_DB_PASS );
+				if ($idCheck === 'redirect') {
+					exit();
+				} else if (! $idCheck) {
+					$_SESSION = array();
+					exit('Device ID does not match.');					
+				}
+				// Redirect 指定ファイルの確認 ( by _onShutdownKtai() )
+				$this->_checkRedirectFile();
+			}
+			
+			// Check login
+			$this->_checkEasyLogin();
+			
+			// Setup session ID
+			$this->HypKTaiRender->setupSID();
+			
+			// HTTP_REFERER
+			if (empty($this->HypKTaiRender->SERVER['HTTP_REFERER']) && isset($_SESSION['hypKtaiReferer'])) {
+				$_SERVER['HTTP_REFERER'] = $this->HypKTaiRender->SERVER['HTTP_REFERER'] = $_SESSION['hypKtaiReferer'];
+			}
+			$_SESSION['hypKtaiReferer'] = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->SERVER['REQUEST_URI'];
+			if (isset($_SERVER['HTTP_REFERER'])) {
+				$_SERVER['HTTP_REFERER'] = $this->HypKTaiRender->removeQueryFromUrl($_SERVER['HTTP_REFERER'], array($this->HypKTaiRender->session_name, 'guid'));
+			}
+			
 			// Remove control keys
 			$this->k_tai_conf['getKeys'][] = $this->HypKTaiRender->session_name;
+			$this->k_tai_conf['getKeys'][] = 'guid';
 			if (isset($_SERVER['QUERY_STRING'])) {
 				$_SERVER['QUERY_STRING'] = ltrim($this->HypKTaiRender->removeQueryFromUrl('?' . $_SERVER['QUERY_STRING'], $this->k_tai_conf['getKeys']), '?');
 			}
@@ -491,8 +521,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				define('KTAI_RENDER_MSG_' . strtoupper($key), $val);
 			}
 
-			// Check login
-			$this->_checkEasyLogin();
 			// Set theme set
 			if (isset($this->k_tai_conf['themeSet']) && is_file(XOOPS_THEME_PATH . '/' . $this->k_tai_conf['themeSet'] . '/theme.html')) {
 				$GLOBALS['xoopsConfig']['theme_set'] = $this->k_tai_conf['themeSet'];
@@ -539,8 +567,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			if (! empty($this->use_k_tai_render)) {
 				ob_start(array(& $this, 'emojiFilter'));
 			}
-			
-			//ob_start(array(& $this, 'googleAnalyticsFilter'));
 		}
 		
 		
@@ -559,8 +585,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 	
 	function _onShutdownKtai() {
-		$session_name = session_name();
-		if (defined('SID') && SID && ! isset($_COOKIE[$session_name])) {
+		if (! $this->HypKTaiRender->vars['ua']['allowCookie']) {
 			$url = '';
 			$arh = FALSE;
 			if (function_exists('apache_response_headers')) {
@@ -583,27 +608,37 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				}
 			}
 			if ($url) {
+				$nosession = (strpos($url, session_name() . '=') === FALSE);
 				$url = $this->HypKTaiRender->getRealUrl($url);
 				$url = $this->HypKTaiRender->addSID($url, XOOPS_URL);
-				header('Location:' . $url, TRUE);
+				if (! headers_sent()) {
+					header('Location: ' . $url, TRUE);
+				} else if ($this->HypKTaiRender->vars['ua']['uid'] && $nosession) {
+					$file = XOOPS_ROOT_PATH . '/cache/' . md5($this->HypKTaiRender->vars['ua']['uid'] . XOOPS_DB_PASS) . '.redirect';
+					$fp = fopen($file, 'w');
+					fwrite($fp, $url);
+					fclose($fp);
+				}
 			}
 		}
 	}
 	
 	function _checkEasyLogin () {
 		if (empty($_SESSION['xoopsUserId'])) {
+			$this->HypKTaiRender->vars['ua']['xoopsUid'] = 0;
 			$this->HypKTaiRender->vars['ua']['isGuest'] = TRUE;
 		} else {
+			$this->HypKTaiRender->vars['ua']['xoopsUid'] = intval($_SESSION['xoopsUserId']);
+			$this->HypKTaiRender->vars['ua']['isGuest'] = FALSE;
 			if (empty($this->k_tai_conf['noCheckIpRange']) && ! $this->HypKTaiRender->checkIp ($_SERVER['REMOTE_ADDR'], $this->HypKTaiRender->vars['ua']['carrier'])) {
 				$_SESSION = array();
-				redirect_header(XOOPS_URL, 0, 'Your IP "' . $_SERVER['REMOTE_ADDR'] . '" doesn\'t match to IP range of "'.$this->HypKTaiRender->vars['ua']['carrier'].'".');
-				exit();
+				exit('Your IP "' . $_SERVER['REMOTE_ADDR'] . '" doesn\'t match to IP range of "'.$this->HypKTaiRender->vars['ua']['carrier'].'".');
 			}
 		}
-
+		
 		if (! empty($this->k_tai_conf['easyLogin'])) {
 			
-			if (isset($_GET['_EASYLOGIN']) || (! empty($_SESSION['xoopsUserId']) && (isset($_GET['_EASYLOGINSET']) || isset($_GET['_EASYLOGINUNSET'])))) {
+			if (isset($_GET['_EASYLOGIN']) || ($this->HypKTaiRender->vars['ua']['xoopsUid'] && (isset($_GET['_EASYLOGINSET']) || isset($_GET['_EASYLOGINUNSET'])))) {
 				if (empty($this->HypKTaiRender->vars['ua']['uid'])) {
 						exit('Could not got your device ID.');
 				}
@@ -632,19 +667,21 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					$uids = array();
 				}
 
-				if (! empty($_SESSION['xoopsUserId'])) {
+				if ($this->HypKTaiRender->vars['ua']['xoopsUid']) {
 					// Check & save uids data
-					if (! isset($uids[$uaUid]) || $uids[$uaUid] !== $_SESSION['xoopsUserId'] || $mode === 'unset') {
+					if (! isset($uids[$uaUid]) || $uids[$uaUid] !== $this->HypKTaiRender->vars['ua']['xoopsUid'] || $mode === 'unset') {
 						if ($mode === 'unset') {
 							unset($uids[$uaUid]);
 						} else {
-							$uids[$uaUid] = $_SESSION['xoopsUserId'];
+							$uids[$uaUid] = $this->HypKTaiRender->vars['ua']['xoopsUid'];
 						}
 						HypCommonFunc::flock_put_contents($datfile, serialize($uids));
 						
 						$uri = $this->HypKTaiRender->SERVER['REQUEST_URI'];
-						$url = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->removeQueryFromUrl($uri, array('guid', '_EASYLOGIN', '_EASYLOGINSET', '_EASYLOGINUNSET'));
+						//$uri = $this->HypKTaiRender->removeSID($uri);
+						$url = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->removeQueryFromUrl($uri, array($this->HypKTaiRender->session_name, 'guid', '_EASYLOGIN', '_EASYLOGINSET', '_EASYLOGINUNSET'));
 
+						$url = $this->HypKTaiRender->addSID($url);
 						header('Location: ' . $url);
 						exit();
 					}
@@ -652,7 +689,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					// Do easy login
 					
 					$uri = $this->HypKTaiRender->SERVER['REQUEST_URI'];
-
+					$uri = $this->HypKTaiRender->removeSID($uri);
+					
 					// Default is login form
 					$url = XOOPS_URL . '/user.php?xoops_redirect=' . rawurlencode($uri);
 					
@@ -661,6 +699,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				        $member_handler =& xoops_gethandler('member');
 				        $user =& $member_handler->getUser($uids[$uaUid]);
 						if (false !== $user && $user->getVar('level') > 0) {
+					        session_regenerate_id();
 							// Update last login
 							$user->setVar('last_login', time());
 							$member_handler->insertUser($user, TRUE);
@@ -673,12 +712,35 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 								$_SESSION['xoopsUserTheme'] = $user_theme;
 							}
 							
-							$url = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->removeQueryFromUrl($uri, array('guid', '_EASYLOGIN'));
+							$url = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->removeQueryFromUrl($uri, array($this->HypKTaiRender->session_name, 'guid', '_EASYLOGIN'));
+							$config_handler =& xoops_gethandler('config');
+							$xoopsConfig =& $config_handler->getConfigsByCat(XOOPS_CONF);
+							include_once XOOPS_ROOT_PATH.'/language/'.$xoopsConfig['language'].'/user.php';
+							$_SESSION['hyp_redirect_message'] = sprintf(_US_LOGGINGU, $user->getVar('uname'));
+							$_SESSION['hyp_redirect_uname'] = $user->getVar('uname');
 				        }
 					}
 					// Redirect
+					$url = $this->HypKTaiRender->addSID($url);
 					header('Location: ' . $url);
 					exit();
+				}
+			}
+		}
+	}
+
+	function _checkRedirectFile() {
+		// Redirect 指定ファイルの確認 ( by _onShutdownKtai() )
+		if (! $this->HypKTaiRender->vars['ua']['allowCookie'] && $this->HypKTaiRender->vars['ua']['uid']) {
+			$redirectfile = XOOPS_ROOT_PATH . '/cache/' . md5($this->HypKTaiRender->vars['ua']['uid'] . XOOPS_DB_PASS) . '.redirect';
+			if (is_file($redirectfile)) {
+				if (filemtime($redirectfile) + 10 > time()) {
+					list($url) = file($redirectfile);
+					unlink($redirectfile);
+					header('Location: '. $url);
+					exit();
+				} else {
+					unlink($redirectfile);
 				}
 			}
 		}
@@ -999,18 +1061,27 @@ EOD;
 						if (! empty($r->vars['ua']['isGuest'])) {
 							$add = '_EASYLOGIN';
 							if ($r->vars['ua']['carrier'] === 'docomo') {
-								$add .= '&guid=ON';
+								$add .= '&guid=on';
 							}
-							$url = $r->myRoot . $r->removeSID($r->SERVER['REQUEST_URI']);
+							//$url = $r->myRoot . $r->removeSID($r->SERVER['REQUEST_URI']);
+							$url = $r->myRoot . $r->removeQueryFromUrl($r->SERVER['REQUEST_URI'], array('guid', $r->session_name));
 							$url .= ((strpos($url, '?') === FALSE)? '?' : '&') . $add;
 							$url = str_replace('&', '&amp;', $url);
 							$easylogin = '<a href="' . $url . '">' . $this->k_tai_conf['msg']['easylogin'] . '</a>';
 						} else {
-							if (is_object($GLOBALS['xoopsUser'])) {
-								$uname = htmlspecialchars($GLOBALS['xoopsUser']->getVar('uname'));
-								$uid = $GLOBALS['xoopsUser']->getVar('uid');
-								$guid = ($r->vars['ua']['carrier'] === 'docomo')? '&amp;guid=ON' : '';
-								$uname = '<a href="' . XOOPS_URL . '/userinfo.php?uid=' . $uid . $guid . '">' . $uname . '</a>';
+							$uname = '';
+							if (empty($_SESSION['hyp_redirect_uname'])) {
+								$member_handler =& xoops_gethandler('member');
+								$xoopsUser =& $member_handler->getUser($this->HypKTaiRender->vars['ua']['xoopsUid']);
+								$uname = $xoopsUser->getVar('uname');
+							} else {
+								$uname = $_SESSION['hyp_redirect_uname'];
+								unset($_SESSION['hyp_redirect_uname']);
+							}
+							if ($uname) {
+								$uname = htmlspecialchars($uname);
+								$guid = ($r->vars['ua']['carrier'] === 'docomo')? '&amp;guid=on' : '';
+								$uname = '<a href="' . XOOPS_URL . '/userinfo.php?uid=' . $this->HypKTaiRender->vars['ua']['xoopsUid'] . $guid . '">' . $uname . '</a>';
 							}
 							$easylogin = $uname . ' <a href="' . XOOPS_URL . '/user.php?op=logout">' . $this->k_tai_conf['msg']['logout'] . '</a>';
 							
@@ -1021,7 +1092,7 @@ EOD;
 								if (isset($purl['path'])) {
 									$nowpath = preg_replace('#^' . $purl['path'] . '#', '', $nowpath);
 								}
-								if (strpos($nowpath, $this->k_tai_conf['easyLoginConfPath']) === 0 && $_SESSION['xoopsUserId'] == @ $_GET[$this->k_tai_conf['easyLoginConfuid']]) {
+								if (strpos($nowpath, $this->k_tai_conf['easyLoginConfPath']) === 0 && $this->HypKTaiRender->vars['ua']['xoopsUid'] == @ $_GET[$this->k_tai_conf['easyLoginConfuid']]) {
 									
 									$uaUid = md5($r->vars['ua']['uid'] . XOOPS_DB_PASS);
 									
@@ -1043,7 +1114,7 @@ EOD;
 									}
 									
 									if ($r->vars['ua']['carrier'] === 'docomo') {
-										$add .= '&guid=ON';
+										$add .= '&guid=on';
 									}
 									$url = $r->myRoot . $r->removeQueryFromUrl($r->SERVER['REQUEST_URI'], array('guid', '_EASYLOGINUNSET', '_EASYLOGINSET'));
 									$url .= ((strpos($url, '?') === FALSE)? '?' : '&') . $add;
@@ -1444,6 +1515,8 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->k_tai_conf['easyLogin'] = 1;
 		// Easy login で IP アドレス帯域をチェックしない
 		$this->k_tai_conf['noCheckIpRange'] = 0;
+		// docomo の端末IDを確認する間隔(秒)
+		$this->k_tai_conf['docomoGuidTTL'] = 300;
 		
 		// リンクメッセージ
 		$this->k_tai_conf['msg']['easylogin'] = '簡単ログイン';

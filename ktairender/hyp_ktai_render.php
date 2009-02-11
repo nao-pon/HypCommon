@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.34 2009/02/02 05:28:35 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.35 2009/02/11 06:03:41 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -50,6 +50,7 @@ class HypKTaiRender
 	var $Config_googleAdSenseBelow = '';
 	var $Config_style = array();
 	var $Config_botReg = '/Googlebot-Mobile|Y!J-(?:SRD|MBS)|froute\.jp/i';
+	var $Config_docomoGuidTTL = 300;
 	
 	function HypKTaiRender () {
 		
@@ -151,7 +152,9 @@ class HypKTaiRender
 		if (! $this->session_name) $this->session_name = session_name();
 		if (! $rootURL) $rootURL = $this->myRoot;
 		if (strpos($url, $rootURL) === 0) {
-			if (defined('SID') && SID && ! isset($_COOKIE[$this->session_name])) {
+			$sid = session_id();
+			if (! $this->vars['ua']['allowCookie'] && $sid) {
+				$sid = $this->session_name . '=' . $sid;
 				$hash = '';
 				if (strpos($url, '#') !== FALSE) {
 					list($url, $hash) = explode('#', $url, 2);
@@ -159,23 +162,88 @@ class HypKTaiRender
 				}
 				$url = $this->removeSID($url);
 				$url = rtrim($url, '?');
-				$url .= ((strpos($url, '?') === FALSE)? '?' : '&') . SID . $hash;
+				$url .= ((strpos($url, '?') === FALSE)? '?' : '&') . $sid . $hash;
 			}
 		}
 		return $url;
+	}
+
+	// Device ID のチェック
+	function checkDeviceId($key = '') {
+		if ($this->vars['ua']['isBot']) return true;
+		
+		if ($this->vars['ua']['carrier'] === 'docomo') {
+			// docomo only
+			$now = time();
+			if (! isset($_SESSION['hypKtaiStartTime'])) $_SESSION['hypKtaiStartTime'] = 0;
+			
+			if ($_SESSION['hypKtaiStartTime'] + $this->Config_docomoGuidTTL < $now && strpos(strtolower($this->SERVER['REQUEST_URI']), 'guid=') === FALSE) {
+				$_SESSION['hypKtaiStartTime'] = $now;
+				// 未取得なので guid=on をつけてリダイレクト
+				$joint = (strpos($this->SERVER['REQUEST_URI'], '?') === FALSE)? '?' : '&';
+				$url = $this->myRoot . $this->SERVER['REQUEST_URI'] . $joint . 'guid=on';
+				$url = $this->removeSID($url);
+				$sid = $this->session_name . '=' . session_id();
+				header('Location: ' . $url . '&' . $sid);
+				return 'redirect';
+			}
+			
+			// PEAR
+			$incPath = ini_get('include_path');
+			$addPath = XOOPS_TRUST_PATH . '/PEAR';
+			if (strpos($incPath, $addPath) === FALSE) {
+				ini_set('include_path',  $incPath . PATH_SEPARATOR . $addPath);
+			}			
+			require_once 'Crypt/Blowfish.php';
+			$blowfish = new Crypt_Blowfish($key); // Crypt_Blowfish => 1.0.1 
+			//$blowfish = Crypt_Blowfish::factory('ecb', $key); // Crypt_Blowfish => 1.1.0RC1
+
+			if (strpos(strtolower($this->SERVER['REQUEST_URI']), 'guid=') === FALSE && ! $this->vars['ua']['uid'] && isset($_SESSION['hypKtaiUserId'])) {
+				// セッションに登録済み
+				$_SERVER['HTTP_X_DCMGUID'] = $this->vars['ua']['uid'] = rtrim($blowfish->decrypt(base64_decode($_SESSION['hypKtaiUserId'])), "\0");
+			} else if ($this->vars['ua']['uid'] && ! isset($_SESSION['hypKtaiUserId'])) {
+				// セッションに登録されていなければ登録
+				$_SESSION['hypKtaiUserId'] = base64_encode($blowfish->encrypt($this->vars['ua']['uid']));
+			} else if (isset($_SESSION['hypKtaiUserId'])) {
+				// セッション登録値と比較
+				if ($_SESSION['hypKtaiUserId'] != base64_encode($blowfish->encrypt($this->vars['ua']['uid']))) {
+					return false;
+				}
+			}
+			//$_SESSION['hyp_redirect_message'] = $_SERVER['HTTP_X_DCMGUID'];
+		} else {
+			// other carrier
+			if ($this->vars['ua']['uid'] && ! isset($_SESSION['hypKtaiUserId'])) {
+				// セッションに登録されていなければ登録
+				$_SESSION['hypKtaiUserId'] = md5($this->vars['ua']['uid'] . $key);
+			} else if (isset($_SESSION['hypKtaiUserId'])) {
+				// セッション登録値と比較
+				if ($_SESSION['hypKtaiUserId'] != md5($this->vars['ua']['uid'] . $key)) {
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
+
+	function setupSID() {
+		$this->session_name = session_name();
+		$this->session_id = session_id();
+		$this->SID = ($this->session_id)? $this->session_name . '=' . $this->session_id : '';
+		
+		// Need SID ?
+		if (! $this->vars['ua']['allowCookie'] && $this->session_id && ! $this->vars['ua']['isBot']) {			
+			$this->vars['needSID'] = TRUE;
+		} else {
+			$this->vars['needSID'] = FALSE;
+		}
 	}
 	
 	function doOptimize () {
 		setlocale( LC_CTYPE, 'C');
 		$this->parsed_base = parse_url($this->myRoot);
-		$this->session_name = session_name();
-		
-		// Need SID ?
-		if (! $this->vars['ua']['allowCookie'] && defined('SID') && SID && empty($_COOKIE[$this->session_name]) && ! $this->vars['ua']['isBot']) {			
-			$this->vars['needSID'] = TRUE;
-		} else {
-			$this->vars['needSID'] = FALSE;
-		}
+		$this->setupSID();
 		
 		if ($this->inputHtml) {
 			$this->_extractHeadBody();
@@ -377,7 +445,10 @@ class HypKTaiRender
 
 		//// Remove etc.
 		// <a> with JavaScript
-		$body = preg_replace('#<a[^>]+?href=(?:"|\')?javascript:[^>]+?>(.+?)</a>#isS', '$1', $body);
+		$body = preg_replace('#<a[^>]+?href=(?:"|\')?javascript:[^>]+?>(.+?)</a>#is', '$1', $body);
+		
+		// go back button
+		$body = preg_replace('#<input[^>]+?onclick=(?:"|\')?(?:javascript:)?history\.[^>]*?>#is', '', $body);
 
 		//// tag attribute
 		$body = str_replace('\\"', "\x08", $body);
@@ -613,7 +684,7 @@ class HypKTaiRender
 		
 		// Check FORM
 		if ($this->vars['needSID']) {
-			$sid_val = session_id();
+			$sid_val = $this->session_id;
 			$html = preg_replace_callback('#(<form[^>]*?\baction=([\'"])?)([^\s"\'>]+)((?:\\2)?[^>]*>)#isS',
 				create_function(
 					'$match',
@@ -712,16 +783,16 @@ class HypKTaiRender
 		$now = time();
 		if (isset($_COOKIE['___utma'])) {
 			$utma = $_COOKIE['___utma'];
-		} else if (isset($_SESSION['__utma'])) {
-			$utma = $_SESSION['__utma'];
+		} else if (isset($_SESSION['hypKtai_utma'])) {
+			$utma = $_SESSION['hypKtai_utma'];
 		} else {
 			$utma = $hash.'.'.$random.'.'.$now.'.'.$now.'.'.$now.'.1';
 			setcookie('___utma', $utma,  $now + 63072000, '/', $host);
 		}
 		if (isset($_COOKIE['___utmz'])) {
 			$utmz = $_COOKIE['___utmz'];
-		} else if (isset($_SESSION['__utmz'])) {
-			$utmz = $_SESSION['__utmz'];
+		} else if (isset($_SESSION['hypKtai_utmz'])) {
+			$utmz = $_SESSION['hypKtai_utmz'];
 		} else {
 			$utmz = $hash.'.'.$now.'.1.1';
 			setcookie('___utmz', $utmz,  $now + 15768000, '/', $host);
@@ -739,8 +810,8 @@ class HypKTaiRender
 			setcookie('___utmz', $utmz,  $now + 15768000, '/', $host);
 		}
 		
-		$_SESSION['__utma'] = $utma;
-		$_SESSION['__utmz'] = $utmz;
+		$_SESSION['hypKtai_utma'] = $utma;
+		$_SESSION['hypKtai_utmz'] = $utmz;
 		
 		$cookie = '__utma%3D'.$utma.'%3B%2B__utmz%3D'.$utmz.'.utmccn%3D(direct)%7Cutmcsr%3D(direct)%7Cutmcmd%3D(none)%3B%2B';
 
@@ -951,6 +1022,7 @@ class HypKTaiRender
 		);
 		$this->vars['ua']['isBot'] = FALSE;
 		$this->vars['ua']['isKTai'] = FALSE;
+		$this->vars['ua']['uid'] = '';
 		$this->vars['ua']['inIPRange'] = FALSE;
 		$this->vars['ua']['carrier'] = 'Unknown';
 		$this->vars['ua']['allowPNG'] = FALSE;
@@ -1264,7 +1336,7 @@ class HypKTaiRender
 
 			$add = array();
 			if ($this->vars['needSID']) {
-				$add[] = SID;
+				$add[] = $this->SID;
 			}
 			if ($hash) {
 				$href = preg_replace('/(?:\?|&(?:amp;)?)' . preg_quote($this->hashkey, '/') . '=[^&]+/', '', $href);
