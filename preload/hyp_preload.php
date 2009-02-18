@@ -1013,7 +1013,7 @@ EOD;
 				foreach($showblocks as $id => $title) {
 					$block_menu[] = '<a href="#'.$id.'">' . $title . '</a>';
 				}
-				$body .= '<!--blockMenu--><ns>' . join(' / ', $block_menu) . '</ns><!--/blockMenu-->';
+				$body .= '<!--blockMenu-->' . join(' / ', $block_menu) . '<!--/blockMenu-->';
 			}
 			
 			if ($rebuilds) {
