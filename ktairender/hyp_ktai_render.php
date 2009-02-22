@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.36 2009/02/11 06:48:13 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.37 2009/02/22 01:16:48 nao-pon Exp $
  */
 
 if (! class_exists('HypKTaiRender')) {
@@ -49,7 +49,7 @@ class HypKTaiRender
 	var $Config_googleAdSenseConfig = '';
 	var $Config_googleAdSenseBelow = '';
 	var $Config_style = array();
-	var $Config_botReg = '/Googlebot-Mobile|Y!J-(?:SRD|MBS)|froute\.jp/i';
+	var $Config_botReg = '/Googlebot-Mobile|Y!J-(?:SRD|MBS)|froute\.jp|ichiro\/mobile|LD_mobile_bot/i';
 	var $Config_docomoGuidTTL = 300;
 	
 	function HypKTaiRender () {
