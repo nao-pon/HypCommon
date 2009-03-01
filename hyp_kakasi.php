@@ -1,9 +1,13 @@
 <?php
-// $Id: hyp_kakasi.php,v 1.3 2007/06/26 03:06:19 nao-pon Exp $
+// $Id: hyp_kakasi.php,v 1.4 2009/03/01 23:42:25 nao-pon Exp $
 // Hyp_KAKASI Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
-if( ! class_exists( 'Hyp_KAKASHI' ) )
+if (! function_exists('XC_CLASS_EXISTS')) {
+	require dirname(__FILE__) . '/XC_CLASS_EXISTS.inc.php';
+}
+
+if( ! XC_CLASS_EXISTS( 'Hyp_KAKASHI' ) )
 {
 class Hyp_KAKASHI
 {

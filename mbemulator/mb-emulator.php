@@ -5,10 +5,14 @@
  * 
  * license based on GPL(GNU General Public License)
  *
- * $Id: mb-emulator.php,v 1.12 2008/02/27 08:20:23 nao-pon Exp $
+ * $Id: mb-emulator.php,v 1.13 2009/03/01 23:42:25 nao-pon Exp $
  */
 
-if (!class_exists('HypMBString'))
+if (! function_exists('XC_CLASS_EXISTS')) {
+	require dirname(dirname(__FILE__)) . '/XC_CLASS_EXISTS.inc.php';
+}
+
+if (! XC_CLASS_EXISTS('HypMBString'))
 {
 
 if (!defined('MB_CASE_UPPER')) define('MB_CASE_UPPER', 0);

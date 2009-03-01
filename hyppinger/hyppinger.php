@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/05/15 by nao-pon http://hypweb.net/
- * $Id: hyppinger.php,v 1.1 2008/05/15 23:55:14 nao-pon Exp $
+ * $Id: hyppinger.php,v 1.2 2009/03/01 23:42:25 nao-pon Exp $
  */
 
 require_once(dirname(dirname(__FILE__)) . '/hyp_common_func.php');
@@ -61,7 +61,7 @@ class HypPinger {
 	
 	function _buildXML() {
 		if ($this->encording) {
-			if (! extension_loaded('mbstring') && ! class_exists('HypMBString')) {
+			if (! extension_loaded('mbstring') && ! XC_CLASS_EXISTS('HypMBString')) {
 				require_once(dirname(dirname(__FILE__)) . '/mbemulator/mb-emulator.php');
 			}
 			$this->name = mb_convert_encoding($this->name, 'UTF-8', $this->encording);

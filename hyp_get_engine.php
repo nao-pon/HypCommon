@@ -1,12 +1,12 @@
 <?php
-// $Id: hyp_get_engine.php,v 1.8 2008/11/10 00:03:56 nao-pon Exp $
+// $Id: hyp_get_engine.php,v 1.9 2009/03/01 23:42:25 nao-pon Exp $
 // HypGetQueryWord Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
-if( ! class_exists( 'HypGetQueryWord' ) )
-{
+require_once(dirname(__FILE__)."/hyp_common_func.php");
 
-include_once(dirname(__FILE__)."/hyp_common_func.php");
+if( ! XC_CLASS_EXISTS( 'HypGetQueryWord' ) )
+{
 
 class HypGetQueryWord
 {

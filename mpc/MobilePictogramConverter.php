@@ -1,4 +1,8 @@
 <?php
+if (! function_exists('XC_CLASS_EXISTS')) {
+	require dirname(dirname(__FILE__)) . '/XC_CLASS_EXISTS.inc.php';
+}
+
 /* •ÏŠ·Œã‚ÌŠG•¶Žšƒ^ƒCƒv */
 define('MPC_TO_FOMA'    , 'FOMA');
 define('MPC_TO_EZWEB'   , 'EZWEB');
@@ -75,7 +79,7 @@ class MobilePictogramConverter
         require_once($filepath);
         $classname = 'MPC_'.$carrier;
         
-        if (class_exists($classname) == false) {
+        if (XC_CLASS_EXISTS($classname) == false) {
             $error = 'The class doesn\'t exist.';
             return $error;
         }
