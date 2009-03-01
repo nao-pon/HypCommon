@@ -1,9 +1,13 @@
 <?php
-// $Id: hyp_common_func.php,v 1.57 2009/01/25 00:36:44 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.58 2009/03/01 23:43:02 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
-if( ! class_exists( 'HypCommonFunc' ) )
+if (! function_exists('XC_CLASS_EXISTS')) {
+	require dirname(__FILE__) . '/XC_CLASS_EXISTS.inc.php';
+}
+
+if( ! XC_CLASS_EXISTS( 'HypCommonFunc' ) )
 {
 class HypCommonFunc
 {
@@ -16,7 +20,7 @@ class HypCommonFunc
 	}
 	
 	function loadClass($name) {
-		if (class_exists($name)) return;
+		if (XC_CLASS_EXISTS($name)) return;
 		
 		$dir = dirname(__FILE__);
 		switch($name) {
@@ -1591,7 +1595,7 @@ EOF;
  * $redirect_max : HTTP redirectの回数制限
 */
 
-if( ! class_exists( 'Hyp_HTTP_Request' ) )
+if( ! XC_CLASS_EXISTS( 'Hyp_HTTP_Request' ) )
 {
 class Hyp_HTTP_Request
 {

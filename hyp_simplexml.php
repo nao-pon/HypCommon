@@ -1,10 +1,14 @@
 <?php
-// $Id: hyp_simplexml.php,v 1.3 2009/02/11 05:54:05 nao-pon Exp $
+// $Id: hyp_simplexml.php,v 1.4 2009/03/01 23:42:25 nao-pon Exp $
 // HypSimpleXML Class by nao-pon http://hypweb.net
 // Based on SimpleXML
 // added function 'XMLstr_in()'
 
-if( ! class_exists( 'HypSimpleXML' ) )
+if (! function_exists('XC_CLASS_EXISTS')) {
+	require dirname(__FILE__) . '/XC_CLASS_EXISTS.inc.php';
+}
+
+if( ! XC_CLASS_EXISTS( 'HypSimpleXML' ) )
 {
 /**
  *
@@ -324,7 +328,7 @@ class HypSimpleXML
 }
 }
 
-if( ! class_exists( 'HypXMLData' ) )
+if( ! XC_CLASS_EXISTS( 'HypXMLData' ) )
 {
 /**
  * @package	phpSimpleXML
