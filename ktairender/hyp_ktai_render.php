@@ -2,13 +2,17 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.37 2009/02/22 01:16:48 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.38 2009/03/01 23:41:22 nao-pon Exp $
  */
 
-if (! class_exists('HypKTaiRender')) {
+if (! function_exists('XC_CLASS_EXISTS')) {
+	require dirname(dirname(__FILE__)) . '/XC_CLASS_EXISTS.inc.php';
+}
+
+if (! XC_CLASS_EXISTS('HypKTaiRender')) {
 
 //// mbstring ////
-if (! extension_loaded('mbstring') && ! class_exists('HypMBString')) {
+if (! extension_loaded('mbstring') && ! XC_CLASS_EXISTS('HypMBString')) {
 	require (dirname(dirname(__FILE__)) . '/mbemulator/mb-emulator.php');
 }
 
@@ -170,7 +174,11 @@ class HypKTaiRender
 
 	// Device ID のチェック
 	function checkDeviceId($key = '') {
-		if ($this->vars['ua']['isBot']) return true;
+		if ($this->vars['ua']['isBot'] ||
+			strpos($this->myRoot . $this->SERVER['REQUEST_URI'], str_replace('&amp;', '&', $this->Config_redirect)) === 0
+		) {
+			return true;
+		}
 		
 		if ($this->vars['ua']['carrier'] === 'docomo') {
 			// docomo only
@@ -268,7 +276,7 @@ class HypKTaiRender
 		if ($this->Config_googleAdSenseConfig && is_file($this->Config_googleAdSenseConfig)) {
 			include $this->Config_googleAdSenseConfig;
 			@ include_once dirname(__FILE__) . '/googleAdsense.php';
-			if (class_exists('googleAdsense')) {
+			if (XC_CLASS_EXISTS('googleAdsense')) {
 				$googleAdsense = new googleAdsense();
 				$googleAdsenseHtml = $googleAdsense->getHtml();
 			}
@@ -1389,7 +1397,7 @@ class HypKTaiRender
 		 || ($parsed_url['host'] === $this->parsed_base['host'] && $parsed_url['scheme'] === $this->parsed_base['scheme'])
 		 || (preg_match($showHostReg, $parsed_url['host']) && ! preg_match($directHostReg, $parsed_url['host']))) {
 			$png = ($this->vars['ua']['allowPNG'])? '&amp;p' : '';
-			if (! $parsed_url['host']) {
+			if (empty($parsed_url['host'])) {
 				$url = $this->getRealUrl($url);
 			}
 			
@@ -1464,7 +1472,7 @@ class HypKTaiRender
 	}
 	
 	function & _getMobilePictogramConverter() {
-		if (! class_exists('MobilePictogramConverter')) {
+		if (! XC_CLASS_EXISTS('MobilePictogramConverter')) {
 			HypCommonFunc::loadClass('MobilePictogramConverter');
 		}
 		$mpc =& MobilePictogramConverter::factory_common();
