@@ -2,7 +2,7 @@
 /*
  * Created on 2008/07/24 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: imgconv.php,v 1.4 2008/08/22 08:06:53 nao-pon Exp $
+ * $Id: imgconv.php,v 1.5 2009/03/01 23:41:50 nao-pon Exp $
  */
 
 $url = (isset($_GET['u']))? $_GET['u'] : '';
@@ -10,6 +10,7 @@ $mode = (isset($_GET['m']))? $_GET['m'] : '';
 $maxsize = (isset($_GET['s']))? intval($_GET['s']) : 0;
 $png = (isset($_GET['p']))? 1 : 0;
 if (! $maxsize) $maxsize = 200;
+define('UNIX_TIME', (isset($_SERVER['REQUEST_TIME'])? $_SERVER['REQUEST_TIME'] : time()));
 
 switch($mode) {
 	case 'i4k':
@@ -30,6 +31,7 @@ switch($mode) {
 					header('Content-Type: ' . $mime);
 					header('Content-Length: ' . filesize($file));
 					header('Cache-Control:max-age=' . $maxage);
+					header('Expires: ' . gmdate( "D, d M Y H:i:s", UNIX_TIME + $maxage ) . ' GMT');
 					readfile($file);
 					exit();
 				} else {
@@ -39,9 +41,7 @@ switch($mode) {
 				exit();
 			}
 
-			if (! class_exists('HypCommonFunc')) {
-				include($trustpath . '/class/hyp_common/hyp_common_func.php');
-			}
+			include_once($trustpath . '/class/hyp_common/hyp_common_func.php');
 			
 			$h = new Hyp_HTTP_Request();
 			
@@ -66,6 +66,7 @@ switch($mode) {
 					header('Content-Type: ' . $mime);
 					header('Content-Length: ' . filesize($file));
 					header('Cache-Control:max-age=' . $maxage);
+					header('Expires: ' . gmdate( "D, d M Y H:i:s", UNIX_TIME + $maxage ) . ' GMT');
 					readfile($file);
 					exit();
 				}

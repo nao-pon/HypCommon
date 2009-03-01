@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/02/11 by nao-pon http://hypweb.net/
- * $Id: favicon.php,v 1.7 2008/09/10 04:20:36 nao-pon Exp $
+ * $Id: favicon.php,v 1.8 2009/03/01 23:37:36 nao-pon Exp $
  */
 
 /**
@@ -26,6 +26,7 @@ if (is_file(FAVICON_TRUST_PATH . '/conf.php')) {
 	define('FAVICON_CACHE_DIR',     FAVICON_TRUST_PATH . '/cache/');
 	define('FAVICON_CACHE_TTL',     2592000);  // 60 * 60 * 24 * 30 [sec.] (1 month)
 }
+define('UNIX_TIME', (isset($_SERVER['REQUEST_TIME'])? $_SERVER['REQUEST_TIME'] : time()));
 
 function get_favicon_url($url)
 {
@@ -109,6 +110,7 @@ function output_image($url, $time = 0)
     if ($time) {
         header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $time) . ' GMT');
         header('Cache-Control: public, max-age=' . FAVICON_CACHE_TTL);
+        header('Expires: ' . gmdate( "D, d M Y H:i:s", UNIX_TIME + FAVICON_CACHE_TTL ) . ' GMT');
     }
     header('Etag: '. $time);
     header('Content-Length: ' . filesize($filename));
@@ -248,6 +250,7 @@ function redirect_icon($url)
     $base = $p_url['scheme'] . '://' . $p_url['host'] . (isset($p_url['port']) ? ':' . $p_url['port'] : '');
 	$uri = preg_replace('/url=[^&]+/', 'icon=' . rawurlencode($url), $_SERVER['REQUEST_URI']);
 	header('Cache-Control: public, max-age=' . FAVICON_CACHE_TTL );
+	header('Expires: ' . gmdate( "D, d M Y H:i:s", UNIX_TIME + FAVICON_CACHE_TTL ) . ' GMT');
 	header('Location: '.$base . $uri);
 	exit();
 }
@@ -261,6 +264,7 @@ function output_icon($icon) {
 	    header('HTTP/1.1 304 Not Modified');
 	    header('Etag: '. $time);
 	    header('Cache-Control: public, max-age=' . FAVICON_CACHE_TTL );
+	    header('Expires: ' . gmdate( "D, d M Y H:i:s", UNIX_TIME + FAVICON_CACHE_TTL ) . ' GMT');
 	    exit;
 	}
 
