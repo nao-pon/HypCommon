@@ -9,7 +9,7 @@ if (! extension_loaded('mbstring')) {
 include_once dirname(dirname(__FILE__)) . '/hyp_common_func.php';
 
 // For not cube.
-if (! class_exists('XCube_ActionFilter')) {
+if (! XC_CLASS_EXISTS('XCube_ActionFilter')) {
 class XCube_ActionFilter
 {
 	var $mController;
@@ -241,9 +241,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 				// HTTP_REFERER
 				if (! empty($_POST) && empty($_SERVER['HTTP_REFERER'])) {
-					if (! empty($this->k_tai_conf['noCheckIpRange']) || $this->HypKTaiRender->checkIp($_SERVER['REMOTE_ADDR'], $this->HypKTaiRender->vars['ua']['carrier'])) {
-						$_SERVER['HTTP_REFERER'] = XOOPS_URL . '/';
-					}
+					$_SERVER['HTTP_REFERER'] = XOOPS_URL . '/';
 				}
 			} else {
 				define('HYP_K_TAI_RENDER', FALSE);
@@ -328,7 +326,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 
 		// For WizMobile
-		if (class_exists('Wizin_User')) {
+		if (XC_CLASS_EXISTS('Wizin_User')) {
 			$wizinUser = & Wizin_User::getSingleton();
 			$this->wizMobileUse = $wizinUser->bIsMobile;
 		}
@@ -484,8 +482,13 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			$this->HypKTaiRender->setupSID();
 			
 			// HTTP_REFERER
-			if (empty($this->HypKTaiRender->SERVER['HTTP_REFERER']) && isset($_SESSION['hypKtaiReferer'])) {
-				$_SERVER['HTTP_REFERER'] = $this->HypKTaiRender->SERVER['HTTP_REFERER'] = $_SESSION['hypKtaiReferer'];
+			if (empty($this->HypKTaiRender->SERVER['HTTP_REFERER'])) {
+				if (! empty($_SESSION['hypKtaiReferer'])) {
+					$_SERVER['HTTP_REFERER'] = $this->HypKTaiRender->SERVER['HTTP_REFERER'] = $_SESSION['hypKtaiReferer'];
+				} else if (! empty($_SERVER['HTTP_REFERER'])) {
+					// セッションに積んでないのに preFilter() で自動セット = CSRF
+					exit('Bad Request.');
+				}
 			}
 			$_SESSION['hypKtaiReferer'] = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->SERVER['REQUEST_URI'];
 			if (isset($_SERVER['HTTP_REFERER'])) {
@@ -756,7 +759,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		
 		$to = $mpc = NULL;
 		
-		if (! class_exists('MobilePictogramConverter')) {
+		if (! XC_CLASS_EXISTS('MobilePictogramConverter')) {
 			HypCommonFunc::loadClass('MobilePictogramConverter');
 		}
 		
@@ -1242,7 +1245,7 @@ EOD;
 		if ($str === '' || strpos($str, '<html') === FALSE) return $str;
 		
 		if (preg_match('/\(\([eis]:[0-9a-f]{4}\)\)/S', $str)) {
-			if (! class_exists('MobilePictogramConverter')) {
+			if (! XC_CLASS_EXISTS('MobilePictogramConverter')) {
 				HypCommonFunc::loadClass('MobilePictogramConverter');
 			}
 			$mpc =& MobilePictogramConverter::factory_common();
@@ -1351,7 +1354,7 @@ if (is_file(XOOPS_ROOT_PATH.'/class/hyp_common/hyp_preload.conf.php')) {
 	include_once(dirname(__FILE__).'/hyp_preload.conf.php');
 }
 
-if (! class_exists('HypCommonPreLoad')) {
+if (! XC_CLASS_EXISTS('HypCommonPreLoad')) {
 class HypCommonPreLoad extends HypCommonPreLoadBase {
 	
 	function HypCommonPreLoad (& $controller) {
