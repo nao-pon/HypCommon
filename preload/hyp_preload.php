@@ -98,12 +98,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->post_spam_guest)) $this->post_spam_guest = 15;
 		if (! isset($this->post_spam_badip)) $this->post_spam_badip = 100;
 		if (! isset($this->post_spam_checkers)) $this->post_spam_checkers = array(
-			'list.dsbl.org',
+			//'list.dsbl.org',
 			'niku.2ch.net',
 			array(
 				'dnsbl.spam-champuru.livedoor.com',
 				'/^192\.168\.1\.2/'
-			)
+			),
 		);
 		if (! isset($this->post_spam_rules)) $this->post_spam_rules = array(
 			"/((?:ht|f)tps?:\/\/[!~*'();\/?:\@&=+\$,%#\w.-]+).+?\\1.+?\\1/i" => 11,
@@ -369,8 +369,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 			
 			// Proxy Check
-			if (defined('HYP_POST_ENCODING') && $this->use_proxy_check) {
-				HypCommonFunc::BBQ_Check($this->no_proxy_check, $this->msg_proxy_check);
+			if ($this->use_proxy_check) {
+				HypCommonFunc::BBQ_Check($this->no_proxy_check, $this->msg_proxy_check, NULL, $this->post_spam_checkers);
 			}
 			
 			// 文字エンコーディング外の文字を数値エンティティに変換
@@ -379,7 +379,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 
 			// 機種依存文字フィルター
-			if ($this->encode === 'EUC-JP' && $this->use_dependence_filter) {
+			if (defined('HYP_POST_ENCODING') && $this->use_dependence_filter) {
 				$_POST = HypCommonFunc::dependence_filter($_POST);
 			}
 			
@@ -1395,6 +1395,16 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_user  = 50;      // POST SPAM 閾値: ログインユーザー
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
 		$this->post_spam_badip = 100;     // アクセス拒否リストへ登録する閾値
+
+		// Proxy Checkers
+		$this->post_spam_checkers = array(
+			//'list.dsbl.org',
+			'niku.2ch.net',
+			array(
+				'dnsbl.spam-champuru.livedoor.com',
+				'/^192\.168\.1\.2/'
+			),
+		);
 	
 		// POST SPAM のポイント加算設定
 		$this->post_spam_rules = array(
@@ -1406,16 +1416,6 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			
 			// 無効な文字コードがある 31pt
 			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f]+/' => 31
-		);
-		
-		// SPAM Checkers
-		$this->post_spam_checkers = array(
-			'list.dsbl.org',
-			'niku.2ch.net',
-			array(
-				'dnsbl.spam-champuru.livedoor.com',
-				'/^192\.168\.1\.2/'
-			)
 		);
 		
 		// 無効なフィールド定義

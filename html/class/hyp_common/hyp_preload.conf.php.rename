@@ -49,6 +49,16 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
 		$this->post_spam_badip = 100;      // アクセス拒否リストへ登録する閾値
 	
+		// Proxy Checkers
+		$this->post_spam_checkers = array(
+			//'list.dsbl.org',
+			'niku.2ch.net',
+			array(
+				'dnsbl.spam-champuru.livedoor.com',
+				'/^192\.168\.1\.2/'
+			),
+		);
+
 		// POST SPAM のポイント加算設定
 		$this->post_spam_rules = array(
 			// 同じURLが1行に3回 11pt
