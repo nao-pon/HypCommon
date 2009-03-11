@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.58 2009/03/01 23:43:02 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.59 2009/03/11 04:28:22 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1203,9 +1203,7 @@ EOF;
 	{
 		if (!isset($post) || !function_exists("mb_ereg_replace")) {return $post;}
 		
-		//$post_enc = defined('HYP_POST_ENCODING')? HYP_POST_ENCODING : _CHARSET;
-		//if ($post_enc !== 'EUC-JP' && $post_enc !== 'UTF-8') {return $post;}
-		if (!defined('HYP_POST_ENCODING') || (HYP_POST_ENCODING !== 'EUC-JP' && HYP_POST_ENCODING !== 'UTF-8')) {return $post;}
+		if (!defined('HYP_POST_ENCODING') || (HYP_POST_ENCODING !== 'EUC-JP' && HYP_POST_ENCODING !== 'EUCJP-WIN' && HYP_POST_ENCODING !== 'UTF-8')) {return $post;}
 
 		static $bef = null;
 		static $aft = null;
@@ -1441,16 +1439,20 @@ EOF;
 	{
 		if( empty( $ip ) ) $ip = $_SERVER['REMOTE_ADDR'] ;
 		if( empty( $ip ) ) return false ;
-	
-		$db = Database::getInstance() ;
-		$rs = $db->query( "SELECT conf_value FROM ".$db->prefix("config")." WHERE conf_name='bad_ips' AND conf_modid=0 AND conf_catid=1" ) ;
-		list( $bad_ips_serialized ) = $db->fetchRow( $rs ) ;
-		$bad_ips = unserialize( $bad_ips_serialized ) ;
-		$bad_ips[] = $ip ;
-	
-		$conf_value = addslashes( serialize( array_unique( $bad_ips ) ) ) ;
-		$db->queryF( "UPDATE ".$db->prefix("config")." SET conf_value='$conf_value' WHERE conf_name='bad_ips' AND conf_modid=0 AND conf_catid=1" ) ;
-	
+		
+		if (XC_CLASS_EXISTS('Protector')) {
+			$protector =& Protector::getInstance();
+			$protector->register_bad_ips(time() + $protector->_conf['banip_time0']);	
+		} else {
+			$db = Database::getInstance() ;
+			$rs = $db->query( "SELECT conf_value FROM ".$db->prefix("config")." WHERE conf_name='bad_ips' AND conf_modid=0 AND conf_catid=1" ) ;
+			list( $bad_ips_serialized ) = $db->fetchRow( $rs ) ;
+			$bad_ips = unserialize( $bad_ips_serialized ) ;
+			$bad_ips[] = $ip ;
+		
+			$conf_value = addslashes( serialize( array_unique( $bad_ips ) ) ) ;
+			$db->queryF( "UPDATE ".$db->prefix("config")." SET conf_value='$conf_value' WHERE conf_name='bad_ips' AND conf_modid=0 AND conf_catid=1" ) ;
+		}
 		return true ;
 	}
 
