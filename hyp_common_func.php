@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.59 2009/03/11 04:28:22 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.60 2009/03/11 07:53:36 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1052,6 +1052,7 @@ EOF;
 		{
 			$host = array_reverse(explode('.', $ip));
 			foreach($checker as $chk) {
+				if (!$chk) continue;
 				if (is_array($chk)) {
 					$reg = $chk[1];
 					$chk = $chk[0];
