@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.38 2009/03/01 23:41:22 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.39 2009/03/20 06:04:01 nao-pon Exp $
  */
 
 if (! function_exists('XC_CLASS_EXISTS')) {
@@ -1370,11 +1370,7 @@ class HypKTaiRender
 		if (is_null($showHostReg)) {
 			$showHostReg = '#(?!)#';
 			if ($this->Config_showImgHosts) {
-				if ($this->Config_showImgHosts === 'all') {
-					$showHostReg = '#(?=)#';
-				} else {
-					$showHostReg = $this->_getHostsRegex($this->Config_showImgHosts);
-				}
+				$showHostReg = $this->_getHostsRegex($this->Config_showImgHosts);
 			}
 		}
 		if (is_null($directHostReg)) {
@@ -1393,7 +1389,7 @@ class HypKTaiRender
 		$url = $match[4];
 		$parsed_url = parse_url($url);
 		
-		if (empty($parsed_url['host'])
+		if (($this->Config_directImgHosts !== 'all' && empty($parsed_url['host']))
 		 || ($parsed_url['host'] === $this->parsed_base['host'] && $parsed_url['scheme'] === $this->parsed_base['scheme'])
 		 || (preg_match($showHostReg, $parsed_url['host']) && ! preg_match($directHostReg, $parsed_url['host']))) {
 			$png = ($this->vars['ua']['allowPNG'])? '&amp;p' : '';
@@ -1466,7 +1462,8 @@ class HypKTaiRender
 			}
 			$hostsReg = $dem . '(?:' . join('|', $hosts) . ')$' . $dem;
 		} else {
-			$hostsReg = $dem . '(?!)' . $dem;
+			$reg = ($arr === 'all')? '(?=)' : '(?!)';
+			$hostsReg = $dem . $reg . $dem;
 		}
 		return $hostsReg;
 	}
