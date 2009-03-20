@@ -92,11 +92,14 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->post_spam_url)) $this->post_spam_url = 1;
 		if (! isset($this->post_spam_host)) $this->post_spam_host  = 31;
 		if (! isset($this->post_spam_word)) $this->post_spam_word  = 10;
-		if (! isset($this->post_spam_filed)) $this->post_spam_filed = 51;
+		if (! isset($this->post_spam_filed)) $this->post_spam_filed = 200;
 		if (! isset($this->post_spam_trap)) $this->post_spam_trap  = '___url';
-		if (! isset($this->post_spam_user)) $this->post_spam_user  = 50;
+		if (! isset($this->post_spam_user)) $this->post_spam_user  = 150;
 		if (! isset($this->post_spam_guest)) $this->post_spam_guest = 15;
 		if (! isset($this->post_spam_badip)) $this->post_spam_badip = 100;
+		if (! isset($this->post_spam_badip_ttl)) $this->post_spam_badip_ttl = 900;
+		if (! isset($this->post_spam_badip_forever)) $this->post_spam_badip_forever = 200;
+		if (! isset($this->post_spam_badip_ttl0)) $this->post_spam_badip_ttl0 = 2592000;
 		if (! isset($this->post_spam_checkers)) $this->post_spam_checkers = array(
 			//'list.dsbl.org',
 			'niku.2ch.net',
@@ -451,9 +454,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					$spamlev = (is_object($xoopsUser))? $this->post_spam_user : $this->post_spam_guest;
 					$level = HypCommonFunc::get_postspam_avr($this->post_spam_a, $this->post_spam_bb, $this->post_spam_url, $this->encode, $this->encodehint_name);
 					if ($level > $spamlev) {
-						if ($level > $this->post_spam_badip) { HypCommonFunc::register_bad_ips(); }
+						$ttl = ($level > $this->post_spam_badip_forever)? $this->post_spam_badip_ttl0 : $this->post_spam_badip_ttl;
+						if ($level > $this->post_spam_badip) { HypCommonFunc::register_bad_ips(null, $ttl); }
 						if ($this->use_mail_notify) { $this->sendMail($level); }
-						exit();
+						exit('Processing was not completed.');
 					} else {
 						if ($this->use_mail_notify > 1) { $this->sendMail($level); }
 					}
@@ -1389,13 +1393,18 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_url = 1;         // URL      1個あたりのポイント
 		$this->post_spam_host  = 31;      // Spam HOST の加算ポイント
 		$this->post_spam_word  = 10;      // Spam Word の加算ポイント
-		$this->post_spam_filed = 51;      // Spam 無効フィールドの加算ポイント
+		$this->post_spam_filed = 200;     // Spam 無効フィールドの加算ポイント
 		$this->post_spam_trap  = '___url';// Spam 罠用無効フィールド名
 		
-		$this->post_spam_user  = 50;      // POST SPAM 閾値: ログインユーザー
+		$this->post_spam_user  = 150;     // POST SPAM 閾値: ログインユーザー
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
 		$this->post_spam_badip = 100;     // アクセス拒否リストへ登録する閾値
-
+		
+		// Protector 併用設定 (Protector の拒否IP登録の保護グループ設定も有効)
+		$this->post_spam_badip_ttl     = 900;     // アクセス拒否の拒否継続時間[Sec](0:無期限,null:Protector不使用)
+		$this->post_spam_badip_forever = 200;     // 無期限アクセス拒否閾値
+		$this->post_spam_badip_ttl0    = 2592000; // 無期限アクセス拒否継続時間[Sec](0:本当に無期限)
+		
 		// Proxy Checkers
 		$this->post_spam_checkers = array(
 			//'list.dsbl.org',
