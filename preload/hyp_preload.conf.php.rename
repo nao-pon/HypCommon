@@ -42,12 +42,17 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_url = 1;         // URL      1個あたりのポイント
 		$this->post_spam_host  = 31;      // Spam HOST の加算ポイント
 		$this->post_spam_word  = 10;      // Spam Word の加算ポイント
-		$this->post_spam_filed = 51;      // Spam 無効フィールドの加算ポイント
+		$this->post_spam_filed = 200;     // Spam 無効フィールドの加算ポイント
 		$this->post_spam_trap  = '___url';// Spam 罠用無効フィールド名
 		
 		$this->post_spam_user  = 50;      // POST SPAM 閾値: ログインユーザー
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
-		$this->post_spam_badip = 100;      // アクセス拒否リストへ登録する閾値
+		$this->post_spam_badip = 100;     // アクセス拒否リストへ登録する閾値
+
+		// Protector 併用設定 (Protector の拒否IP登録の保護グループ設定も有効)
+		$this->post_spam_badip_ttl     = 900;     // アクセス拒否の拒否継続時間[Sec](0:無期限,null:Protector不使用)
+		$this->post_spam_badip_forever = 200;     // 無期限アクセス拒否閾値
+		$this->post_spam_badip_ttl0    = 2592000; // 無期限アクセス拒否継続時間[Sec](0:本当に無期限)
 	
 		// Proxy Checkers
 		$this->post_spam_checkers = array(

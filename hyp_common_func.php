@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.60 2009/03/11 07:53:36 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.61 2009/03/20 06:07:12 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1194,7 +1194,7 @@ EOF;
 			}
 			return $param;
 		} else {
-			$result = str_replace("\0", '', $param);
+			$result = str_replace(array("\0", '&#8203;', "\xE2\x80\x8B"), '', $param);
 			return $result;
 		}
 	}
@@ -1436,14 +1436,29 @@ EOF;
 		return $result;
 	}
 
-	function register_bad_ips( $ip = null )
+	function register_bad_ips( $ip = null, $protectorTTL = null )
 	{
 		if( empty( $ip ) ) $ip = $_SERVER['REMOTE_ADDR'] ;
 		if( empty( $ip ) ) return false ;
 		
-		if (XC_CLASS_EXISTS('Protector')) {
+		if (!is_null($protectorTTL) && XC_CLASS_EXISTS('Protector')) {
+			global $xoopsUser;
 			$protector =& Protector::getInstance();
-			$protector->register_bad_ips(time() + $protector->_conf['banip_time0']);	
+			$conf = $protector->getConf() ;
+			$can_ban = true;
+			if (is_object($xoopsUser)) {
+				$uid = $xoopsUser->getVar('uid') ;
+				$can_ban = count( @array_intersect( $xoopsUser->getGroups() , @unserialize( @$conf['bip_except'] ) ) ) ? false : true ;
+			}
+			if ($can_ban) {
+				$protectorTTL = intval($protectorTTL);
+				if ($protectorTTL > 0) {
+					$time = time() + $protectorTTL;
+				} else {
+					$time = 0;
+				}
+				$protector->register_bad_ips($time);
+			}	
 		} else {
 			$db = Database::getInstance() ;
 			$rs = $db->query( "SELECT conf_value FROM ".$db->prefix("config")." WHERE conf_name='bad_ips' AND conf_modid=0 AND conf_catid=1" ) ;
