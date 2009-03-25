@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.39 2009/03/20 06:04:01 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.40 2009/03/25 00:46:57 nao-pon Exp $
  */
 
 if (! function_exists('XC_CLASS_EXISTS')) {
@@ -43,6 +43,7 @@ class HypKTaiRender
 	var $Config_directLinkHosts = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com');
 	var $Config_redirect = '';
 	var $Config_urlRewrites = array();
+	var $Config_urlImgRewrites = array();
 	var $Config_emojiDir = '';
 	var $Config_icons = array();
 	var $Config_imageConvert = FALSE;
@@ -102,10 +103,10 @@ class HypKTaiRender
 	
 		// Amazon Search results link Rewrite
 		$this->Config_urlRewrites['regex'][] = '#^(http://(?:www\.)?amazon.[^/]+?)/gp/search\?.+?tag=([a-z0-9]+).+?keywords=([^& \'"]+).*$#iS';
-		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?ie=UTF8&amp;k=$3&amp;uid=NULLGWDOCOMO&amp;at=$2&amp;m=Blended&amp;url=%2Fgp%2Faw%2Fs.html&amp;lc=mqs';	
+		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?ie=UTF8&amp;k=$3&amp;uid=NULLGWDOCOMO&amp;at=$2&amp;m=&amp;url=%2Fgp%2Faw%2Fs.html&amp;lc=mqs';
 		$this->Config_urlRewrites['regex'][] = '#^(http://(?:www\.)?amazon.[^/]+?)/gp/search\?.+?keywords=([^& \'"]+).+?tag=([a-z0-9]+).*$#iS';
-		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?ie=UTF8&amp;k=$2&amp;uid=NULLGWDOCOMO&amp;at=$3&amp;m=Blended&amp;url=%2Fgp%2Faw%2Fs.html&amp;lc=mqs';	
-		
+		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?ie=UTF8&amp;k=$2&amp;uid=NULLGWDOCOMO&amp;at=$3&amp;m=&amp;url=%2Fgp%2Faw%2Fs.html&amp;lc=mqs';
+
 		// Rakuten
 		$this->Config_urlRewrites['regex'][] = '#^(http://hb\.afl\.rakuten\.co\.jp/hgc/[^/]+?/\?)pc=.+?&amp;m=#';
 		$this->Config_urlRewrites['tostr'][] = '$1m=';
@@ -130,6 +131,22 @@ class HypKTaiRender
 	function set_myRoot ($url) {
 		$parsed_url = parse_url($url);
 		$this->myRoot = $parsed_url['scheme'].'://'.$parsed_url['host'].(isset($parsed_url['port'])? ':' . $parsed_url['port'] : '');
+	}
+	
+	function marge_urlRewites ($key, $arr) {
+		if (in_array($key, array('urlRewrites', 'urlImgRewrites'))) {
+			if (is_array($arr) && is_array($arr['regex']) && is_array($arr['tostr'])) {
+				$name = 'Config_' . $key;
+				$conf = $this->$name;
+				foreach($arr['regex'] as $i => $reg) {
+					if (isset($arr['tostr'][$i]) && @ preg_match($reg, '') !== FALSE) {
+						$conf['regex'][] = $reg;
+						$conf['tostr'][] = $arr['tostr'][$i];
+					}
+				}
+				$this->$name = $conf;
+			}
+		}
 	}
 	
 	function removeSID ($url) {
@@ -424,6 +441,13 @@ class HypKTaiRender
 
 	// HTML を携帯端末用にシェイプアップする
 	function html_diet_for_hp ($body) {
+		// 無視する部分(<!--HypKTaiIgnore-->...<!--/HypKTaiIgnore-->)を削除
+		while(strpos($body, '<!--HypKTaiIgnore-->') !== FALSE) {
+			$arr1 = explode('<!--HypKTaiIgnore-->', $body, 2);
+			$arr2 = array_pad(explode('<!--/HypKTaiIgnore-->', $arr1[1], 2), 2, '');
+			$body = $arr1[0] . $arr2[1];
+		}
+
 		// タグを小文字に統一
 		$body = preg_replace('#</?[a-zA-Z]+#eS', 'strtolower("$0")', $body);
 
@@ -946,12 +970,11 @@ class HypKTaiRender
 			//'h5',
 			//'h6',
 			'ul',
-			'ol'
+			'ol',
+			'dl'
 		);
 		$regs = array();
 		foreach($oneps as $onep) {
-			//$regs[] = '<'.$onep.'(?:.(?!<'.$onep.'))+?</'.$onep.'>';
-			//$regs[] = '<'.$onep.'(?:.(?!<(?:'.$onep.'|table)))+?</'.$onep.'>';
 			$regs[] = '<'.$onep.'(?:.(?!<'.$onep.')){,'.($this->splitMaxSize * .8).'}?</'.$onep.'>';
 		}
 		
@@ -1387,6 +1410,13 @@ class HypKTaiRender
 		}
 
 		$url = $match[4];
+
+		// Url rewrite
+		$rewiteUrl = false;
+		if (! empty($this->Config_urlImgRewrites['regex']) && ! empty($this->Config_urlImgRewrites['tostr'])) {
+			$rewiteUrl = $url = preg_replace($this->Config_urlImgRewrites['regex'], $this->Config_urlImgRewrites['tostr'], $url);
+		}
+
 		$parsed_url = parse_url($url);
 		
 		if (($this->Config_directImgHosts !== 'all' && empty($parsed_url['host']))
@@ -1442,6 +1472,9 @@ class HypKTaiRender
 			} else {
 				if (empty($parsed_url['host'])
 				 || preg_match($directHostReg, $parsed_url['host'])) {
+					if ($rewiteUrl && $rewiteUrl !== $match[4]) {
+						$match[0] = str_replace($match[4], $rewiteUrl, $match[0]);
+					}
 					return $match[0];
 				} else {
 					if (! isset($match[6])) {
