@@ -165,8 +165,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->k_tai_conf['limitedBlockIds'])) $this->k_tai_conf['limitedBlockIds'] = array();
 		if (! isset($this->k_tai_conf['showBlockIds'])) $this->k_tai_conf['showBlockIds'] = array();
 		if (! isset($this->k_tai_conf['pictSizeMax'])) $this->k_tai_conf['pictSizeMax'] = '200';
-		if (! isset($this->k_tai_conf['showImgHosts'])) $this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com', 'ad.jp.ap.valuecommerce.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com', 'google.com');
-		if (! isset($this->k_tai_conf['directImgHosts'])) $this->k_tai_conf['directImgHosts'] = array('google-analytics.com');
+		if (! isset($this->k_tai_conf['showImgHosts'])) $this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com', 'google.com');
+		if (! isset($this->k_tai_conf['directImgHosts'])) $this->k_tai_conf['directImgHosts'] = array('google-analytics.com', 'maps.google.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
 		if (! isset($this->k_tai_conf['directLinkHosts'])) $this->k_tai_conf['directLinkHosts'] = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com', 'afl.rakuten.co.jp', 'maps.google.com');
 		if (! isset($this->k_tai_conf['redirect'])) $this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/gate.php?way=redirect&amp;_d=0&amp;_u=0&amp;_x=0&amp;l=';
 		if (! isset($this->k_tai_conf['easyLogin'])) $this->k_tai_conf['easyLogin'] = 1;
@@ -192,6 +192,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->k_tai_conf['googleAdsense']['config'])) $this->k_tai_conf['googleAdsense']['config'] = XOOPS_TRUST_PATH . '/class/hyp_common/ktairender/adsenseConf.php';
 		if (! isset($this->k_tai_conf['googleAdsense']['below'])) $this->k_tai_conf['googleAdsense']['below'] = 'header';
 		if (! isset($this->k_tai_conf['googleAnalyticsId'])) $this->k_tai_conf['googleAnalyticsId'] = '';
+		
+		if (! isset($this->k_tai_conf['urlRewrites'])) $this->k_tai_conf['urlRewrites'] = null;
+		if (! isset($this->k_tai_conf['urlImgRewrites'])) $this->k_tai_conf['urlImgRewrites'] = null;
 		
 		$this->detect_order_org = mb_detect_order();
 		
@@ -231,7 +234,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				$this->HypKTaiRender->hashkey = $this->k_tai_conf['getKeys']['hash'];
 				$this->HypKTaiRender->Config_pictSizeMax = $this->k_tai_conf['pictSizeMax'];
 				$this->HypKTaiRender->Config_docomoGuidTTL = $this->k_tai_conf['docomoGuidTTL'];
-					
+				$this->HypKTaiRender->marge_urlRewites('urlRewrites', $this->k_tai_conf['urlRewrites']);
+				$this->HypKTaiRender->marge_urlRewites('urlImgRewrites', $this->k_tai_conf['urlImgRewrites']);
+
 				// Session setting
 				@ ini_set('session.use_trans_sid', 0);
 				if (! $this->HypKTaiRender->vars['ua']['allowCookie']) {
@@ -1510,10 +1515,10 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->k_tai_conf['pictSizeMax'] = '200';
 		
 		// インラインイメージを表示するホスト名(後方一致)
-		$this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com', 'ad.jp.ap.valuecommerce.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com', 'google.com');
+		$this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com', 'google.com');
 		
 		// 直接画像を表示するホスト名(後方一致)
-		$this->k_tai_conf['directImgHosts'] = array('google-analytics.com');
+		$this->k_tai_conf['directImgHosts'] = array('google-analytics.com', 'maps.google.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
 		
 		// リダイレクトスクリプトを経由しないホスト名(後方一致)
 		$this->k_tai_conf['directLinkHosts'] = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com', 'afl.rakuten.co.jp', 'maps.google.com');
@@ -1570,6 +1575,14 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// Google Analytics 設定
 		$this->k_tai_conf['googleAnalyticsId'] = '';
 		
+		// <a> タグの href 属性の書き換えルール
+		//$this->k_tai_conf['urlRewrites']['regex'][] = '';
+		//$this->k_tai_conf['urlRewrites']['tostr'][] = '';
+
+		// <img> タグの src 属性の書き換えルール
+		//$this->k_tai_conf['urlImgRewrites']['regex'][] = '';
+		//$this->k_tai_conf['urlImgRewrites']['tostr'][] = '';
+
 		// 携帯対応レンダー設定 以上
 		/////////////////////////////
 
