@@ -423,11 +423,21 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				}
 				
 				// Default スパムサイト定義読み込み
-				$datfile = dirname(dirname(__FILE__)) . '/spamsites.dat';
-				if (is_file($datfile)) {
+				$datfiles = array();
+				$datfiles[] = dirname(dirname(__FILE__)) . '/spamsites.dat';
+				$datfiles[] = dirname(__FILE__) . '/spamsites.conf.dat';
+				$checks = array();
+				$mtime = 0;
+				foreach($datfiles as $datfile) {
+					if (is_file($datfile)) {
+						$mtime = max(filemtime($datfile), $mtime);
+						$checks = array_merge($checks, file($datfile));
+					}
+				}
+				if ($checks) {
 					$cachefile = XOOPS_TRUST_PATH . '/cache/hyp_spamsites.dat';
-					if (filemtime($datfile) > @ filemtime($cachefile)) {
-						$regs = HypCommonFunc::get_reg_pattern(array_map('trim',file($datfile)));
+					if ($mtime > @ filemtime($cachefile)) {
+						$regs = HypCommonFunc::get_matcher_regex_safe($checks, "\x08");
 						HypCommonFunc::flock_put_contents($cachefile, $regs);
 					} else {
 						$regs = join('', file($cachefile));
@@ -436,13 +446,23 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 						HypCommonFunc::PostSpam_filter('/((ht|f)tps?:\/\/(.+\.)*|@|url=)' . $reg . '/i', $this->post_spam_host);
 					}
 				}
-
+				
 				// Default スパムワード定義読み込み
-				$datfile = dirname(dirname(__FILE__)) . '/spamwords.dat';
-				if (is_file($datfile)) {
+				$datfiles = array();
+				$datfiles[] = dirname(dirname(__FILE__)) . '/spamwords.dat';
+				$datfiles[] = dirname(__FILE__) . '/spamwords.conf.dat';
+				$checks = array();
+				$mtime = 0;
+				foreach($datfiles as $datfile) {
+					if (is_file($datfile)) {
+						$mtime = max(filemtime($datfile), $mtime);
+						$checks = array_merge($checks, file($datfile));
+					}
+				}
+				if ($checks) {
 					$cachefile = XOOPS_TRUST_PATH . '/cache/hyp_spamwords.dat';
-					if (filemtime($datfile) > @ filemtime($cachefile)) {
-						$regs = HypCommonFunc::get_reg_pattern(array_map('trim',file($datfile)));
+					if ($mtime > @ filemtime($cachefile)) {
+						$regs = HypCommonFunc::get_matcher_regex_safe($checks, "\x08");
 						HypCommonFunc::flock_put_contents($cachefile, $regs);
 					} else {
 						$regs = join('', file($cachefile));
@@ -854,15 +874,15 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	var elm = document.getElementById('redirect_message');
 	var stl = elm.style;
 	stl.position = 'fixed';
-	stl.top = '30%';
-	stl.left = '10%';
-	stl.width = '80%';
+	stl.top = '10px';
+	stl.left = '20%';
+	stl.width = '60%';
 	stl.zIndex = '10000';
 	stl.textAlign = 'center';
 	stl.backgroundColor = 'white';
-	stl.filter = 'alpha(opacity=85)';
-	stl.MozOpacity = '0.85';
-	stl.opacity = '0.85';
+	stl.filter = 'alpha(opacity=70)';
+	stl.MozOpacity = '0.7';
+	stl.opacity = '0.7';
 	stl.border = '1px solid gray';
 	stl.cursor = 'pointer';
 	elm.onclick = function(){elm.style.display = 'none'};
