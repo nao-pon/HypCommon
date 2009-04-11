@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.61 2009/03/20 06:07:12 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.62 2009/04/11 00:12:38 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1339,101 +1339,102 @@ EOF;
 	}
 
 	// 配列から正規表現を得る
-	function get_reg_pattern(& $words, $minlen = 1)
+	function get_reg_pattern($words)
 	{
-		$reg_words = array();
-
-		foreach ($words as $word)
-		{
-			if (strlen($word) >= $minlen)
-				$reg_words[] = $word;
-		}
-
-		if (count($reg_words) == 0)
-		{
-			$result = '(?!)';
-		}
-		else
-		{
-			$reg_words = array_unique($reg_words);
-			sort($reg_words, SORT_STRING);
-
-			$result = HypCommonFunc::get_reg_pattern_sub($reg_words, 0, count($reg_words), 0);
-		}
-		
-		return $result;
+		return HypCommonFunc::get_matcher_regex_safe($words);
 	}
 
-	function get_reg_pattern_sub(& $words, $start, $end, $pos)
+	function get_matcher_regex_safe ($pages, $spliter = "\t", $array_fix = true, $nest = 0, $ci = 1) {
+		if ($array_fix) {
+			$pages = array_map('trim', $pages);
+			if ($ci) $pages = array_map('strtolower', $pages);
+			$pages = array_unique($pages);
+			foreach(array_keys($pages, '') as $key) {
+				unset($pages[$key]);
+			}
+			sort($pages, SORT_STRING);
+		}
+		
+		++$nest;
+		$reg = HYpCommonFunc::get_matcher_regex_safe_sub($pages);
+		$regs = preg_split("/(\d+)\x08/", $reg, -1, PREG_SPLIT_DELIM_CAPTURE);
+		$pats = array();
+		$index = 0;
+		reset($regs);
+		while (list($key, $pat) = each($regs)) {
+			list($key, $val) = each($regs);
+			if (!$val) $val = count($pages);
+			if (@ preg_match('/' . $pat. '/', '') === false) {
+				if ($nest <= 10) {
+					$count = $val - $index;
+					$split = floor(($val - $index) / 2);
+					$pages1 = array_slice($pages, $index, $split);
+					$pages2 = array_slice($pages, $split, $count - $split);
+					$pats[] = HYpCommonFunc::get_matcher_regex_safe($pages2, $spliter, false, $nest, $ci);
+					$pats[] = HYpCommonFunc::get_matcher_regex_safe($pages1, $spliter, false, $nest, $ci);
+					$index = $val;
+				}
+			} else {
+				$pats[] = $pat;
+			}
+		}
+		return join($spliter, $pats);
+	}
+	
+	function get_matcher_regex_safe_sub (& $array, $offset = 0, $sentry = NULL, $pos = 0, $nest = 0)
 	{
-		static $lev = 0;
+		++$nest;
+		$limit = 1024 * 30;
 		
-		if ($end == 0) return '(?!)';
+		if (empty($array)) return '(?!)'; // Zero
+		if ($sentry === NULL) $sentry = count($array);
 		
-		$lev ++;
-		
-		$result = '';
-		$count = $i = $j = 0;
-		$x = (mb_strlen($words[$start]) <= $pos);
-		if ($x) { ++$start; }
-		
-		for ($i = $start; $i < $end; $i = $j)
-		{
-			$char = mb_substr($words[$i], $pos, 1);
-			for ($j = $i; $j < $end; $j++)
-			{
-				if (mb_substr($words[$j], $pos, 1) != $char) { break; }
-			}
-			if ($i != $start)
-			{
-				if ($lev === 1)
-				{
-					$result .= "\x08";
+		// Too short. Skip this
+		$skip = ($pos >= mb_strlen($array[$offset]));
+		if ($skip) ++$offset;
+	
+		// Generate regex for each value
+		$regex = '';
+		$index = $offset;
+		$multi = FALSE;
+		$reglen = 0;
+		while ($index < $sentry) {
+			if ($index !== $offset) {
+				$multi = TRUE;
+				if ($nest === 1 && strlen($regex) - $reglen > $limit) {
+					$reglen = strlen($regex);
+					$regex .= ')'.($index)."\x08(?:";
+				} else {
+					$regex .= '|'; // OR
 				}
-				else
-				{
-					$result .= '|';
-				}
-				
 			}
-			if ($i >= ($j - 1))
-			{
-				$result .= str_replace(' ', '\\ ', preg_quote(mb_substr($words[$i], $pos), '/'));
-			}
-			else
-			{
-				$result .= str_replace(' ', '\\ ', preg_quote($char, '/')) .
-					HypCommonFunc::get_reg_pattern_sub($words, $i, $j, $pos + 1);
-			}
+	
+			// Get one character from left side of the value
+			$char = mb_substr($array[$index], $pos, 1);
+	
+			// How many continuous keys have the same letter
+			// at the same position?
+			for ($i = $index; $i < $sentry; ++$i)
+				if (mb_substr($array[$i], $pos, 1) !== $char) break;
 			
-			++$count;
-		}
-		if ($lev === 1)
-		{
-			$limit = 1024 * 30; //マージンを持たせて 30kb で分割
-			$_result = "";
-			$size = 0;
-			foreach(explode("\x08",$result) as $key)
-			{
-				if (strlen($_result.$key) - $size > $limit)
-				{
-					$_result .= ")\x08(?:".$key;
-					$size = strlen($_result);
-				}
-				else
-				{
-					$_result .= ($_result ? "|" : "").$key;
-				}
+			if ($index < ($i - 1)) {
+				// Some more keys found
+				// Recurse
+				$regex .= str_replace(array(' ', '#'), array('\\ ', '\\#'), preg_quote($char, '/')) .
+				HypCommonFunc::get_matcher_regex_safe_sub($array, $index, $i, $pos + 1, $nest);
+			} else {
+				// Not found
+				$regex .= str_replace(array(' ', '#'), array('\\ ', '\\#'),
+				preg_quote(mb_substr($array[$index], $pos), '/'));
 			}
-			$result = '(?:' . $_result . ')';
+			$index = $i;
 		}
-		else
-		{
-			if ($x or $count > 1) { $result = '(?:' . $result . ')'; }
-			if ($x) { $result .= '?'; }
+		
+		if ($skip || $multi){
+			$regex = '(?:' . $regex . ')';
 		}
-		$lev --;
-		return $result;
+		if ($skip) $regex .= '?'; // Match for $pages[$offset - 1]
+		return $regex;
 	}
 
 	function register_bad_ips( $ip = null, $protectorTTL = null )
