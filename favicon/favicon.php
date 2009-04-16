@@ -1,16 +1,36 @@
 <?php
 /*
  * Created on 2008/02/11 by nao-pon http://hypweb.net/
- * $Id: favicon.php,v 1.8 2009/03/01 23:37:36 nao-pon Exp $
+ * $Id: favicon.php,v 1.9 2009/04/16 08:56:05 nao-pon Exp $
  */
 
 /**
  * favicon.php - Outputs the cached favicon with proper headers
  *
- * @author      revulo
- * @licence     http://www.opensource.org/licenses/bsd-license.php  New BSD License
- * @version     1.2
- * @link        http://www.revulo.com/PukiWiki/Plugin/Favicon.html
+ * Copyright (c) 2007-2009 revulo
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ *
+ * @author     revulo <revulon@gmail.com>
+ * @licence    http://www.opensource.org/licenses/mit-license.php  MIT License
+ * @version    1.4
+ * @link       http://www.revulo.com/PukiWiki/Plugin/Favicon.html
  */
 
 ignore_user_abort(FALSE);
@@ -27,6 +47,8 @@ if (is_file(FAVICON_TRUST_PATH . '/conf.php')) {
 	define('FAVICON_CACHE_TTL',     2592000);  // 60 * 60 * 24 * 30 [sec.] (1 month)
 }
 define('UNIX_TIME', (isset($_SERVER['REQUEST_TIME'])? $_SERVER['REQUEST_TIME'] : time()));
+
+if (! defined('FAVICON_ADMIN_MODE')) define('FAVICON_ADMIN_MODE', FALSE);
 
 function get_favicon_url($url)
 {
@@ -55,26 +77,24 @@ function get_url_filename($url)
     static $filename;
 
     if (empty($filename)) {
-        $url = preg_replace('/^https?:\/\//', '', $url);
-        $url = preg_replace('/index\.[a-z]+/i', '', $url);
         $url = rtrim($url, '/');
-        $filename = FAVICON_CACHE_DIR . substr(rawurlencode($url), 0, 250) . '.url';
+        $filename = FAVICON_CACHE_DIR . md5($url) . '.url';
+        //exit($url);
     }
     return $filename;
 }
 
-function get_image_filename($url)
+function get_image_filename($icon)
 {
     static $filename;
 
     if (empty($filename)) {
-        if ($url === 'DefaultIcon') {
+        if ($icon === 'DefaultIcon') {
         	$filename = FAVICON_DEFAULT_IMAGE;
-        } else if ($url === 'ErrorIcon') {
+        } else if ($icon === 'ErrorIcon') {
         	$filename = FAVICON_ERROR_IMAGE;
         } else {
-            $url      = preg_replace('/^https?:\/\//', '', $url);
-            $filename = FAVICON_CACHE_DIR . substr(rawurlencode($url), 0, 254);
+            $filename = FAVICON_CACHE_DIR . $icon;
         }
     }
     return $filename;
@@ -100,9 +120,11 @@ function if_modified_since()
     }
 }
 
-function output_image($url, $time = 0)
+function output_image($icon, $time = 0)
 {
-    $filename = get_image_filename($url);
+    $filename = get_image_filename($icon);
+    $mime = get_mimetype_from_name($icon);
+    
     if (function_exists('mb_http_output')) {
         mb_http_output('pass');
     }
@@ -114,7 +136,7 @@ function output_image($url, $time = 0)
     }
     header('Etag: '. $time);
     header('Content-Length: ' . filesize($filename));
-    header('Content-Type: image/x-icon');
+    header('Content-Type: ' . $mime);
     readfile($filename);
     exit();
 }
@@ -122,6 +144,13 @@ function output_image($url, $time = 0)
 
 function update_cache($url)
 {
+    // Garbage Collection
+    $garbage = FAVICON_CACHE_DIR . 'garbage.time';
+    if (! is_file($garbage) || filemtime($garbage) + 86400 < UNIX_TIME) {
+    	touch($garbage);
+    	clear_cache();
+    }
+    
     $html = http_get_contents($url, 4096);
     if ($html === false) {        // connection failed or timed out
         $favicon = 'DefaultIcon';
@@ -161,13 +190,15 @@ function update_cache($url)
         $data = http_get_contents($favicon);
         if ($data === false) {                   // connection failed or timed out
             return false;
-        } else if (is_image($data) === false) {  // no favicon or unknown format
-            $favicon = 'DefaultIcon';
-        } else {
+        } else if ($ext = get_extention($data)) {
+            $favicon = md5($url) . $ext;
             $image = get_image_filename($favicon);
             if (file_put_contents($image, $data) === FALSE) {
             	$favicon = 'ErrorIcon';
             }
+        } else {
+        	// no favicon or unknown format
+            $favicon = 'DefaultIcon';
         }
     }
 
@@ -194,54 +225,132 @@ function http_get_contents(& $url, $size = 0)
 	return ($ht->rc == 404 || $ht->rc == 410 || $ht->rc > 600 || $ht->rc < 100)? null : $ht->data;
 }
 
-function is_image($data)
+function get_mimetype($data)
 {
     if (strncmp("\x00\x00\x01\x00", $data, 4) === 0) {
         // ICO
-        return true;
+        return 'image/x-icon';
     } else if (strncmp("\x89PNG\x0d\x0a\x1a\x0a", $data, 8) === 0) {
         // PNG
-        return true;
-    } else if (strncmp('BM', $data, 2) === 0) {
-        // BMP
-        return true;
+        return 'image/png';
     } else if (strncmp('GIF87a', $data, 6) === 0 || strncmp('GIF89a', $data, 6) === 0) {
         // GIF
-        return true;
+        return 'image/gif';
     } else if (strncmp("\xff\xd8", $data, 2) === 0) {
         // JPEG
-        return true;
+        return 'image/jpeg';
     } else {
         return false;
     }
 }
 
+function get_extention($data)
+{
+    //$temp = tempnam(FAVICON_CACHE_DIR, 'ico');
+    //@ file_put_contents($temp, $data);
+    //clearstatcache();
+    //if (@ getimagesize($temp)) {
+	//   unlink($temp);
+	    if (strncmp("\x00\x00\x01\x00", $data, 4) === 0) {
+	        // ICO
+	        return '.ico';
+	    } else if (strncmp("\x89PNG\x0d\x0a\x1a\x0a", $data, 8) === 0) {
+	        // PNG
+	        return '.png';
+	    } else if (strncmp('GIF87a', $data, 6) === 0 || strncmp('GIF89a', $data, 6) === 0) {
+	        // GIF
+	        return '.gif';
+	    } else if (strncmp("\xff\xd8", $data, 2) === 0) {
+	        // JPEG
+	        return '.jpg';
+	    }
+	    return false;
+    //}
+    //@ unlink($temp);
+    //return false;
+}
+
+function get_mimetype_from_name($favicon)
+{
+    $ext = substr($favicon, -3);
+    if ($ext === 'ico') {
+        // ICO
+        return 'image/x-icon';
+    } else if ($ext === 'png') {
+        // PNG
+        return 'image/png';
+    } else if ($ext === 'gif') {
+        // GIF
+        return 'image/gif';
+    } else if ($ext === 'jpg') {
+        // JPEG
+        return 'image/jpeg';
+    } else {
+        return 'image/x-icon';
+    }
+}
+
 function is_url(& $url)
 {
-	$url = preg_replace('/(\?|#).*/', '', $url);
 	
-	if ($url{0} === '/') {
+	if ($url[0] === '/') {
 		$p_url  = parse_url(XOOPS_URL);
         $base = $p_url['scheme'] . '://' . $p_url['host'] . (isset($p_url['port']) ? ':' . $p_url['port'] : '');
-        $url  = $base . $url;
+        $url = $base . '/' . ltrim(dirname(preg_replace('/(\?|#).*/', '', $url)), '/');
+	} else if ($url[0] === '.') {
+		$url = XOOPS_URL  . '/';
 	} else {
-		$_hosts = @ file(FAVICON_TRUST_PATH . '/group.def.hosts');
-		if (is_file(FAVICON_TRUST_PATH . '/group.hosts')) {
-			$_hosts = array_merge($_hosts, file(FAVICON_TRUST_PATH . '/group.hosts'));
-		}
-		if ($_hosts) {
-			foreach($_hosts as $host) {
-				list($from, $to) = explode(' ', $host);
-				$hosts[trim($to)] = trim($from);
+		$p_url = parse_url($url);
+		$url = $p_url['scheme'] . '://' . $p_url['host'] . (isset($p_url['port']) ? ':' . $p_url['port'] : '') . $p_url['path'];
+	}
+
+	$url = preg_replace('/index\.[^.]+$/i', '', $url);
+
+	$hosts = get_hosts();
+	if ($hosts) {
+		$p_url = parse_url($url);
+		$_parts = explode('.', $p_url['host']);
+		while ($_parts) {
+			$_host = join('.', $_parts);
+			if (isset($hosts[$_host])) {
+				$url = $hosts[$_host];
+				break;
 			}
-			$p_url = parse_url($url);
-			if ($match = array_search($p_url['host'], $hosts)) {
-				$url = $match;
-			}
+			array_shift($_parts);
 		}
 	}
+
+	//exit($url);
 	$url = preg_replace('/([" \x80-\xff]+)/e', 'rawurlencode("$1")', $url);
 	return (preg_match('/(?:https?|ftp|news):\/\/[!~*\'();\/?:\@&=+\$,%#\w.-]+/', $url));
+}
+
+function get_hosts() {
+	$cache = FAVICON_CACHE_DIR . 'group.hosts';
+	if (is_file($cache)) {
+		 $mtime = filemtime($cache);
+		 $checktime = filemtime(FAVICON_TRUST_PATH . '/group.def.hosts');
+		 if (is_file(FAVICON_TRUST_PATH . '/group.hosts')) {
+		 	$checktime = max($checktime, filemtime(FAVICON_TRUST_PATH . '/group.hosts'));
+		 }
+		 if ($mtime > $checktime) {
+		 	return unserialize(file_get_contents($cache));
+		 }
+	}
+
+	$hosts = array();
+	$_hosts = file(FAVICON_TRUST_PATH . '/group.def.hosts');
+	if (is_file(FAVICON_TRUST_PATH . '/group.hosts')) {
+		$_hosts = array_merge($_hosts, file(FAVICON_TRUST_PATH . '/group.hosts'));
+	}
+	if ($_hosts) {
+		foreach($_hosts as $host) {
+			list($from, $to) = explode(' ', $host);
+			$hosts[trim($from)] = trim($to);
+		}
+	}
+	file_put_contents($cache, serialize($hosts));
+	return $hosts;
 }
 
 function redirect_icon($url)
@@ -271,6 +380,41 @@ function output_icon($icon) {
 	output_image($icon, $time);
 }
 
+function clear_cache($mode = '') {
+	if ($handle = opendir(FAVICON_CACHE_DIR)) {
+		$all = FALSE;
+		if ($mode === 'all') {
+			$mode = '';
+			$all = TRUE;
+		}
+		$chk = array();
+		while (false !== ($file = readdir($handle))) {
+			$target = FAVICON_CACHE_DIR . $file;
+			if ($file !== '.' && $file !== '..') {
+				if ($mode === 'check') {
+					$ext = explode('.', $file);
+					$ext = array_pop($ext);
+					if (isset($chk[$ext])) {
+						$chk[$ext]++;
+					} else {
+						$chk[$ext] = 1;
+					}
+					continue;
+				}
+				if (FAVICON_ADMIN_MODE && $mode && substr($file, strlen($mode) * -1) !== $mode) continue;
+				if ((FAVICON_ADMIN_MODE && ($all || $mode)) || substr_count($file, '.') > 1 || filemtime($target) + FAVICON_CACHE_TTL < UNIX_TIME) {
+					unlink($target);
+				}
+			}
+		}
+		if ($chk) {
+			foreach ($chk as $key => $val) {
+				echo $key . ': ' . $val . '<br />';
+			}
+		}
+	}
+}
+
 if (!function_exists('file_put_contents')) {
     function file_put_contents($filename, $data)
     {
@@ -289,22 +433,21 @@ if (!function_exists('file_put_contents')) {
     }
 }
 
-if (isset($_GET['icon'])) {
-	output_icon($_GET['icon']);
-	exit();
+if (isset($_GET['clear'])) {
+	clear_cache($_GET['clear']);
+	exit('ok');
 }
 
-$url = false;
+$favicon = false;
 if (isset($_GET['url'])) {
-	$url = get_favicon_url(rawurldecode($_GET['url']));
+	$favicon = get_favicon_url(rawurldecode($_GET['url']));
 }
 
-if ($url === false) {
+if ($favicon === false) {
     output_image('ErrorIcon');
     exit();
 }
 
-//redirect_icon($url);
-output_icon($url);
+output_icon($favicon);
 
 exit();
