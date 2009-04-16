@@ -359,6 +359,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 		}
 		
+		global $xoopsUser, $xoopsUserIsAdmin;
 		if (! empty($_POST)) {
 			// Input フィルター (remove "\0")
 			$_POST = HypCommonFunc::input_filter($_POST);
@@ -473,7 +474,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				}
 				
 				// 判定
-				global $xoopsUser, $xoopsUserIsAdmin;
 				if (!$xoopsUserIsAdmin) {
 					// 閾値
 					$spamlev = (is_object($xoopsUser))? $this->post_spam_user : $this->post_spam_guest;
@@ -497,9 +497,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			$idCheck = $this->HypKTaiRender->checkDeviceId( XOOPS_DB_PASS );
 			if ($idCheck === 'redirect') {
 				exit();
-			} else if (! $idCheck) {
+			} else if (! $idCheck && is_object($xoopsUser)) {
+				// ログインしている場合のみ
 				$_SESSION = array();
-				exit('Device ID does not match.');					
+				exit('Device ID does not match.');
 			}
 			// Redirect 指定ファイルの確認 ( by _onShutdownKtai() )
 			$this->_checkRedirectFile();
