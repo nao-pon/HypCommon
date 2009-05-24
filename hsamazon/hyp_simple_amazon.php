@@ -5,12 +5,14 @@ class HypSimpleAmazon
 	
 	var $Location = 'JP';
 	var $AccessKeyId = '0F1572ZQ7P3BTFJ28RR2';
+	var $SecretAccessKey = '';
 	var $ResponseGroup = 'ItemAttributes,Images,Offers,Variations';
 	var $SearchIndex = 'Blended';
-	var $Version = '2007-10-29';
+	var $Version = '2009-03-31';
 	var $AssociateTag = '';
-	var $restHost = 'http://webservices.amazon.co.jp';
-	var $searchHost = 'http://www.amazon.co.jp';
+	var $restHost = 'webservices.amazon.co.jp';
+	var $restPath = '/onca/xml';
+	var $searchHost = 'www.amazon.co.jp';
 	var $searchQuery = '/gp/search?ie=UTF8&amp;index=blended&amp;linkCode=ur2&amp;camp=247&amp;creative=1211';
 	var $encoding = 'EUC-JP';
 	var $SearchIndexes = array();
@@ -36,6 +38,22 @@ class HypSimpleAmazon
 		include_once dirname($this->myDirectory) . '/hyp_common_func.php';
 		include_once dirname($this->myDirectory) . '/hyp_simplexml.php';
 		
+		$configFile = $this->myDirectory . '/hyp_simple_amazon.ini.rename';
+		if (is_file($this->myDirectory . '/hyp_simple_amazon.ini')) {
+			$configFile = $this->myDirectory . '/hyp_simple_amazon.ini';
+		}
+		$ini = parse_ini_file($configFile);
+		if (! $AssociateTag && isset($ini['AssociateTag'])) {
+			$AssociateTag = $ini['AssociateTag'];
+		}
+		if (isset($ini['AccessKeyId'])) {
+			$this->AccessKeyId = $ini['AccessKeyId'];
+		}
+		if (isset($ini['SecretAccessKey'])) {
+			$this->SecretAccessKey = $ini['SecretAccessKey'];
+		}
+		
+		if (! $this->AccessKeyId) $this->AccessKeyId = '0F1572ZQ7P3BTFJ28RR2';
 		$this->AssociateTag = $AssociateTag? $AssociateTag : 'hypweb-22';
 		
 		$this->loadSearchIndexes();
@@ -45,36 +63,50 @@ class HypSimpleAmazon
 	}
 	
 	function _sendQuery ($params) {
+		$params['Service'] = 'AWSECommerceService';
 		$params['AssociateTag'] = $this->AssociateTag;
 		$params['AWSAccessKeyId'] = $this->AccessKeyId;
 		$params['Version'] = $this->Version;
 		$params['ContentType'] = 'text/xml';
 		$params['ResponseGroup'] = $this->ResponseGroup;
+		$params['Timestamp'] = gmdate('Y-m-d\TH:i:s\Z');
 		
 		if (isset($params['SearchIndex']) && ($params['SearchIndex'] === 'Blended' || $params['SearchIndex'] === 'All')) {
 			unset($params['Sort'], $params['MerchantId']);
 		}
 		
+		ksort($params);
 		$querys = array();
 		foreach($params as $key=>$val) {
-			$querys[] = $key . '=' . rawurlencode($val);
+			$querys[] = $this->urlencode_rfc3986($key) . '=' . $this->urlencode_rfc3986($val);
 		}
-		$url = $this->restHost . '/onca/xml?Service=AWSECommerceService&' . join ('&', $querys);
+		$query = join ('&', $querys);
+		
+		$signature = $this->HMAC_SHA256_encode('GET' . "\n" . $this->restHost . "\n" . $this->restPath . "\n" . $query . '', $this->SecretAccessKey);
+		if ($signature) {
+			$signature = '&Signature=' . rawurlencode($signature);
+		}
+		
+		$url = 'http://' . $this->restHost . $this->restPath . '?' . $query . $signature;
 		
 		$ht = new Hyp_HTTP_Request();
 		$ht->init();
-		$ht->url = $url;
+		$this->url = $ht->url = $url;
 		$ht->get();
 
-		if ($ht->rc == 200) {
+		if ($ht->rc === 200 || $ht->rc === 403) {
 			$data = $ht->data;
 
 			$xm = new HypSimpleXML();
 
 			$this->xml = $xm->XMLstr_in($data);
-			
-			if ($error = @ $this->xml['Items']['Request']['Errors']['Error']) {
+			//var_dump($this->xml);exit();
+			if ($xm->error) {
+				$this->error = $xm->error;
+			} else if ($error = @ $this->xml['Items']['Request']['Errors']['Error']) {
 				$this->error = $error['Message'];
+			} else if ($error = @ $this->xml['Error']) {
+				$this->error = $error['Code'] . ': ' . $error['Message'];
 			}
 		} else {
 			$this->xml = '';
@@ -87,32 +119,32 @@ class HypSimpleAmazon
 		$this->Location = $loc;
 		switch($loc) {
 			case 'JP':
-				$this->restHost = 'http://webservices.amazon.co.jp';
-				$this->searchHost = 'http://www.amazon.co.jp';
+				$this->restHost = 'webservices.amazon.co.jp';
+				$this->searchHost = 'www.amazon.co.jp';
 				break;
 			case 'US':
-				$this->restHost = 'http://webservices.amazon.com';
-				$this->searchHost = 'http://www.amazon.com';
+				$this->restHost = 'webservices.amazon.com';
+				$this->searchHost = 'www.amazon.com';
 				break;
 			case 'UK':
-				$this->restHost = 'http://webservices.amazon.co.uk';
-				$this->searchHost = 'http://www.amazon.co.uk';
+				$this->restHost = 'webservices.amazon.co.uk';
+				$this->searchHost = 'www.amazon.co.uk';
 				break;
 			case 'DE':
-				$this->restHost = 'http://webservices.amazon.de';
-				$this->searchHost = 'http://www.amazon.de';
+				$this->restHost = 'webservices.amazon.de';
+				$this->searchHost = 'www.amazon.de';
 				break;
 			case 'FR':
-				$this->restHost = 'http://webservices.amazon.fr';
-				$this->searchHost = 'http://www.amazon.fr';
+				$this->restHost = 'webservices.amazon.fr';
+				$this->searchHost = 'www.amazon.fr';
 				break;
 			case 'CA':
-				$this->restHost = 'http://webservices.amazon.ca';
-				$this->searchHost = 'http://www.amazon.ca';
+				$this->restHost = 'webservices.amazon.ca';
+				$this->searchHost = 'www.amazon.ca';
 				break;
 			default :
-				$this->restHost = 'http://webservices.amazon.com';
-				$this->searchHost = 'http://www.amazon.com';
+				$this->restHost = 'webservices.amazon.com';
+				$this->searchHost = 'www.amazon.com';
 				$this->Location = 'US';
 		}
 		$this->loadSearchIndexes();
@@ -182,7 +214,11 @@ class HypSimpleAmazon
 		}
 	}
 	
-	function setSearchIndex ($str) {
+	function setSearchIndex ($str, $target = '') {
+		$this->SearchTarget = '';
+		if ($target === 'title') {
+			$this->searchTarget = 'Title';
+		}
 		// Remove '-jp' etc. for AWS 3.0 compat.
 		$str = preg_replace('/-[^\-]+$/', '', $str);
 		foreach($this->SearchIndexes as $_index) {
@@ -199,6 +235,7 @@ class HypSimpleAmazon
 		$this->compactArray = array();
 		$this->html = '';
 		$this->searchKey = '';
+		$this->newestTime = 0;
 		$this->error = '';
 	}
 	
@@ -209,8 +246,12 @@ class HypSimpleAmazon
 		
 		$options['Operation'] = 'ItemSearch';
 		$options['SearchIndex'] = $this->SearchIndex;
-		$options['Keywords'] = mb_convert_encoding($key, 'UTF-8', $this->encoding);
-		$this->searchKey = $options['Keywords'];
+		$this->searchKey = mb_convert_encoding($key, 'UTF-8', $this->encoding);
+		if (!empty($this->searchTarget)) {
+			$options[$this->searchTarget] = $this->searchKey;
+		} else {
+			$options['Keywords'] = $this->searchKey;
+		}
 		
 		$this->_sendQuery($options);
 	}
@@ -255,7 +296,7 @@ class HypSimpleAmazon
 			$e_key = $key;
 		}
 		
-		$url = $this->searchHost . $this->searchQuery . ($this->AssociateTag ? '&amp;tag=' . rawurlencode($this->AssociateTag) : '') . '&amp;keywords=' . rawurlencode($e_key);
+		$url = 'http://' . $this->searchHost . $this->searchQuery . ($this->AssociateTag ? '&amp;tag=' . rawurlencode($this->AssociateTag) : '') . '&amp;keywords=' . rawurlencode($e_key);
 		//if ($category) $url .= '&amp;url=search-alias%3D'.strtolower($category);
 		//if ($category) $url .= '&amp;rs=&amp;rh=i%3Aaps%2Ck%3A'.rawurlencode($e_key).'%2Ci%3A'.strtolower($category);
 		
@@ -276,6 +317,8 @@ class HypSimpleAmazon
 	}
 	
 	function toCompactArray() {
+		if (!$this->xml) return;
+		
 		$compact = array();
 
 		$compact['request'] = @ $this->xml['Items']['Request'];
@@ -301,8 +344,8 @@ class HypSimpleAmazon
 				$_item['BINDING'] = @ $item['ItemAttributes']['Binding'];
 				$_item['PRODUCTGROUP'] = @ $item['ItemAttributes']['ProductGroup'];
 				$_item['MANUFACTURER'] = $this->get_manufacturer($item);
-				$_item['RELEASEDATE'] = @ $item['ItemAttributes']['ReleaseDate'];
-				
+				$_item['RELEASEDATE'] = $this->get_releasedate($item);
+				$_item['RELEASEUTIME'] = @ $item['ReleaseUTIME'];
 				$_item['AVAILABILITY'] = @ $item['Offers']['Offer']['OfferListing']['Availability'];
 				$_item['SIMG'] = @$item['SmallImage']['URL'];
 				$_item['MIMG'] = @$item['MediumImage']['URL'];
@@ -359,7 +402,7 @@ class HypSimpleAmazon
 	
 	function getAddCartURL ($asin) {
 		
-		$url = $this->searchHost
+		$url = 'http://' . $this->searchHost
 		     . '/gp/aws/cart/add.html?AWSAccessKeyId=' . $this->AccessKeyId
 		     . '&amp;AssociateTag=' . $this->AssociateTag
 		     . '&amp;ASIN.1=' . $asin
@@ -587,5 +630,34 @@ class HypSimpleAmazon
 			return $this->makeSearchLink($manufacturer, '', FALSE);
 		}
 		return '';
+	}
+	
+	function get_releasedate(& $item) {
+		$timeString = '';
+		if (isset($item['ItemAttributes']['ReleaseDate'])) {
+			$timeString =  $item['ItemAttributes']['ReleaseDate'];
+		} else if (isset($item['ItemAttributes']['PublicationDate'])) {
+			$timeString =  $item['ItemAttributes']['PublicationDate'];
+		}
+		if ($timeString) {
+			$item['ReleaseUTIME'] = intval(@ strtotime($timeString, strtotime(date('Y').'/1/1')));
+			$this->newestTime = max($item['ReleaseUTIME'], $this->newestTime);
+		}
+		return $timeString;
+	}
+	
+	function urlencode_rfc3986($str) {
+		return str_replace('%7E', '~', rawurlencode($str));
+	}
+	
+	function HMAC_SHA256_encode($data, $key) {
+		if (! $key) return '';
+		if (function_exists('hash_hmac') && function_exists('hash_algos') && (in_array('sha256', hash_algos()))) {
+			return base64_encode(hash_hmac('sha256' , $data, $key, TRUE));
+		} else if (function_exists('mhash') && defined('MHASH_SHA256')) {
+			return base64_encode(mhash(MHASH_SHA256 , $data, $key));
+		} else {
+			return '';
+		}
 	}
 }
