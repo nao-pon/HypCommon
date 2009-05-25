@@ -95,6 +95,10 @@ class MobilePictogramConverter
     
     function &factory_common($charset = MPC_FROM_CHARSET_SJIS)
     {
+        static $mpc = NULL;
+        
+        if ($mpc) return $mpc;
+        
         $filepath = dirname(__FILE__).'/Carrier/common.php';
         if (file_exists($filepath) == false) {
             $error = 'The file doesn\'t exist.';

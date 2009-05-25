@@ -17,7 +17,7 @@ class MPC_EZweb extends MPC_Common
     */
     var $regex = array(
         'WEB' => '/<img\s+(icon|localsrc)="?([0-9]+)"?\s*>/ie',
-        'IMG' => '/(<img src="{PATH}\/(\d{1,3})\.gif" alt="" border="0" \/>)/ie',
+        'IMG' => '/(<img src="{PATH}\/(\d{1,3})\.gif" alt="[^"]*?" border="0" \/>)/ie',
         'MODKTAI' => '/\(\(e:([0-9a-z]{4})\)\)/e',
     );
     

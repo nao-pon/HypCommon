@@ -56,6 +56,7 @@ class MPC_Common
     * @var string
     */
     var $i_img_path = 'img/i/';
+    var $i_img_size = array('16', '16');
     
     /**
     * EZweb絵文字画像格納パス
@@ -111,6 +112,18 @@ class MPC_Common
     */
     var $e2icon_table = array();
     
+    /**
+    * [emj:\d] => i-mode変換マップ (map/emj2i_table.php参照)
+    * @var array
+    */
+    var $emj2i_table = array();
+    
+    /**
+    * [emj:\d] => SoftBank変換マップ (map/emj2s_table.php参照)
+    * @var array
+    */
+    var $emj2s_table = array();
+
     /**
     * 変換先の絵文字が存在しなかった場合の代替文字列
     * @var string
@@ -296,7 +309,7 @@ class MPC_Common
         $this->setOption($option);
         $str = $this->getString();
         
-        $str = preg_replace_callback('/(<head.+?\/head>|<script.+?\/script>|<style.+?\/style>|<textarea.+?\/textarea>|<[^<>]+?>)|\(\(([eis]):([0-9a-f]{4})\)\)/isS', array(& $this, '_decodeModKtai'), $str);
+        $str = preg_replace_callback('/(<head.+?\/head>|<script.+?\/script>|<style.+?\/style>|<textarea.+?\/textarea>|<[^<>]+?>)|\(\(([eisv]):([0-9a-f]{4})\)\)|\[emj:(\d{1,4})(?::(im|sb|ez))?\]/isS', array(& $this, '_decodeModKtai'), $str);
 
         return $str;
     }
@@ -330,7 +343,57 @@ class MPC_Common
             }
             return $match[0];
         }
-        $mode = $match[2];
+        
+        if (! empty($match[4])) {
+	    	$emj_table = 'emj2i_table';
+	    	$match[2] = 'i';
+	    	if (! empty($match[5])) {
+	    		switch (strtolower($match[5])) {
+	    			case 'sb' :
+	    				$emj_table = 'emj2s_table';
+	    				$match[2] = 's';
+	    				break;
+	    			case 'ez' :
+	    				$emj_table = 'e2icon_table';
+	    				$match[2] = 'e';
+	    				break;
+	    			default :
+	    				$emj_table = 'emj2i_table';
+	    				$match[2] = 'i';
+	    		}
+	    	}
+	    	if (empty($this->$emj_table)) {
+				require 'map/'.$emj_table.'.php';
+		    }
+		    $_table = $this->$emj_table;
+		    if (! isset($_table[$match[4]])) {
+		    	return $match[0];
+		    }
+		    $match[3] = ($match[2] === 'e')? dechex($_table[$match[4]]) : $_table[$match[4]];
+	    	/*
+	    	if ($this->emj_to === 's') {
+		    	if (empty($this->i2s_table)) {
+					require 'map/i2s_table.php';
+			    }
+			    $match[2] = 's';
+			    $match[3] = dechex($this->i2s_table[hexdec($match[3])]);
+			} else if ($this->emj_to === 'e') {
+		    	if (empty($this->i2e_table)) {
+					require 'map/i2e_table.php';
+			    }
+	            if (empty($this->e2icon_table)) {
+	                require 'map/e2icon_table.php';
+	            }
+			    $match[2] = 'e';
+			    $match[3] = dechex($this->e2icon_table[$this->i2e_table[hexdec($match[3])]]);
+			}
+			*/
+        }
+        
+        $mode = strtolower($match[2]);
+        if ($mode === 'v') {
+        	$mode = 's';
+        }
         
         // ezweb convert to icon number
         $dec = HexDec($match[3]);
@@ -507,7 +570,7 @@ class MPC_Common
                 $buf = ($dec >= 63921 && $dec <= 63996) ? '&#x'.strtoupper(bin2hex(mb_convert_encoding(pack('H*', dechex($dec)), 'unicode', 'SJIS-win'))).';' : '&#'.$dec.';';
                 break;
             case MPC_TO_OPTION_IMG:
-                $buf = '<img src="'.rtrim($this->i_img_path, '/').'/'.$dec.'.gif" alt="((i:'.dechex($dec).'))" border="0" width="12" height="12" />';
+                $buf = '<img src="'.rtrim($this->i_img_path, '/').'/'.$dec.'.gif" alt="((i:'.dechex($dec).'))" border="0" width="'.$this->i_img_size[0].'" height="'.$this->i_img_size[0].'" />';
                 break;
             case MPC_TO_OPTION_MODKTAI:
                 $buf = '((i:'.dechex($dec).'))';
@@ -986,6 +1049,7 @@ class MPC_Common
         }
         return ($upper == true) ? strtoupper($hex) : $hex;
     }
+
 }
 // }}}
 ?>

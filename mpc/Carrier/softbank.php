@@ -17,7 +17,7 @@ class MPC_SoftBank extends MPC_Common
   */
     var $regex = array(
         'WEB' => '/[\x1B][\x24](([\x47][\x21-\x7A]+)|([\x45][\x21-\x7A]+)|([\x46][\x21-\x7A]+)|([\x4F][\x21-\x6D]+)|([\x50][\x21-\x6C]+)|([\x51][\x21-\x5E]+))[\x0F]?/',
-        'IMG' => '/<img src="{PATH}\/((17|18|20)\d{3})\.gif" alt="" border="0" width="15" height="15" \/>/ie',
+        'IMG' => '/<img src="{PATH}\/((17|18|20)\d{3})\.gif" alt="[^"]*?" border="0" width="\d*?" height="\d*?" \/>/ie',
         'MODKTAI' => '/\(\(s:([0-9a-z]{4})\)\)/e',
     );
     

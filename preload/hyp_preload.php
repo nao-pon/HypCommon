@@ -1274,7 +1274,7 @@ EOD;
 		
 		if ($str === '' || strpos($str, '<html') === FALSE) return $str;
 		
-		if (preg_match('/\(\([eis]:[0-9a-f]{4}\)\)/S', $str)) {
+		if (preg_match('/\(\([eisv]:[0-9a-f]{4}\)\)|\[emj:\d{1,4}(?::(?:im|ez|sb))?\]/S', $str)) {
 			if (! XC_CLASS_EXISTS('MobilePictogramConverter')) {
 				HypCommonFunc::loadClass('MobilePictogramConverter');
 			}

@@ -17,7 +17,7 @@ class MPC_FOMA extends MPC_Common
     */
     var $regex = array(
         'WEB' => '/&#(63\d{3});/ie',
-        'IMG' => '/<img *src="{PATH}\/(63\d{3})\.gif" alt="" border="0" width="12" height="12" \/>/ie',
+        'IMG' => '/<img *src="{PATH}\/(63\d{3})\.gif" alt="[^"]*?" border="0" width="\d*?" height="\d*?" \/>/ie',
         'MODKTAI' => '/\(\(i:([0-9a-z]{4})\)\)/e',
     );
     
