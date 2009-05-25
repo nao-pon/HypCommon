@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.40 2009/03/25 00:46:57 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.41 2009/05/25 00:10:35 nao-pon Exp $
  */
 
 if (! function_exists('XC_CLASS_EXISTS')) {
@@ -88,6 +88,9 @@ class HypKTaiRender
 		if (isset($_SERVER['_REQUEST_URI'])) {
 			$this->SERVER['REQUEST_URI'] = $_SERVER['_REQUEST_URI'];
 		}
+		
+		// mod_rewrite に影響されないアクセスURI上の QUERY_STRING を取得
+		list(,$this->SERVER['QUERY_STRING']) = array_pad(explode('?', $this->SERVER['REQUEST_URI'], 2), 2, '');
 		
 		$this->myRoot = 'http' . (!empty($this->SERVER['HTTPS'])? 's' : '' ) . '://'
 		         . $this->SERVER['SERVER_NAME'] . (($this->SERVER['SERVER_PORT'] == 80)? '' : ':'.$this->SERVER['SERVER_PORT']);
@@ -208,9 +211,13 @@ class HypKTaiRender
 					// 未取得なので guid=on をつけてリダイレクト
 					$joint = (strpos($this->SERVER['REQUEST_URI'], '?') === FALSE)? '?' : '&';
 					$url = $this->myRoot . $this->SERVER['REQUEST_URI'] . $joint . 'guid=on';
-					$url = $this->removeSID($url);
-					$sid = $this->session_name . '=' . session_id();
-					header('Location: ' . $url . '&' . $sid);
+					if (! $this->vars['ua']['allowCookie']) {
+						$url = $this->removeSID($url);
+						$sid = '&' . $this->session_name . '=' . session_id();
+					} else {
+						$sid = '';
+					}
+					header('Location: ' . $url . $sid);
 					return 'redirect';
 				}
 			}
@@ -301,7 +308,7 @@ class HypKTaiRender
 		
 		foreach(array('header', 'body', 'footer') as $var) {
 			$str =& $$var;
-			if (preg_match('/\(\([eis]:[0-9a-f]{4}\)\)/S', $str)) {
+			if (preg_match('/\(\([eisv]:[0-9a-f]{4}\)\)|\[emj:\d{1,4}(?::(?:im|ez|sb))?\]/S', $str)) {
 				if (! isset($mpc)) {
 					$mpc =& $this->_getMobilePictogramConverter();
 				}
@@ -395,7 +402,7 @@ class HypKTaiRender
 				$pager = '<center>' . join(' ', $pager) . '</center>';
 			}
 
-			if (preg_match('/\(\([eis]:[0-9a-f]{4}\)\)/S', $pager)) {
+			if (preg_match('/\(\([eisv]:[0-9a-f]{4}\)\)|\[emj:\d{1,4}(?::(?:im|ez|sb))?\]/S', $pager)) {
 				if (! isset($mpc)) {
 					$mpc =& $this->_getMobilePictogramConverter();
 				}
@@ -412,10 +419,10 @@ class HypKTaiRender
 		// Optimize query strings
 		$_func = create_function(
 			'$match',
-			'if ($match[3][0] === \'?\') $match[3] = preg_replace(\'/^.*?'.$h_reg.'(#[^#]+)?$/\', \'' . $this->SERVER['REQUEST_URI'] . '$1\', $match[3]);' . 
+			'if ($match[3][0] === \'?\') $match[3] = preg_replace(\'/^.*?'.$h_reg.'(#[^#]+)?$/\', \'?' . $this->SERVER['QUERY_STRING'] . '$1\', $match[3]);' . 
 			'$match[3] = preg_replace(\'/(?:&(?:amp;)?)+/\', \'&amp;\', $match[3]);' .
 			'$match[3] = str_replace(\'?&amp;\', \'?\', $match[3]);' .
-			'$match[3] = str_replace(\'&amp;#\', \'#\', $match[3]);' .
+			'$match[3] = str_replace(array(\'?#\', \'&amp;#\'), \'#\', $match[3]);' .
 			'return $match[1] . $match[3] . (isset($match[4])? $match[4] : \'\');'
 		);
 		$_reg = '#(<a[^>]*? href=([\'"])?)([^\s"\'>]+)(\\2)?#isS';
@@ -441,6 +448,7 @@ class HypKTaiRender
 
 	// HTML を携帯端末用にシェイプアップする
 	function html_diet_for_hp ($body) {
+
 		// 無視する部分(<!--HypKTaiIgnore-->...<!--/HypKTaiIgnore-->)を削除
 		while(strpos($body, '<!--HypKTaiIgnore-->') !== FALSE) {
 			$arr1 = explode('<!--HypKTaiIgnore-->', $body, 2);
@@ -453,11 +461,13 @@ class HypKTaiRender
 
 		// 半角カナに変換
 		if (function_exists('mb_convert_kana')) {
-			$body = preg_replace_callback('/(^|<textarea.+?\/textarea>|<pre.+?\/pre>|<[^>]*>)(.*?)(?=<textarea.+?\/textarea>|<pre.+?\/pre>|<[^>]*>|$)/sS',
+			$_body = $body;
+			$body = preg_replace_callback('/(^|<textarea.+?\/textarea>|<pre.+?\/pre>|<[^>]*?>)(.*?)(?=<textarea.+?\/textarea>|<pre.+?\/pre>|<[^>]*?>|$)/sS',
 				create_function(
 					'$match',
 					'return $match[1] . mb_convert_kana(preg_replace(\'/[\s]+/\',\' \',str_replace(array("\r\n","\r","\n"),\'\',$match[2])), \'knr\', \''.$this->inputEncode.'\');'
 				), $body);
+			if (! $body) $body = $_body; // PCRE エラー対策
 		}
 
 		// Is <form> action anchor only?
@@ -484,9 +494,9 @@ class HypKTaiRender
 		$body = preg_replace('#<input[^>]+?onclick=(?:"|\')?(?:javascript:)?history\.[^>]*?>#is', '', $body);
 
 		//// tag attribute
-		$body = str_replace('\\"', "\x08", $body);
+		$body = str_replace(array("\\'", '\\"'), array("\x07", "\x08"), $body);
 		// Any
-		$reg = '#(<[^>]+?)\s+(?:class|clear|target|nowrap|title|on[^=]+)=(?:\'[^\']*\'|"[^"\x08]*")([^>]*>)#iS';
+		$reg = '#(<[^>]+?)\s+(?:class|clear|target|nowrap|title|on[^=]+)=(?:\'[^\']*\'|"[^"]*")([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
@@ -495,7 +505,7 @@ class HypKTaiRender
 			$body = preg_replace($reg, '$1$2', $body);
 		}
 		// img
-		$reg = '#(<img[^>]+?)\s+(?:hspace|vspace|border)=(?:\'[^\']*\'|"[^"\x08]*")([^>]*>)#iS';
+		$reg = '#(<img[^>]+?)\s+(?:hspace|vspace|border)=(?:\'[^\']*\'|"[^"]*")([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
@@ -504,7 +514,7 @@ class HypKTaiRender
 			$body = preg_replace($reg, '$1$2', $body);
 		}
 		// input
-		$reg = '#(<input[^>]+?)\s+(?:size|alt|border)=(?:\'[^\']*\'|"[^"\x08]*")([^>]*>)#iS';
+		$reg = '#(<input[^>]+?)\s+(?:size|alt|border)=(?:\'[^\']*\'|"[^"]*")([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
@@ -512,7 +522,7 @@ class HypKTaiRender
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
-		$body = str_replace("\x08", '\\"', $body);
+		$body = str_replace(array("\x07", "\x08"), array("\\'", '\\"'), $body);
 		
 		// form enctype="multipart/form-data"
 		if (! $this->vars['ua']['allowFormData']) {
@@ -604,18 +614,21 @@ class HypKTaiRender
 
 		// <table>を正規化
 		// 入れ子テーブルを展開
-		$args = preg_split('#(<table(?:.(?!<table))+?</table>)#sS', $body, -1, PREG_SPLIT_DELIM_CAPTURE);
+		$body = str_replace('<table', "\x01", $body);
+		$args = preg_split('#(\x01[^>]*?'.'>[^\x01]+?</table>)#sS', $body, -1, PREG_SPLIT_DELIM_CAPTURE);
 		if (isset($args[1])) {
+			$reg = '#^(<table[^>]*?)\s+(?:align|width|border)=(?:\'[^\']*?\'|"[^"]*?")([^>]*?>)#S';
 			$body = '';
 			foreach($args as $val) {
+				$val = str_replace("\x01", '<table', $val);
 				if (substr($val, 0, 6) === '<table') {
 					// remove tag attribute
 					$val = str_replace('\\"', "\x08", $val);
-					$reg = '#(<table[^>]+?)\s+(?:align|width)=(?:\'[^\']*\'|"[^"\x08]*")([^>]*>)#iS';
 					while(preg_match($reg, $val)) {
 						$val = preg_replace($reg, '$1$2', $val);
 					}
 					$val = str_replace("\x08", '\\"', $val);
+					$val = str_replace('<table', '<table border="1" cellspacing="0" align="center"', $val);
 				} else {
 					$val = preg_replace('#(</?)(?:t(?:able|r|h))[^>]*?>#S', '$1div>', $val);
 					$val = preg_replace('#</td>#S', ' ', $val);
@@ -638,7 +651,18 @@ class HypKTaiRender
 
 	// HTML を指定サイズ内に収まるように分割する
 	function html_split($html, $startnum = 0) {
-
+		
+		// 分割の必要性チェック
+		if (strlen($html) < $this->splitMaxSize) {
+			// id or name のチェック
+			if (preg_match_all('/<[^>]+?(?:id|name)=(\'|")(.+?)\\1/iS', $html, $match, PREG_PATTERN_ORDER)) {
+				foreach($match[2] as $_id) {
+					$ids[$_id] = $startnum;
+				}
+			}
+			return array(array($html), $ids);
+		}
+		
 		// ページ分断で閉じられなかったらきちんと閉じて次ページの先頭で再度開くタグ
 		$checks = array('address', 'blockquote', 'center', 'div', 'dl', 'fieldset', 'ol', 'p', 'pre', 'table', 'td', 'tr', 'ul');
 		if ($this->outputMode === 'xhtml') $checks[] = 'li';
@@ -651,25 +675,35 @@ class HypKTaiRender
 		$len = 0;
 
 		$arr = $this->_html_split_make_array($html);
+		$arr = array_diff($arr, array(''));
+
 		foreach($arr as $key => $val) {
-		
+
 			if (! isset($out[$i])) $out[$i] = '';
 			$out[$i] .= $val;
 			$len += strlen($val);
 
 			// タグの開閉をチェックする
-			if ($val[0] === '<') {
-				if (preg_match('/^<([a-zA-Z]+)/', $val, $match) && in_array($match[1], $checks)) {
-					array_unshift($stacks, $match[1]);
-					array_unshift($opentags, $val);
-					$len += strlen($match[1]) + 3;
+			if (! preg_match('#^<([a-z]+?)\b.+?</\\1>$#s', $val)) {
+				if (preg_match_all('/<([a-z]+?)\b[^>]*>/', $val, $match, PREG_PATTERN_ORDER)) {
+					foreach($match[1] as $_key => $_match) {
+						if (in_array($_match, $checks)) {
+							array_unshift($stacks, $_match);
+							array_unshift($opentags, $match[0][$_key]);
+							$len += strlen($_match) + 3;
+						}
+					}
 				}
-				if (preg_match('/\/([a-zA-Z]+)>$/', $val, $match) && in_array($match[1], $checks)) {
-					$stack_key = array_search($match[1], $stacks);
-					if ($stack_key !== FALSE) {
-						unset($stacks[$stack_key]);
-						unset($opentags[$stack_key]);
-						$len -= (strlen($match[1]) + 3);
+				if (preg_match_all('/<\/([a-z]+?)>/', $val, $match, PREG_PATTERN_ORDER)) {
+					foreach($match[1] as $_match) {
+						if (in_array($_match, $checks)) {
+							$stack_key = array_search($_match, $stacks);
+							if ($stack_key !== FALSE) {
+								unset($stacks[$stack_key]);
+								unset($opentags[$stack_key]);
+								$len -= (strlen($_match) + 3);
+							}
+						}
 					}
 				}
 			}
@@ -933,103 +967,120 @@ class HypKTaiRender
 	}
 
 	function _html_split_make_array ($html) {
-		$u = '';
-		// 文字コード別に1文字の正規表現をセット
-		switch (strtoupper($this->outputEncode)) {
-			case 'EUC-JP':
-			case 'EUC':
-			case 'EUCJP':
-			case 'EUC_JP':
-				$p = '(?:[\xA1-\xFE][\xA1-\xFE]|[\x01-\x7F]|\x8E[\xA0-\xDF])';
-				break;
-			case 'SHIFT_JIS':
-			case 'SHIFT-JIS':
-			case 'SJIS':
-				$p = '(?:[\x81-\x9F\xE0-\xFC][\x40-\xFC]|[\x01-\x7F]|[\xA0-\xDF])';
-				break;
-			case 'UTF-8':
-			case 'UTF_8':
-			case 'UTF8':
-				$u = 'u';
-			default:
-				$p = '.';
-		}
+	
+		static $reg = '';
 		
-		// できるだけひとまとめにする塊
-		$oneps = array(
-			'table',
-			'th',
-			'tr',
-			'td',
-			'div',
-			'p',
-			'h1',
-			'h2',
-			'h3',
-			'h4',
-			//'h5',
-			//'h6',
-			'ul',
-			'ol',
-			'dl'
-		);
-		$regs = array();
-		foreach($oneps as $onep) {
-			$regs[] = '<'.$onep.'(?:.(?!<'.$onep.')){,'.($this->splitMaxSize * .8).'}?</'.$onep.'>';
+		if (!$reg) {
+
+			$u = '';
+			// 文字コード別に1文字の正規表現をセット
+			switch (strtoupper($this->outputEncode)) {
+				case 'EUC-JP':
+				case 'EUC':
+				case 'EUCJP':
+				case 'EUC_JP':
+					$p = '(?:[\xA1-\xFE][\xA1-\xFE]|\x8E[\xA0-\xDF]|[^<>])';
+					break;
+				case 'SHIFT_JIS':
+				case 'SHIFT-JIS':
+				case 'SJIS':
+					//$p = '(?:[\x81-\x9F\xE0-\xFC][\x40-\xFC]|[\x01-\x3B\x3D\x3F-\x7F]|[\xA0-\xDF])';
+					$p = '(?:[\x81-\x9F\xE0-\xFC][\x40-\xFC]|[\xA0-\xDF]|[^<>])';
+					break;
+				case 'UTF-8':
+				case 'UTF_8':
+				case 'UTF8':
+					$u = 'u';
+					$p = '[^<>]';
+				default:
+					$p = '[^<>]';
+			}
+		
+			// できるだけひとまとめにする塊
+			$oneps = array(
+				'ns',
+				'table',
+				'thead',
+				'tfoot',
+				'tbody',
+				'th',
+				'tr',
+				'td',
+				'p',
+				'h1',
+				'h2',
+				'h3',
+				'h4',
+				'h5',
+				'h6',
+				'ul',
+				'ol',
+				'dl',
+				'li',
+				'div'
+			);
+			$regs = array();
+			foreach($oneps as $onep) {
+				$regs[] = '<'.$onep.'\b(?:.(?!<'.$onep.'\b))+?</'.$onep.'>';
+			}
+			$reg = '#(' .
+				'<form.+?/form>|' .
+				join('|', $regs) . '|' .
+				'<a.+?/a>|' .
+				'<[^>]+?>|' .
+				'&(?:[a-zA-Z]{2,8}|\#[0-9]{1,6}|\#x[0-9a-fA-F]{2,4});|' .
+				'(?:\s|' . $p . '){1,80}' .
+				')#sS'.$u;
 		}
 		
 		$first = '';
 		$last = '';
 		
-		if (preg_match('#^(<([a-zA-Z]+)[^>]*>)(.*)(</\\2>)$#sS', $html, $match)) {
+		if (preg_match('#^\s*(<([a-z]+?)[^>]*?>)(.*?)(</\\2>)\s*$#sS', $html, $match)) {
 			$first = $match[1];
-			$html = $match[3];
+			$body = $match[3];
 			$last = $match[4];
+		} else {
+			$body = $html;
 		}
 
-		$args = preg_split(
-			'#(' .
-			'(?><ns>.+?</ns>)|' .
-			'(?><form.+?/form>)|' .
-			''.join('|', $regs) . '|' .
-			'<a.+?/a>|' .
-			'<[^>]+?>|' .
-			'&(?:[a-zA-Z]{2,8}|\#[0-9]{1,6}|\#x[0-9a-fA-F]{2,4});|' .
-			'\s|' .
-			$p . '{,80}' .
-			')#sS'.$u, $html, -1, PREG_SPLIT_DELIM_CAPTURE);
-		
+		$args = preg_split($reg, $body, -1, PREG_SPLIT_DELIM_CAPTURE);
 		$out = array();
 		if ($first) $out[] = $first;
 		foreach($args as $arg) {
-			if (strlen($arg) > $this->splitMaxSize) {
+			$arg_len = strlen($arg);
+			if ($arg_len > $this->splitMaxSize * 0.8) {
 				if (substr($arg, 0, 5) === '<form') {
-					$out[] = '<div>[ Can\'t edit with your device. (&lt;form&gt; is too large.) ]</div>';
-					continue;
+					if ($arg_len > $this->splitMaxSize) {
+						$out[] = '<div>[ Can\'t edit with your device. (&lt;form&gt; is too large.) ]</div>';
+					} else {
+						$out[] = $arg;
+					}
 				} else {
 					if ($arg === $html) {
 						if ($arg[0] === '<') {
-							if (preg_match('/^<([a-z]+)/', $arg, $match)) {
-								$close = '</'.$match[1].'>';
+							if (preg_match('/^(<([a-z]+?)[^>]*?>)/', $arg, $match)) {
+								$open = $match[1];
+								$close = '</'.$match[2].'>';
+								$arg = substr($arg, strlen($open));
 								list($arg1, $arg2) = explode($close, $arg, 2);
-								$arg1 .= $close;
+								$out[] = $open;
 								$out = array_merge($out, $this->_html_split_make_array($arg1));
-								$out = array_merge($out, $this->_html_split_make_array($arg2));
+								$out[] = $close;
+								if ($arg2) $out = array_merge($out, $this->_html_split_make_array($arg2));
 								continue;
 							}
 						}
-						$out[] = '<div>[ Rendering error. ('.strlen($arg).') ]</div>';
-						//$out = array_merge($out, $this->_html_split_make_array($arg1));
-						continue;
+						$out[] = '<div>[ Rendering error. Length: '.strlen($arg).' bytes ]</div>';
+					} else {
+						$out = array_merge($out, $this->_html_split_make_array($arg));
 					}
-					$out = array_merge($out, $this->_html_split_make_array($arg));
 				}
 			} else if ($arg !== '') {
 				$out[] = $arg;
 			}
 		}
 		if ($last) $out[] = $last;
-		
 		return $out;
 	}
 	
@@ -1081,8 +1132,15 @@ class HypKTaiRender
 					case 'DoCoMo':
 						$carrier = 'docomo';
 						$max_size = 10;
+						$_sizelimit = 200;
 						if (preg_match('#\b[cC]([0-9]+)\b#', $ua_agent, $matches)) {
-							$max_size = intval($matches[1] / 2);	// Cache max size
+							$max_size = intval($matches[1]);
+							if ($max_size <= 100) {
+								$this->vars['ua']['ver'] = '1.0';
+							}
+							$max_size = intval($max_size / 2);	// Cache max size
+						} else {
+							$this->vars['ua']['ver'] = '1.0';
 						}
 						$max_size = min($_sizelimit, $max_size);
 						break;
@@ -1133,7 +1191,7 @@ class HypKTaiRender
 					
 					case 'iPhone':
 					case 'iPod':
-						$max_size = 100;
+						$max_size = 200;
 						$carrier = strtolower($ua_name);
 						break;
 
@@ -1147,17 +1205,17 @@ class HypKTaiRender
 				switch ($carrier) {
 					case 'docomo':
 						$this->keybutton = array(
-							'1'	=>	'&#63879;',
-							'2'	=>	'&#63880;',
-							'3'	=>	'&#63881;',
-							'4'	=>	'&#63882;',
-							'5'	=>	'&#63883;',
-							'6'	=>	'&#63884;',
-							'7'	=>	'&#63885;',
-							'8'	=>	'&#63886;',
-							'9'	=>	'&#63887;',
-							'0'	=>	'&#63888;',
-							'#'	=>	'&#63877;',
+							'1'	=>	'&#xE6E2;',
+							'2'	=>	'&#xE6E3;',
+							'3'	=>	'&#xE6E4;',
+							'4'	=>	'&#xE6E5;',
+							'5'	=>	'&#xE6E6;',
+							'6'	=>	'&#xE6E7;',
+							'7'	=>	'&#xE6E8;',
+							'8'	=>	'&#xE6E9;',
+							'9'	=>	'&#xE6EA;',
+							'0'	=>	'&#xE6EB;',
+							'#'	=>	'&#xE6E0;',
 							'*'	=>	'[*]'
 						);
 						if (isset($this->SERVER['HTTP_X_DCMGUID'])) $this->vars['ua']['uid'] = $this->SERVER['HTTP_X_DCMGUID'];
@@ -1165,7 +1223,7 @@ class HypKTaiRender
 						$this->vars['ua']['carrier'] = $carrier;
 						$this->vars['ua']['allowPNG'] = FALSE;
 						$this->vars['ua']['allowInputImage'] = FALSE;
-						$this->vars['ua']['allowCookie'] = FALSE;
+						$this->vars['ua']['allowCookie'] = (floatval($this->vars['ua']['ver']) < 2)? FALSE : TRUE;
 						$this->vars['ua']['contentType'] = 'application/xhtml+xml';
 						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//i-mode group (ja)//DTD XHTML i-XHTML(Locale/Ver.=ja/2.3) 1.0//EN" "i-xhtml_4ja_10.dtd">';
 						break;
@@ -1224,17 +1282,17 @@ class HypKTaiRender
 
 					case 'willcom':
 						$this->keybutton = array(
-							'1'	=>	'&#63879;',
-							'2'	=>	'&#63880;',
-							'3'	=>	'&#63881;',
-							'4'	=>	'&#63882;',
-							'5'	=>	'&#63883;',
-							'6'	=>	'&#63884;',
-							'7'	=>	'&#63885;',
-							'8'	=>	'&#63886;',
-							'9'	=>	'&#63887;',
-							'0'	=>	'&#63888;',
-							'#'	=>	'&#63877;',
+							'1'	=>	'&#xE6E2;',
+							'2'	=>	'&#xE6E3;',
+							'3'	=>	'&#xE6E4;',
+							'4'	=>	'&#xE6E5;',
+							'5'	=>	'&#xE6E6;',
+							'6'	=>	'&#xE6E7;',
+							'7'	=>	'&#xE6E8;',
+							'8'	=>	'&#xE6E9;',
+							'9'	=>	'&#xE6EA;',
+							'0'	=>	'&#xE6EB;',
+							'#'	=>	'&#xE6E0;',
 							'*'	=>	'[*]'
 						);
 						if (isset($_COOKIE['KTaiRenderUid'])) {
@@ -1361,11 +1419,11 @@ class HypKTaiRender
 			
 			list($href, $hash) = array_pad(explode('#', $url, 2), 2, '');
 			
-			if (!$href) {
+			if (! $href) {
 				$href = isset($this->SERVER['QUERY_STRING'])? '?' . $this->SERVER['QUERY_STRING'] : '';
 				$href = preg_replace('/(?:\?|&(?:amp;)?)' . $this->session_name . '=[^&]+/', '', $href);
 			};
-
+			
 			$add = array();
 			if ($this->vars['needSID']) {
 				$add[] = $this->SID;
@@ -1374,8 +1432,11 @@ class HypKTaiRender
 				$href = preg_replace('/(?:\?|&(?:amp;)?)' . preg_quote($this->hashkey, '/') . '=[^&]+/', '', $href);
 				$add[] = $this->hashkey . '=' . $hash;
 			}
+
 			if ($add) $href .= ((strpos($href, "?") === FALSE)? '?' : '&amp;') . (join('&amp;', $add));
+
 			$url = $href . ($hash? '#' . $hash : '');
+			
 		} else if ($parsed_url['host'] !== $this->parsed_base['host']) {
 			$hostsReg = $this->_getHostsRegex($this->Config_directLinkHosts);
 			if (!preg_match($hostsReg, $parsed_url['host'])) {
@@ -1512,6 +1573,22 @@ class HypKTaiRender
 		return $mpc;
 	}
 	
+	function _debug($str) {
+		if (isset($_GET['debug'])) {
+			$out = '';
+			if (is_array($str)) {
+				foreach($str as $key => $val) {
+					$out .= "[$key]: $val\n";
+				}
+			} else {
+				$out = $str;
+			}
+			if ($fp = fopen(dirname(__FILE__) . '/debug.txt', 'ab')) {
+				fwrite($fp, $out. "\n\n\n");
+				fclose($fp);
+			}
+		}
+	}
 /* -------------------------------------------------------------------------
 	ClientDetect class
 	a part of PC2M Website Transcoder for Mobile Clients
