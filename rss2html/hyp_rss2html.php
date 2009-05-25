@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/25 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_rss2html.php,v 1.4 2008/09/26 08:36:52 nao-pon Exp $
+ * $Id: hyp_rss2html.php,v 1.5 2009/05/25 00:13:03 nao-pon Exp $
  */
 
 class HypRss2Html
@@ -253,10 +253,10 @@ class HypRss2Html
 			$utime = time();
 		}
 		
-		$time = max(0, ($utime - $time) / 60); // minutes
+		$time = ($utime - $time) / 60; // minutes
 	
 		foreach ($units as $unit=>$card) {
-			if ($time < $card) break;
+			if (abs($time) < $card) break;
 			$time /= $card;
 		}
 		$time = floor($time) . $unit;
