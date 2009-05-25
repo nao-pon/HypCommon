@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.62 2009/04/11 00:12:38 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.63 2009/05/25 00:17:18 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1474,10 +1474,13 @@ EOF;
 	}
 
 	function html_wordwrap(& $html, $num = 36, $sep = '&#8203;') {
-		$html = preg_replace_callback('/(<(script|textarea|style|option|pre).*?<\/\\2>|<[^>]*>)|((?>&#?[a-z0-9]+;|\(\([eis]:[0-9a-f]{4}\)\)|[!=\x23-\x3b\x3f-\x7e]){'.$num.'})/isS',
+		$ret = preg_replace_callback('/(<(script|textarea|style|option|pre).+?<\/\\2>|<[^>]+?>)|((?>&#?[a-z0-9]+?;|\(\([eisv]:[0-9a-f]{4}\)\)|\[emj:\d{1,4}(?::(?:im|ez|sb))?\]|[!=\x23-\x3b\x3f-\x7e]){'.$num.'})/isS',
 		create_function('$arg',
 			'if ($arg[1]) { return $arg[1]; } else { return $arg[3] . "'.$sep.'";}'
 		),$html);
+		if (! is_null($ret)) {
+			$html = $ret;
+		}
 	}
 	
 	// IDN ( Internationalized Domain Name ) encoder & decoder
@@ -1564,7 +1567,94 @@ EOF;
 			return FALSE;
 		}
 	}
+	
+	// Make Emoji pad
+	function make_emoji_pad ($id, $checkmsg = '', $clearDisplayId = '', $emojiurl = '', $writeJS = TRUE, $emj_list = NULL) {
+		$useList = ($emj_list !== 'all');
+		
+		if ($useList && ! is_array($emj_list)) {
+			$emj_list = array(
+				140,141,142,143,144,1021,1022,1023,1024,1025,1026,1027,1029,1030,1031,1032,
+				1033,1034,1035,1071,1072,1076,145,156,150,151,152,157,158,162,163,164,
+				146,155,147,149,136,137,138,139,154,153,1028,86,87,88,85,84,
+				1,2,3,4,5,6,8,1052,172,100,101,1068,1069,1070,1073,1074,
+				9,10,11,12,13,14,15,16,17,18,19,20,80,81,82,83,
+				1011,75,110,105,106,107,74,1012,76,103,1054,1056,1058,1059,1060,1061,
+				115,116,123,125,126,127,128,129,130,131,132,133,134,1038,1039,1043,
+				1010,113,114,119,120,135,1041,1044,59,104,89,90,48,49,50,94,
+				38,39,40,41,42,43,44,1051,1053,45,46,47,1046,1048,66,67,
+				1040,22,23,24,25,26,27,28,51,52,53,54,55,56,57,58,
+				61,62,63,65,68,69,70,71,72,73,1063,1075,1066,1062,1019,1064,
+				1065,77,79,91,92,1003,1005,1016,1015,1008,167,176,95,96,97,98,
+				30,31,32,33,34,35,36,37,1018,102
+			);
+		}
 
+		if (! $checkmsg) $checkmsg = 'Emoji pad';
+		if (! $emojiurl) $emojiurl = ((defined('XOOPS_URL'))? XOOPS_URL : '.') . '/images/emoji';
+		
+		$html = <<< EOD
+<div class="norich">
+<input type="checkbox" id="emoji_onoff_$id" onclick="if(this.checked){xoopsGetElementById('emoji_buttons_pre_$id').style.display='block';xoopsGetElementById('$id').focus();}else{xoopsGetElementById('emoji_buttons_pre_$id').style.display='none'};" /><label for="emoji_onoff_$id">$checkmsg</label>
+<div id="emoji_buttons_pre_$id" style="display:none;">
+EOD;
+		if ($useList) {
+			$i = 0;
+			foreach($emj_list as $emjcnt) {
+				$html .= '<a style="padding:1px;" href="#" onclick=\'hypEmojiPadSet("'.$id.'", "'.$emjcnt.'"); return false;\'>[emj:'.$emjcnt.']</a>';
+				$i++;
+				if ($i % 16 === 0) {
+					$html .= '<br />';
+				}
+			}
+		} else {
+			for ($emjline = 1; $emjline < 1077; $emjline += 16) {
+				if ($emjline == 177) $emjline = 1001;
+				for ($emjcnt = $emjline; $emjcnt < $emjline + 16; $emjcnt++) {
+					if ($emjcnt > 1076) break;
+					$html .= '<a style="padding:1px;" href="#" onclick=\'hypEmojiPadSet("'.$id.'", "'.$emjcnt.'"); return false;\'>[emj:'.$emjcnt.']</a>';
+				}
+				$html .= '<br />';
+			}
+		}
+		$html .= '</div></div>';
+		if (! XC_CLASS_EXISTS('MobilePictogramConverter')) {
+			HypCommonFunc::loadClass('MobilePictogramConverter');
+		}
+		$mpc =& MobilePictogramConverter::factory_common();
+		$mpc->setImagePath($emojiurl);
+		$mpc->setString($html, FALSE);
+		$html = $mpc->autoConvertModKtai();
+		
+		$jshtml = $writeJS? str_replace(array('"', "\r\n", "\r", "\n"), array('\\"', ''), $html) : '';
+		$ret = $writeJS? '' : $html;
+
+		$ret .= <<< EOD
+<script type="text/javascript"><!--//
+if (typeof hypEmojiPadSet != 'function') {
+	var hypEmojiPadSet = function(id, emjCode) {
+		var revisedMessage;
+		var textareaDom = xoopsGetElementById(id);
+		xoopsInsertText(textareaDom, "[emj:"+emjCode+"]");
+		textareaDom.focus();
+		return;
+	};
+}
+(function(){
+	var clearDisplayId = "$clearDisplayId";
+	if (clearDisplayId && xoopsGetElementById(clearDisplayId)) xoopsGetElementById(clearDisplayId).style.display = '';
+	var html = "$jshtml";
+	if (html) document.write(html);
+	if (!!XpWiki && Prototype.Browser.IE) {
+		$('emoji_buttons_pre_$id').observe('mousedown', function(){wikihwlper_caretPos();});
+	}
+})();
+// -->
+</script>
+EOD;
+		return $ret;
+	}
+	
 	// flock safty file_get_contents()
 	function flock_get_contents ($filename, $maxRetry = 10) {
 		$return = FALSE;
