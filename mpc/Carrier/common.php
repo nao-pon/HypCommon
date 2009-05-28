@@ -344,7 +344,7 @@ class MPC_Common
             return $match[0];
         }
         
-        if (! empty($match[4])) {
+        if (isset($match[4])) {
 	    	$emj_table = 'emj2i_table';
 	    	$match[2] = 'i';
 	    	if (! empty($match[5])) {
