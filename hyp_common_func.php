@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.63 2009/05/25 00:17:18 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.64 2009/06/25 23:42:08 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -334,7 +334,7 @@ EOF;
 	}
 	
 	// 携帯用に画像を(リサイズして)変換する
-	function img4ktai($file, $maxsize = 128, $allowpng = FALSE, $allconvert = FALSE) {
+	function img4ktai($file, $maxsize = 128, $allowpng = FALSE, $allconvert = FALSE, $quality = 50) {
 		//GD のバージョンを取得
 		static $gd_ver = null;
 		if (is_null($gd_ver)) {
@@ -345,7 +345,7 @@ EOF;
 		if ($gd_ver < 1 || !function_exists("imagecreate")) return FALSE;//gdをサポートしていない
 		
 		// リサイズ
-		$resized = HypCommonFunc::ImageResize($file, $maxsize . 'x' . $maxsize, 50);
+		$resized = HypCommonFunc::ImageResize($file, $maxsize . 'x' . $maxsize, $quality);
 
 		$size = @ getimagesize($file);
 		if (! $size) return FALSE;
@@ -421,7 +421,19 @@ EOF;
 		
 		return TRUE;
 	}
-
+	
+	// 携帯用にリサイズした画像の元のサイズを得る
+	function get_imagesize4ktai($url, $maxsize, $allowpng) {
+		$cachepath = XOOPS_ROOT_PATH . '/class/hyp_common/cache';
+		$png = ($allowpng)? 1 : 0;
+		$basename = md5(join("\t", array($url, $maxsize, $png))) . '.i4ks';
+		$size_file = $cachepath . '/' .  $basename;
+		if (is_file($size_file)) {
+			return file_get_contents($size_file);
+		}
+		return '';
+	}
+	
 	// サムネイル画像を作成。
 	// 成功ならサムネイルのファイルのパス、不成功なら元ファイルパスを返す
 	function make_thumb($o_file, $s_file, $max_width, $max_height, $zoom_limit="1,95", $refresh=FALSE, $quality=75)
