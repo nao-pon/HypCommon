@@ -2,13 +2,15 @@
 /*
  * Created on 2008/09/04 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: redirect.php,v 1.1 2008/09/10 04:27:10 nao-pon Exp $
+ * $Id: redirect.php,v 1.2 2009/06/25 23:42:56 nao-pon Exp $
  */
 
 // clear output buffer
 while( ob_get_level() ) {
 	ob_end_clean() ;
 }
+
+define('UNIX_TIME', (isset($_SERVER['REQUEST_TIME'])? $_SERVER['REQUEST_TIME'] : time()));
 
 if (isset($_GET['l'])) {
 	$url = $_GET['l'];
@@ -50,10 +52,17 @@ if (isset($_GET['l'])) {
 function get_url_info ($url) {
 
 	$ttl = 60 * 60 * 24; // 1day
-	$cache = XOOPS_ROOT_PATH . '/class/hyp_common/cache/' . md5($url) . '.rdi';
+	$cachepath = XOOPS_ROOT_PATH . '/class/hyp_common/cache';
+	$cache = $cachepath . '/' . md5($url) . '.rdi';
 	
-	if (is_file($cache) && filemtime($cache) + $ttl > time()) {
+	if (is_file($cache) && filemtime($cache) + $ttl > UNIX_TIME) {
 		return unserialize(file_get_contents($cache));
+	}
+
+	// GC
+	$gc = $cachepath . '/rdi.gc';
+	if (! is_file($gc) || filemtime($gc) < UNIX_TIME - 86400) {
+		GC_rdi($cachepath, 86400 * 30);
 	}
 	
 	include_once XOOPS_TRUST_PATH . '/class/hyp_common/hyp_common_func.php';
@@ -88,4 +97,24 @@ function get_url_info ($url) {
 	}
 	
 	return $ret;
+}
+
+function GC_rdi($cachepath, $TTL, $showResult = FALSE) {
+	touch($cachepath . '/rdi.gc');
+	$i = 0;
+	$i2 = 0;
+	if ($handle = opendir($cachepath)) {
+		while (false !== ($file = readdir($handle))) {
+			if (substr($file, -4) === '.rdi') {
+				$i2++;
+				$target = $cachepath . '/' . $file;
+				if (filemtime($target) < UNIX_TIME - $TTL) {
+					unlink($target);
+					$i++;
+				}
+			}	
+		}
+		closedir($handle);
+	}
+	if ($showResult) echo $i . '/' . $i2 . ' files removed.';
 }
