@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.41 2009/05/25 00:10:35 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.42 2009/06/25 23:45:22 nao-pon Exp $
  */
 
 if (! function_exists('XC_CLASS_EXISTS')) {
@@ -56,6 +56,7 @@ class HypKTaiRender
 	var $Config_style = array();
 	var $Config_botReg = '/Googlebot-Mobile|Y!J-(?:SRD|MBS)|froute\.jp|ichiro\/mobile|LD_mobile_bot/i';
 	var $Config_docomoGuidTTL = 300;
+	var $Config_imageTwiceDisplayWidth = 0;
 	
 	function HypKTaiRender () {
 		
@@ -194,6 +195,7 @@ class HypKTaiRender
 
 	// Device ID のチェック
 	function checkDeviceId($key = '') {
+		
 		if ($this->vars['ua']['isBot'] ||
 			strpos($this->myRoot . $this->SERVER['REQUEST_URI'], str_replace('&amp;', '&', $this->Config_redirect)) === 0
 		) {
@@ -277,7 +279,7 @@ class HypKTaiRender
 		setlocale( LC_CTYPE, 'C');
 		$this->parsed_base = parse_url($this->myRoot);
 		$this->setupSID();
-		
+
 		if ($this->inputHtml) {
 			$this->_extractHeadBody();
 			$header = $footer = '';
@@ -1223,7 +1225,12 @@ class HypKTaiRender
 						$this->vars['ua']['carrier'] = $carrier;
 						$this->vars['ua']['allowPNG'] = FALSE;
 						$this->vars['ua']['allowInputImage'] = FALSE;
-						$this->vars['ua']['allowCookie'] = (floatval($this->vars['ua']['ver']) < 2)? FALSE : TRUE;
+						if ((floatval($this->vars['ua']['ver']) < 2)) {
+							$this->vars['ua']['allowCookie'] = FALSE;
+						} else {
+							$this->vars['ua']['allowCookie'] = TRUE;
+							list($this->vars['ua']['width'], $this->vars['ua']['height']) = array('480', '480');
+						}
 						$this->vars['ua']['contentType'] = 'application/xhtml+xml';
 						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//i-mode group (ja)//DTD XHTML i-XHTML(Locale/Ver.=ja/2.3) 1.0//EN" "i-xhtml_4ja_10.dtd">';
 						break;
@@ -1251,6 +1258,7 @@ class HypKTaiRender
 						$this->vars['ua']['allowCookie'] = TRUE;
 						$this->vars['ua']['allowFormData'] = FALSE;
 						$this->vars['ua']['meta'] = '<meta http-equiv="Cache-Control" content="no-cache" />';
+						if (isset($this->SERVER['HTTP_X_UP_DEVCAP_DEVICEPIXELS'])) list($this->vars['ua']['width'], $this->vars['ua']['height']) = explode(',', $this->SERVER['HTTP_X_UP_DEVCAP_DEVICEPIXELS']);
 						$this->vars['ua']['contentType'] = 'application/xhtml+xml';
 						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//OPENWAVE//DTD XHTML 1.0//EN" "http://www.openwave.com/DTD/xhtml-basic.dtd">';
 						break;
@@ -1276,6 +1284,11 @@ class HypKTaiRender
 						$this->vars['ua']['allowPNG'] = TRUE;
 						$this->vars['ua']['allowInputImage'] = TRUE;
 						$this->vars['ua']['allowCookie'] = TRUE;
+						if (isset($this->SERVER['HTTP_X_S_DISPLAY_INFO'])) {
+							list($_size) = explode('/', $this->SERVER['HTTP_X_S_DISPLAY_INFO']);
+							list($this->vars['ua']['width'], $this->vars['ua']['height']) = explode('*', $_size);
+							$this->Config_imageTwiceDisplayWidth = 480;
+						}
 						$this->vars['ua']['contentType'] = 'application/xhtml+xml';
 						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//JPHONE//DTD XHTML Basic 1.0 Plus//EN" "xhtml-basic10-plus.dtd">';
 						break;
@@ -1501,31 +1514,56 @@ class HypKTaiRender
 				$h_tag = $arg[1];
 				$height = $arg[2];
 			}
+
+			$_size = '';
+			$url = str_replace('&amp;', '&', $url);
+			$twice = (isset($this->vars['ua']['width']) && $this->Config_imageTwiceDisplayWidth && $this->vars['ua']['width'] >= $this->Config_imageTwiceDisplayWidth);
+			
 			if ($width && $height) {
 				$zoom = min($this->Config_pictSizeMax/$width, $this->Config_pictSizeMax/$height);
 				if ($zoom < 1) {
+					$_w = round($width * $zoom);
 					$reps['from'][] = $w_org;
-					$reps['to'][]   = $w_tag . round($width * $zoom);
+					$reps['to'][]   = $w_tag . ($twice? $_w * 2 : $_w);
+					$_h = round($height * $zoom);
 					$reps['from'][] = $h_org;
-					$reps['to'][]   = $h_tag . round($height * $zoom);
+					$reps['to'][]   = $h_tag . ($twice? $_h * 2 : $_h);
+				} else if ($twice) {
+					$reps['from'][] = $w_org;
+					$reps['to'][]   = $w_tag . intval($width * 2);
+					$reps['from'][] = $h_org;
+					$reps['to'][]   = $h_tag . intval($height * 2);
 				}
 			} else if ($width) {
 				if ($this->Config_pictSizeMax < $width) {
 					$reps['from'][] = $w_org;
-					$reps['to'][]   = $w_tag . $this->Config_pictSizeMax;
+					$reps['to'][]   = $w_tag . ($twice? $this->Config_pictSizeMax * 2 : $this->Config_pictSizeMax);
+				} else if ($twice) {
+					$reps['from'][] = $w_org;
+					$reps['to'][]   = $w_tag . intval($width * 2);
 				}
 			} else if ($height) {
 				if ($this->Config_pictSizeMax < $height) {
 					$reps['from'][] = $h_org;
-					$reps['to'][]   = $h_tag . $this->Config_pictSizeMax;
+					$reps['to'][]   = $h_tag . ($twice? $this->Config_pictSizeMax * 2 : $this->Config_pictSizeMax);
+				} else if ($twice) {
+					$reps['from'][] = $h_org;
+					$reps['to'][]   = $h_tag . intval($height * 2);
+				}
+			} else if ($twice) {
+				if ($imagesize = HypCommonFunc::get_imagesize4ktai($url, $this->Config_pictSizeMax, $this->vars['ua']['allowPNG'])) {
+					list($_w, $_h) = explode('x', $imagesize);
+					$_w = intval($_w * 2);
+					$_h = intval($_h * 2);
+					$_size = ' width="' . $_w . '" height="' . $_h . '"';
 				}
 			}
-			
-			$ret = $match[1] . ' src="' . $this->Config_hypCommonURL . '/gate.php?way=imgconv&amp;m=i4k&amp;s=' . $this->Config_pictSizeMax . $png . '&amp;u=' . rawurlencode(str_replace('&amp;', '&', $url)) . '"' . $match[5];
+
+			$ret = $match[1]  . $_size . ' src="' . $this->Config_hypCommonURL . '/gate.php?way=imgconv&amp;m=i4k&amp;s=' . $this->Config_pictSizeMax . $png . '&amp;u=' . rawurlencode($url) . '"' . $match[5];
 			if (isset($reps['from'])) {
 				$ret = str_replace($reps['from'], $reps['to'], $ret);
 			}
-			
+	
 			return $ret . (isset($match[6])? $match[6] : '');
 		} else {
 			if ($type === 'input') {
