@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.64 2009/06/25 23:42:08 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.65 2009/09/01 01:33:41 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -125,70 +125,40 @@ class HypCommonFunc
 	}
 	
 	// RPC Update Ping を打つ
-	function update_rpc_ping($default_update="http://bulkfeeds.net/rpc http://ping.myblog.jp http://ping.bloggers.jp/rpc/ http://blog.goo.ne.jp/XMLRPC http://ping.cocolog-nifty.com/xmlrpc http://rpc.technorati.jp/rpc/ping")
+	function update_rpc_ping($to = '')
 	{
 		global $xoopsConfig;
 		
 		//RSSキャッシュファイルを削除
 		HypCommonFunc::clear_rss_cache();
 		
-		$update_ping2 = $default_update;
-		$update_ping = preg_split ( "/[\s,]+/" , $update_ping2 );
+		if (! $to) {
+			$to = 'http://api.my.yahoo.co.jp/RPC2 http://ping.myblog.jp http://ping.bloggers.jp/rpc/ http://blog.goo.ne.jp/XMLRPC http://ping.cocolog-nifty.com/xmlrpc http://rpc.technorati.jp/rpc/ping';
+		}
+		
+		$update_ping = preg_split ( "/[\s,]+/" , $to);
 
 		$ping_blog_name = $xoopsConfig['sitename'];
 		$ping_url		= XOOPS_URL."/";
 
-		$ping_update = <<<EOF
-	<?xml version="1.0"?>
-	<methodCall>
-		<methodName>weblogUpdates.ping</methodName>
-		<params>
-		<param><value>$ping_blog_name</value></param>
-		<param><value>$ping_url</value></param>
-		</params>
-	</methodCall>
-EOF;
-		//<?
-		$ping_update = mb_convert_encoding
-					   ( $ping_update , "UTF-8" , "EUC-JP" );
-
-		$ping_update_leng = strlen($ping_update);
-
-		foreach ( $update_ping as $up )
-		{
-			if ( $up != "" )
-			{
-				$uph = ereg_replace ( "http:\/\/", "", $up );
-				list ( $host , $uri ) = split ( "/", $uph , 2 );
-				list ( $host , $port ) = split ( ":", $host );
-
-				if ( $port == "" )
-				{
-					$port = 80;
-					$add_port = "";
-				}
-				else
-				{
-					$add_port = ":$port";
-				}
-				
-				$errNo = 0;
-				$errStr = "";
-				$files = @fsockopen($host, $port , $errNo , $errStr, 10);
-
-				@fputs($files, "POST /$uri HTTP/1.0\r\n" );
-				@fputs($files, "Host: $host$add_port\r\n" );
-				@fputs($files, "Content-Length: $ping_update_leng\r\n" );
-				@fputs($files, "User-Agent: XOOPS update pinger Ver 1.00\r\n" );
-				@fputs($files, "Content-Type: text/xml\r\n" );
-				@fputs($files, "\r\n" );
-				@fputs($files, "$ping_update" );
-
-				fclose ( $files );
-
-			}
+		HypCommonFunc::loadClass('HypPinger');
+		$p = new HypPinger(
+			$ping_blog_name,
+			$ping_url
+			);
+		$p->setEncording(_CHARSET);
+		
+		foreach($update_ping as $to) {
+			list($url, $extended) = array_pad(explode(' ', trim($to)), 2, '');
+			$url = trim($url);
+			$extended = $extended? TRUE : FALSE; 
+			$p->addSendTo($url, $extended);
 		}
-		return ;
+		
+		$p->send();
+		
+		$p = NULL;
+		unset($p);
 	}
 	
 	function make_context($text, $words=array(), $l=255, $parts=3, $delimiter='...', $caseInsensitive = TRUE, $whitespaceCompress = TRUE)
@@ -1605,7 +1575,7 @@ EOF;
 		if (! $checkmsg) $checkmsg = 'Emoji pad';
 		if (! $emojiurl) $emojiurl = ((defined('XOOPS_URL'))? XOOPS_URL : '.') . '/images/emoji';
 		
-		$html = <<< EOD
+		$html = <<<EOD
 <div class="norich">
 <input type="checkbox" id="emoji_onoff_$id" onclick="if(this.checked){xoopsGetElementById('emoji_buttons_pre_$id').style.display='block';xoopsGetElementById('$id').focus();}else{xoopsGetElementById('emoji_buttons_pre_$id').style.display='none'};" /><label for="emoji_onoff_$id">$checkmsg</label>
 <div id="emoji_buttons_pre_$id" style="display:none;">
@@ -1641,7 +1611,7 @@ EOD;
 		$jshtml = $writeJS? str_replace(array('"', "\r\n", "\r", "\n"), array('\\"', ''), $html) : '';
 		$ret = $writeJS? '' : $html;
 
-		$ret .= <<< EOD
+		$ret .= <<<EOD
 <script type="text/javascript"><!--//
 if (typeof hypEmojiPadSet != 'function') {
 	var hypEmojiPadSet = function(id, emjCode) {
@@ -2076,9 +2046,9 @@ function xoops_make_context($text,$words=array(),$l=255)
 
 if (!function_exists('xoops_update_rpc_ping'))
 {
-function xoops_update_rpc_ping($default_update="http://bulkfeeds.net/rpc http://ping.myblog.jp http://ping.bloggers.jp/rpc/ http://blog.goo.ne.jp/XMLRPC http://ping.cocolog-nifty.com/xmlrpc http://rpc.technorati.jp/rpc/ping")
+function xoops_update_rpc_ping($to = "")
 {
-	return HypCommonFunc::update_rpc_ping($default_update);
+	return HypCommonFunc::update_rpc_ping($to);
 }
 }
 
