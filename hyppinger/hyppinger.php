@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/05/15 by nao-pon http://hypweb.net/
- * $Id: hyppinger.php,v 1.2 2009/03/01 23:42:25 nao-pon Exp $
+ * $Id: hyppinger.php,v 1.3 2009/09/01 01:25:11 nao-pon Exp $
  */
 
 require_once(dirname(dirname(__FILE__)) . '/hyp_common_func.php');
@@ -14,7 +14,10 @@ class HypPinger {
 	var $xml_normal = '';
 	var $xml_extended = '';
 	var $results = array();
-	
+	var $connect_timeout = 10;
+	var $read_timeout = 5;
+	var $blocking = FALSE;
+		
 	var $debug = FALSE;
 	
 	function HypPinger ($name, $url, $changesurl=NULL, $rssurl=NULL, $tag=NULL) {
@@ -35,6 +38,9 @@ class HypPinger {
 			$d->method  = 'POST';
 			$d->headers = "Content-Type: text/xml\r\n";
 			$d->post    = $sendTo['extended']? $this->xml_extended : $this->xml_normal;
+			$d->connect_timeout = $this->connect_timeout;
+			$d->read_timeout = $this->read_timeout;
+			$d->blocking = $this->blocking;
 			
 			$d->get();
 			
