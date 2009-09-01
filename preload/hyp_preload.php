@@ -379,7 +379,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			
 			// Proxy Check
 			if ($this->use_proxy_check) {
-				HypCommonFunc::BBQ_Check($this->no_proxy_check, $this->msg_proxy_check, NULL, $this->post_spam_checkers);
+				if (! defined('HYP_K_TAI_RENDER') || ! HYP_K_TAI_RENDER || ! $this->HypKTaiRender->vars['ua']['inIPRange']) {
+					HypCommonFunc::BBQ_Check($this->no_proxy_check, $this->msg_proxy_check, NULL, $this->post_spam_checkers);
+				}
 			}
 			
 			// 文字エンコーディング外の文字を数値エンティティに変換
@@ -1450,7 +1452,10 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			// '/^[\x00-\x7f\s]{65,}$/' => 15,
 			
 			// 無効な文字コードがある 31pt
-			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f]+/' => 31
+			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f]+/' => 31,
+			
+			// よくあるSPAM 15pt
+			'/^\s*(?:Hi|Aloha)! http:\/\//i' => 15,
 		);
 		
 		// 無効なフィールド定義
