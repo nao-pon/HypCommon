@@ -321,11 +321,15 @@ class HypSimpleAmazon
 		
 		$compact = array();
 
-		$compact['request'] = @ $this->xml['Items']['Request'];
-		$compact['totalresults'] = @ $this->xml['Items']['TotalResults'];
-		$compact['totalpages'] = @ $this->xml['Items']['TotalPages'];
-
-		$items = @ $this->xml['Items']['Item'];
+		$compact['request'] = (isset($this->xml['Items']['Request']))? $this->xml['Items']['Request'] : NULL;
+		$compact['totalresults'] = (isset($this->xml['Items']['TotalResults']))? $this->xml['Items']['TotalResults'] : NULL;
+		$compact['totalpages'] = (isset($this->xml['Items']['TotalPages']))? $this->xml['Items']['TotalPages'] : NULL;
+		
+		if (! $compact['totalresults'] && isset($compact['request']['Errors']['Error']['Code']) && $compact['request']['Errors']['Error']['Code'] === 'AWS.ECommerceService.NoExactMatches') {
+			$compact['totalresults'] = 0;
+		}
+		
+		$items = (isset($this->xml['Items']['Item']))? $this->xml['Items']['Item'] : NULL;
 		if ($items) {
 			$this->check_array($items);
 			foreach ($items as $item) {
@@ -652,12 +656,43 @@ class HypSimpleAmazon
 	
 	function HMAC_SHA256_encode($data, $key) {
 		if (! $key) return '';
-		if (function_exists('hash_hmac') && function_exists('hash_algos') && (in_array('sha256', hash_algos()))) {
+		if (defined('HYP_SHA256INC_INCLUDED') || (function_exists('hash_hmac') && function_exists('hash_algos') && (in_array('sha256', hash_algos())))) {
 			return base64_encode(hash_hmac('sha256' , $data, $key, TRUE));
 		} else if (function_exists('mhash') && defined('MHASH_SHA256')) {
 			return base64_encode(mhash(MHASH_SHA256 , $data, $key));
 		} else {
 			return '';
+		}
+	}
+}
+
+if (!function_exists('hash_hmac') && !(function_exists('mhash') && defined('MHASH_SHA256'))) {
+	// for PHP4
+	define('HYP_SHA256INC_INCLUDED', TRUE);
+	require_once dirname(dirname(__FILE__)) . '/sha256.inc.php';
+	function hash_hmac($algo, $data, $key, $raw_output=False) {
+		// RFC 2104 HMAC implementation for php.
+		// Creates a sha256 HMAC.
+		// Eliminates the need to install mhash to compute a HMAC
+		// Hacked by Lance Rushing
+		// source: http://www.php.net/manual/en/function.mhash.php
+		// modified by Ulrich Mierendorff to work with sha256 and raw output
+
+		$b = 64; // block size of md5, sha256 and other hash functions
+		if (strlen($key) > $b) {
+			$key = pack("H*",$algo($key));
+		}
+		$key = str_pad($key, $b, chr(0x00));
+		$ipad = str_pad('', $b, chr(0x36));
+		$opad = str_pad('', $b, chr(0x5c));
+		$k_ipad = $key ^ $ipad ;
+		$k_opad = $key ^ $opad;
+
+		$hmac = $algo($k_opad . pack("H*", $algo($k_ipad . $data)));
+		if ($raw_output) {
+			return pack("H*", $hmac);
+		} else {
+			return $hmac;
 		}
 	}
 }
