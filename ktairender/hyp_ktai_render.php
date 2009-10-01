@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.42 2009/06/25 23:45:22 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.43 2009/10/01 23:27:34 nao-pon Exp $
  */
 
 if (! function_exists('XC_CLASS_EXISTS')) {
@@ -533,7 +533,7 @@ class HypKTaiRender
 		}
 		
 		// css property
-		$reg = '#(<[^>]+?style=[\'"][^\'"]*?)\s*(?<!-)(?:display:\s*non|width|height|margin|padding|float|position|left|top|right|bottom|clear|overflow)[^;\'"]+(?:[ ;]+)?([^>]*>)#iS';
+		$reg = '#(<[^>]+?style=[\'"][^\'"]*?)\s*(?<!-)(?:display:\s*non|width|height|margin|padding|float|position|left|top|right|bottom|overflow)[^;\'"]+(?:[ ;]+)?([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
