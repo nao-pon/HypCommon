@@ -8,9 +8,9 @@ class HypSimpleAmazon
 	var $SecretAccessKey = '';
 	var $ResponseGroup = 'ItemAttributes,Images,Offers,Variations';
 	var $SearchIndex = 'Blended';
-	var $Version = '2009-03-31';
+	var $Version = '2009-10-01';
 	var $AssociateTag = '';
-	var $restHost = 'webservices.amazon.co.jp';
+	var $restHost = 'ecs.amazonaws.jp';
 	var $restPath = '/onca/xml';
 	var $searchHost = 'www.amazon.co.jp';
 	var $searchQuery = '/gp/search?ie=UTF8&amp;index=blended&amp;linkCode=ur2&amp;camp=247&amp;creative=1211';
@@ -20,6 +20,10 @@ class HypSimpleAmazon
 	var $templates = array();
 	var $error = '';
 	var $CompactArrayRemoveAdult = FALSE;
+	var $cacheDir = '';
+	var $OneRequestPerSec = TRUE;
+	var $retry_interval = 250; //(ms)
+	var $retry_count = 20;
 	
 	var $configs = array(
 		'makeLinkSearch' => array(
@@ -89,28 +93,43 @@ class HypSimpleAmazon
 		
 		$url = 'http://' . $this->restHost . $this->restPath . '?' . $query . $signature;
 		
-		$ht = new Hyp_HTTP_Request();
-		$ht->init();
-		$this->url = $ht->url = $url;
-		$ht->get();
-
-		if ($ht->rc === 200 || $ht->rc === 403) {
-			$data = $ht->data;
-
-			$xm = new HypSimpleXML();
-
-			$this->xml = $xm->XMLstr_in($data);
-			//var_dump($this->xml);exit();
-			if ($xm->error) {
-				$this->error = $xm->error;
-			} else if ($error = @ $this->xml['Items']['Request']['Errors']['Error']) {
-				$this->error = $error['Message'];
-			} else if ($error = @ $this->xml['Error']) {
-				$this->error = $error['Code'] . ': ' . $error['Message'];
+		$timer = $this->cacheDir . 'hyp_hsa_' . $this->AccessKeyId . '.timer';
+		$loop = 0;
+		if ($this->OneRequestPerSec) {
+			while($loop < $this->retry_count && is_file($timer) && filemtime($timer) >= time()){
+				$loop++;
+				clearstatcache();
+				usleep($this->retry_interval * 1000); // 250ms
 			}
-		} else {
+		}
+		if ($this->OneRequestPerSec && $loop >= $this->retry_count) {
 			$this->xml = '';
-			$this->error = 'HTTP Error: ' . $ht->rc;
+			$this->error = 'Request Error: Too busy.';
+		} else {
+			if ($this->OneRequestPerSec) @touch($timer);
+			$ht = new Hyp_HTTP_Request();
+			$ht->init();
+			$this->url = $ht->url = $url;
+			$ht->get();
+
+			if ($ht->rc === 200 || $ht->rc === 403) {
+				$data = $ht->data;
+
+				$xm = new HypSimpleXML();
+
+				$this->xml = $xm->XMLstr_in($data);
+				//var_dump($this->xml);exit();
+				if ($xm->error) {
+					$this->error = $xm->error;
+				} else if ($error = @ $this->xml['Items']['Request']['Errors']['Error']) {
+					$this->error = $error['Message'];
+				} else if ($error = @ $this->xml['Error']) {
+					$this->error = $error['Code'] . ': ' . $error['Message'];
+				}
+			} else {
+				$this->xml = '';
+				$this->error = 'HTTP Error: ' . $ht->rc;
+			}
 		}
 	}
 	
@@ -119,31 +138,31 @@ class HypSimpleAmazon
 		$this->Location = $loc;
 		switch($loc) {
 			case 'JP':
-				$this->restHost = 'webservices.amazon.co.jp';
+				$this->restHost = 'ecs.amazonaws.jp';
 				$this->searchHost = 'www.amazon.co.jp';
 				break;
 			case 'US':
-				$this->restHost = 'webservices.amazon.com';
+				$this->restHost = 'ecs.amazonaws.com';
 				$this->searchHost = 'www.amazon.com';
 				break;
 			case 'UK':
-				$this->restHost = 'webservices.amazon.co.uk';
+				$this->restHost = 'ecs.amazonaws.co.uk';
 				$this->searchHost = 'www.amazon.co.uk';
 				break;
 			case 'DE':
-				$this->restHost = 'webservices.amazon.de';
+				$this->restHost = 'ecs.amazonaws.de';
 				$this->searchHost = 'www.amazon.de';
 				break;
 			case 'FR':
-				$this->restHost = 'webservices.amazon.fr';
+				$this->restHost = 'ecs.amazonaws.fr';
 				$this->searchHost = 'www.amazon.fr';
 				break;
 			case 'CA':
-				$this->restHost = 'webservices.amazon.ca';
+				$this->restHost = 'ecs.amazonaws.ca';
 				$this->searchHost = 'www.amazon.ca';
 				break;
 			default :
-				$this->restHost = 'webservices.amazon.com';
+				$this->restHost = 'ecs.amazonaws.com';
 				$this->searchHost = 'www.amazon.com';
 				$this->Location = 'US';
 		}
@@ -237,6 +256,7 @@ class HypSimpleAmazon
 		$this->searchKey = '';
 		$this->newestTime = 0;
 		$this->error = '';
+		if (! $this->cacheDir) $this->cacheDir = (defined(XOOPS_TRUST_PATH)? XOOPS_TRUST_PATH : dirname(dirname(dirname(dirname(__FILE__))))) . '/cache/';
 	}
 	
 	function itemSearch($key, $options = array()) {
@@ -552,7 +572,7 @@ class HypSimpleAmazon
 		return $img;
 	}
 
-	function get_presenter($item) {
+	function get_presenter($item, $retArray = FALSE) {
 		$author = '';
 		if (@ $item['ItemAttributes']['Artist']) {
 			$author = $item['ItemAttributes']['Artist'];
@@ -567,6 +587,7 @@ class HypSimpleAmazon
 		}
 		if ($author) {
 			$this->check_array($author);
+			if ($retArray) return $author;
 			$author = $this->makeSearchLink($author, '', FALSE);
 			$author = 'by: '. join(', ', $author);
 		}
@@ -575,13 +596,20 @@ class HypSimpleAmazon
 	
 	function get_creators($item) {
 		$creators = array();
+		$dones = array();
 		if (@ $item['ItemAttributes']['Creator']) {
 			$this->check_array($item['ItemAttributes']['Creator']);
 			foreach($item['ItemAttributes']['Creator'] as $dat) {
 				$creators[$dat['Role']][] = $this->makeSearchLink($dat['content'], '', FALSE);
+				$dones[$dat['content']] = TRUE;
 			}
-		} else if (@ $item['ItemAttributes']['Manufacturer']) {
-			$creators['by'][] = $this->makeSearchLink($item['ItemAttributes']['Manufacturer'], '', FALSE);
+		}
+		if ($presenter = $this->get_presenter($item, TRUE)) {
+			foreach($presenter as $dat) {
+				if (! isset($dones[$dat])) {
+					$creators['by'][] = $this->makeSearchLink($dat, '', FALSE);
+				}
+			}
 		}
 		return $creators;
 	}
