@@ -284,6 +284,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			
 			include_once(dirname(dirname(__FILE__)).'/xc_classes/disabledBlock.php');
 			$this->mRoot->mDelegateManager->add( 'Legacy_Utils.CreateBlockProcedure' , array(& $this , 'blockControlXCL' )) ;
+			
+			// For STD cache module (cache disabled)
+			$this->mController->mSetBlockCachePolicy->add(array(& $this, '_stdCacheHook'), XCUBE_DELEGATE_PRIORITY_FIRST + 11);
+			$this->mController->mSetModuleCachePolicy->add(array(& $this, '_stdCacheHook'), XCUBE_DELEGATE_PRIORITY_FIRST + 11);
 		}
 	}
 
@@ -293,6 +297,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	
 	function _xoopsConfig_template_set () {
 		$GLOBALS['xoopsConfig']['template_set'] = $this->k_tai_conf['templateSet'];
+	}
+
+	function _stdCacheHook (& $cacheInfo) {
+		$cacheInfo->setEnableCache(false);
 	}
 
 	// Block Control
