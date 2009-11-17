@@ -22,22 +22,22 @@ class XCube_ActionFilter
 }
 
 class HypCommonPreLoadBase extends XCube_ActionFilter {
-	
+
 	var $configEncoding;       // Configエンコーディング
 
 	var $encodehint_word;      // POSTエンコーディング判定用文字
 	var $encodehint_name;      // POSTエンコーディング判定用 Filed name
-	
+
 	var $use_set_query_words;  // 検索ワードを定数にセット
 	var $use_words_highlight;  // 検索ワードをハイライト表示
 	var $msg_words_highlight;  // ハイライトキーワードメッセージ
-	
+
 	var $use_proxy_check;      // POST時プロキシチェックする
 	var $no_proxy_check;       // 除外IP
-	var $msg_proxy_check; 
-	
+	var $msg_proxy_check;
+
 	var $use_dependence_filter;// 機種依存文字フィルター
-	
+
 	var $use_post_spam_filter; // POST SPAM フィルター
 	var $use_mail_notify;      // POST SPAM メール通知
 	var $post_spam_a;          // <a> タグ 1個あたりのポイント
@@ -48,7 +48,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	var $post_spam_filed;      // Spam 無効フィールドの加算ポイント
 	var $post_spam_trap;       // Spam 罠用無効フィールド名
 	var $post_spam_trap_set;   // 無効フィールドの罠を自動で仕掛ける
-		
+
 	var $post_spam_user;       // POST SPAM 閾値: ログインユーザー
 	var $post_spam_guest;      // POST SPAM 閾値: ゲスト
 	var $post_spam_rules;      // コンストラクタ内で設定
@@ -58,13 +58,13 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	var $q_word2;              // 検索ワード分かち書き
 	var $se_name;              // 検索元名
 	var $kakasi_cache_dir;
-	
+
 	var $wizMobileUse = FALSE;
 	var $detect_order_org = array();
-	
+
 	// コンストラクタ
 	function HypCommonPreLoadBase (& $controller) {
-		
+
 		if (! isset($this->use_set_query_words)) $this->use_set_query_words = 0;
 		if (! isset($this->use_words_highlight)) $this->use_words_highlight = 0;
 		if (! isset($this->use_proxy_check )) $this->use_proxy_check = 0;
@@ -73,18 +73,18 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->post_spam_trap_set)) $this->post_spam_trap_set = 0;
 		if (! isset($this->use_k_tai_render)) $this->use_k_tai_render = 0;
 		if (! isset($this->use_smart_redirect)) $this->use_smart_redirect = 0;
-				
+
 		if (! isset($this->configEncoding)) $this->configEncoding = 'ISO-8859-1';
-		
+
 		if (! isset($this->encodehint_word)) $this->encodehint_word = '';
 		if (! isset($this->encodehint_name)) $this->encodehint_name = 'HypEncHint';
 		if (! isset($this->detect_order)) $this->detect_order = 'ASCII, JIS, UTF-8, eucJP-win, EUC-JP, SJIS-win, SJIS';
-		
-		if (! isset($this->msg_words_highlight)) $this->msg_words_highlight = 'These key words are highlighted.'; 
-		
+
+		if (! isset($this->msg_words_highlight)) $this->msg_words_highlight = 'These key words are highlighted.';
+
 		if (! isset($this->no_proxy_check)) $this->no_proxy_check  = '/^(127\.0\.0\.1|192\.168\.1\.)/';
 		if (! isset($this->msg_proxy_check)) $this->msg_proxy_check = 'Can not post from public proxy.';
-		
+
 		if (! isset($this->use_mail_notify)) $this->use_mail_notify = 1;
 		if (! isset($this->send_mail_interval)) $this->send_mail_interval = 60;
 		if (! isset($this->post_spam_a)) $this->post_spam_a   = 1;
@@ -113,15 +113,15 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f]+/' => 31
 		);
 		if (! isset($this->ignore_fileds)) $this->ignore_fileds = array();
-		
+
 		if (! isset($this->q_word)) $this->q_word  = 'XOOPS_QUERY_WORD';
 		if (! isset($this->q_word2)) $this->q_word2 = 'XOOPS_QUERY_WORD2';
 		if (! isset($this->se_name)) $this->se_name = 'XOOPS_SEARCH_ENGINE_NAME';
-	
+
 		if (! isset($this->kakasi_cache_dir)) $this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
-		
+
 		if (! isset($this->smart_redirect_min_sec)) $this->smart_redirect_min_sec = 5;
-		
+
 		if (! isset($this->k_tai_conf['ua_regex'])) $this->k_tai_conf['ua_regex'] = '#(?:SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser|DDIPOCKET|WILLCOM)#';
 		if (! isset($this->k_tai_conf['rebuilds'])) $this->k_tai_conf['rebuilds'] = array(
 			'headerlogo'     => array( 'above' => '<center>',
@@ -180,7 +180,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->k_tai_conf['msg']['toMain'])) $this->k_tai_conf['msg']['toMain'] = 'Show main contents';
 		if (! isset($this->k_tai_conf['msg']['mainMenu'])) $this->k_tai_conf['msg']['mainMenu'] = 'Main Menu';
 		if (! isset($this->k_tai_conf['msg']['subMenu'])) $this->k_tai_conf['msg']['subMenu'] = 'Sub Menu';
-		
+
 		if (! isset($this->k_tai_conf['icon']['toMain'])) $this->k_tai_conf['icon']['toMain'] = '((e:f7e4))';
 		if (! isset($this->k_tai_conf['style']['highlight'])) $this->k_tai_conf['style']['highlight'] = 'background-color:#ffc0cb';
 		if (! isset($this->k_tai_conf['easyLoginConfPath'])) $this->k_tai_conf['easyLoginConfPath'] = '/userinfo.php';
@@ -192,22 +192,22 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->k_tai_conf['googleAdsense']['config'])) $this->k_tai_conf['googleAdsense']['config'] = XOOPS_TRUST_PATH . '/class/hyp_common/ktairender/adsenseConf.php';
 		if (! isset($this->k_tai_conf['googleAdsense']['below'])) $this->k_tai_conf['googleAdsense']['below'] = 'header';
 		if (! isset($this->k_tai_conf['googleAnalyticsId'])) $this->k_tai_conf['googleAnalyticsId'] = '';
-		
+
 		if (! isset($this->k_tai_conf['urlRewrites'])) $this->k_tai_conf['urlRewrites'] = null;
 		if (! isset($this->k_tai_conf['urlImgRewrites'])) $this->k_tai_conf['urlImgRewrites'] = null;
-		
+
 		$this->detect_order_org = mb_detect_order();
-		
+
 		parent::XCube_ActionFilter($controller);
 	}
-	
+
 	function preFilter() {
 		// Use K_TAI Render
 		if (! empty($this->use_k_tai_render)) {
 			if (isset($_SERVER['HTTP_USER_AGENT']) &&
 				preg_match($this->k_tai_conf['ua_regex'], $_SERVER['HTTP_USER_AGENT'])) {
 
-				// Reset each site values. 
+				// Reset each site values.
 				foreach (array_keys($this->k_tai_conf) as $key) {
 					if (strpos($key, '#') === FALSE) {
 						$sitekey = $key . '#' . XOOPS_URL;
@@ -218,7 +218,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				}
 
 				define('HYP_K_TAI_RENDER', TRUE);
-				
+
 				// Set HypKTaiRender
 				HypCommonFunc::loadClass('HypKTaiRender');
 				$this->HypKTaiRender =& HypKTaiRender::getSingleton();
@@ -261,7 +261,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	{
 		// Use K_TAI Render (XCL only)
 		if (defined('XOOPS_CUBE_LEGACY') && defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
-			
+
 			// Set theme set
 			if (isset($this->k_tai_conf['themeSet']) && is_file(XOOPS_THEME_PATH . '/' . $this->k_tai_conf['themeSet'] . '/theme.html')) {
 				$GLOBALS['xoopsConfig']['theme_set'] = $this->k_tai_conf['themeSet'];
@@ -281,10 +281,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			if ($moduleConfigCubeUtils) {
 	        	$moduleConfigCubeUtils['cubeUtils_use_autologin'] = FALSE;
 			}
-			
+
 			include_once(dirname(dirname(__FILE__)).'/xc_classes/disabledBlock.php');
 			$this->mRoot->mDelegateManager->add( 'Legacy_Utils.CreateBlockProcedure' , array(& $this , 'blockControlXCL' )) ;
-			
+
 			// For STD cache module (cache disabled)
 			$this->mController->mSetBlockCachePolicy->add(array(& $this, '_stdCacheHook'), XCUBE_DELEGATE_PRIORITY_FIRST + 11);
 			$this->mController->mSetModuleCachePolicy->add(array(& $this, '_stdCacheHook'), XCUBE_DELEGATE_PRIORITY_FIRST + 11);
@@ -294,7 +294,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	function _xoopsConfig_theme_set () {
 		$GLOBALS['xoopsConfig']['theme_set'] = $this->k_tai_conf['themeSet'];
 	}
-	
+
 	function _xoopsConfig_template_set () {
 		$GLOBALS['xoopsConfig']['template_set'] = $this->k_tai_conf['templateSet'];
 	}
@@ -331,11 +331,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	    }
 	    return TRUE;
 	}
-	
+
 	function postFilter() {
-		
+
 		if (defined('HYP_COMMON_SKIP_POST_FILTER')) return;
-		
+
 		// Set mb_detect_order
 		if ($this->detect_order) {
 			mb_detect_order($this->detect_order);
@@ -349,12 +349,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 		// XOOPS の表示文字エンコーディング
 		$this->encode = strtoupper(_CHARSET);
-		
+
 		// 設定ファイルのエンコーディングを検査
 		if ($this->encode !== 'UTF-8' && $this->encode !== strtoupper($this->configEncoding)) {
 			$this->encodehint_word = '';
 		}
-		
+
 		if (! empty($_GET)) {
 			// 文字コードを正規化
 			$enchint = (isset($_GET[$this->encodehint_name]))? $_GET[$this->encodehint_name] : ((isset($_GET['encode_hint']))? $_GET['encode_hint'] : '');
@@ -366,12 +366,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				}
 			}
 		}
-		
+
 		global $xoopsUser, $xoopsUserIsAdmin;
 		if (! empty($_POST)) {
 			// Input フィルター (remove "\0")
 			$_POST = HypCommonFunc::input_filter($_POST);
-			
+
 			// POST 文字列の文字エンコードを判定
 			$enchint = (isset($_POST[$this->encodehint_name]))? $_POST[$this->encodehint_name] : ((isset($_POST['encode_hint']))? $_POST['encode_hint'] : '');
 			if ($enchint && function_exists('mb_detect_encoding')) {
@@ -379,19 +379,19 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			} else if (isset($_POST['charset'])) {
 				define ('HYP_POST_ENCODING', strtoupper($_POST['charset']));
 			}
-			
+
 			// 携帯レンダーの場合絵文字変換
-			if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
+			if ((defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) || isset($_SERVER['HTTP_X_ORIGINAL_USER_AGENT'])) {
 				$_POST = $this->_modKtaiEmojiEncode($_POST);
 			}
-			
+
 			// Proxy Check
 			if ($this->use_proxy_check) {
 				if (! defined('HYP_K_TAI_RENDER') || ! HYP_K_TAI_RENDER || ! $this->HypKTaiRender->vars['ua']['inIPRange']) {
 					HypCommonFunc::BBQ_Check($this->no_proxy_check, $this->msg_proxy_check, NULL, $this->post_spam_checkers);
 				}
 			}
-			
+
 			// 文字エンコーディング外の文字を数値エンティティに変換
 			if (defined('HYP_POST_ENCODING') && HYP_POST_ENCODING === 'UTF-8' && $this->encode !== 'UTF-8') {
 				HypCommonFunc::encode_numericentity($_POST, $this->encode, 'UTF-8');
@@ -401,7 +401,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			if (defined('HYP_POST_ENCODING') && $this->use_dependence_filter) {
 				$_POST = HypCommonFunc::dependence_filter($_POST);
 			}
-			
+
 			// 文字コードを正規化
 			if (defined('HYP_POST_ENCODING') && $this->encode !== HYP_POST_ENCODING) {
 				mb_convert_variables($this->encode, HYP_POST_ENCODING, $_POST);
@@ -418,7 +418,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 						}
 					}
 				}
-				
+
 				// 無効なフィールド定義
 				if (! empty($this->post_spam_trap)) {
 					$this->ignore_fileds[$this->post_spam_trap] = array('');
@@ -426,13 +426,13 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				if (is_array($this->ignore_fileds) && $this->ignore_fileds) {
 					HypCommonFunc::PostSpam_filter('array_rule', array('ignore_fileds' => array($this->ignore_fileds, $this->post_spam_filed)));
 				}
-				
+
 				// PukiWikiMod のスパム定義読み込み 31pt
 				$datfile = XOOPS_ROOT_PATH.'/modules/pukiwiki/cache/spamdeny.dat';
 				if (is_file($datfile)) {
 					HypCommonFunc::PostSpam_filter("/".trim(join("",file($datfile)))."/i", 31);
 				}
-				
+
 				// Default スパムサイト定義読み込み
 				$datfiles = array();
 				$datfiles[] = dirname(dirname(__FILE__)) . '/spamsites.dat';
@@ -457,7 +457,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 						HypCommonFunc::PostSpam_filter('/((ht|f)tps?:\/\/(.+\.)*|@|url=)' . $reg . '/i', $this->post_spam_host);
 					}
 				}
-				
+
 				// Default スパムワード定義読み込み
 				$datfiles = array();
 				$datfiles[] = dirname(dirname(__FILE__)) . '/spamwords.dat';
@@ -482,7 +482,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 						HypCommonFunc::PostSpam_filter('/' . $reg . '/i', $this->post_spam_word);
 					}
 				}
-				
+
 				// 判定
 				if (!$xoopsUserIsAdmin) {
 					// 閾値
@@ -499,10 +499,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				}
 			}
 		}
-		
+
 		// Use K_TAI Render
 		if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
-			
+
 			// docomo i-mode ID のチェック
 			$idCheck = $this->HypKTaiRender->checkDeviceId( XOOPS_DB_PASS );
 			if ($idCheck === 'redirect') {
@@ -514,13 +514,13 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 			// Redirect 指定ファイルの確認 ( by _onShutdownKtai() )
 			$this->_checkRedirectFile();
-			
+
 			// Check login
 			$this->_checkEasyLogin();
-			
+
 			// Setup session ID
 			$this->HypKTaiRender->setupSID();
-			
+
 			// HTTP_REFERER
 			if (empty($this->HypKTaiRender->SERVER['HTTP_REFERER'])) {
 				if (! empty($_SESSION['hypKtaiReferer'])) {
@@ -534,7 +534,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			if (isset($_SERVER['HTTP_REFERER'])) {
 				$_SERVER['HTTP_REFERER'] = $this->HypKTaiRender->removeQueryFromUrl($_SERVER['HTTP_REFERER'], array($this->HypKTaiRender->session_name, 'guid'));
 			}
-			
+
 			// Remove control keys
 			$this->k_tai_conf['getKeys'][] = $this->HypKTaiRender->session_name;
 			$this->k_tai_conf['getKeys'][] = 'guid';
@@ -549,7 +549,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					$_SERVER[$_key] = $this->HypKTaiRender->removeQueryFromUrl($_SERVER[$_key], $this->k_tai_conf['getKeys']);
 				}
 			}
-			
+
 			// $this->k_tai_conf['msg'] 文字コード変換
 			if ($this->encode !== strtoupper($this->configEncoding)) {
 				if (function_exists('mb_convert_encoding') && $this->configEncoding && $this->encode !== $this->configEncoding) {
@@ -599,7 +599,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			if (! empty($this->use_smart_redirect)) {
 				ob_start(array(& $this, 'smartRedirect'));
 			}
-			
+
 			// <from> Filter
 			if (! $this->wizMobileUse) {
 				ob_start(array(& $this, 'formFilter'));
@@ -609,8 +609,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				ob_start(array(& $this, 'emojiFilter'));
 			}
 		}
-		
-		
+
+
 		// Set Query Words
 		if ($this->use_set_query_words) {
 			HypCommonFunc::set_query_words($this->q_word, $this->q_word2, $this->se_name, $this->kakasi_cache_dir, $this->encode);
@@ -618,13 +618,13 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				ob_start(array(& $this, 'obFilter'));
 			}
 		}
-		
+
 		// Restor mb_detect_order
 		if ($this->detect_order_org) {
 			mb_detect_order($this->detect_order_org);
 		}
 	}
-	
+
 	function _onShutdownKtai() {
 		if (! $this->HypKTaiRender->vars['ua']['allowCookie']) {
 			$url = '';
@@ -663,7 +663,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 		}
 	}
-	
+
 	function _checkEasyLogin () {
 		if (empty($_SESSION['xoopsUserId'])) {
 			$this->HypKTaiRender->vars['ua']['xoopsUid'] = 0;
@@ -676,14 +676,14 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				exit('Your IP "' . $_SERVER['REMOTE_ADDR'] . '" doesn\'t match to IP range of "'.$this->HypKTaiRender->vars['ua']['carrier'].'".');
 			}
 		}
-		
+
 		if (! empty($this->k_tai_conf['easyLogin'])) {
-			
+
 			if (isset($_GET['_EASYLOGIN']) || ($this->HypKTaiRender->vars['ua']['xoopsUid'] && (isset($_GET['_EASYLOGINSET']) || isset($_GET['_EASYLOGINUNSET'])))) {
 				if (empty($this->HypKTaiRender->vars['ua']['uid'])) {
 						exit('Could not got your device ID.');
 				}
-				
+
 				if (empty($this->k_tai_conf['noCheckIpRange']) && ! $this->HypKTaiRender->vars['ua']['inIPRange']) {
 					exit('Your IP "' . $_SERVER['REMOTE_ADDR'] . '" doesn\'t match to IP range of "'.$this->HypKTaiRender->vars['ua']['carrier'].'".');
 				}
@@ -696,9 +696,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				} else if (isset($_GET['_EASYLOGINUNSET'])) {
 					$mode = 'unset';
 				}
-				
+
 				$uaUid = md5($this->HypKTaiRender->vars['ua']['uid'] . XOOPS_DB_PASS);
-				
+
 				// Read data file
 				$myroot = str_replace('/', '_', preg_replace('#https?://#i', '', XOOPS_URL));
 				$datfile = XOOPS_TRUST_PATH . '/cache/' . $myroot . '_easylogin.dat';
@@ -717,7 +717,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 							$uids[$uaUid] = $this->HypKTaiRender->vars['ua']['xoopsUid'];
 						}
 						HypCommonFunc::flock_put_contents($datfile, serialize($uids));
-						
+
 						$uri = $this->HypKTaiRender->SERVER['REQUEST_URI'];
 						//$uri = $this->HypKTaiRender->removeSID($uri);
 						$url = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->removeQueryFromUrl($uri, array($this->HypKTaiRender->session_name, 'guid', '_EASYLOGIN', '_EASYLOGINSET', '_EASYLOGINUNSET'));
@@ -728,13 +728,13 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					}
 				} else if ($mode === 'login') {
 					// Do easy login
-					
+
 					$uri = $this->HypKTaiRender->SERVER['REQUEST_URI'];
 					$uri = $this->HypKTaiRender->removeSID($uri);
-					
+
 					// Default is login form
 					$url = XOOPS_URL . '/user.php?xoops_redirect=' . rawurlencode($uri);
-					
+
 					if (! empty($uids[$uaUid])) {
 				        // Login success
 				        $member_handler =& xoops_gethandler('member');
@@ -744,7 +744,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 							// Update last login
 							$user->setVar('last_login', time());
 							$member_handler->insertUser($user, TRUE);
-							
+
 							// Set session vars
 							$_SESSION['xoopsUserId'] = $uids[$uaUid];
 							$_SESSION['xoopsUserGroups'] = $user->getGroups();
@@ -752,7 +752,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 							if (in_array($user_theme, $GLOBALS['xoopsConfig']['theme_set_allowed'])) {
 								$_SESSION['xoopsUserTheme'] = $user_theme;
 							}
-							
+
 							$url = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->removeQueryFromUrl($uri, array($this->HypKTaiRender->session_name, 'guid', '_EASYLOGIN'));
 							$config_handler =& xoops_gethandler('config');
 							$xoopsConfig =& $config_handler->getConfigsByCat(XOOPS_CONF);
@@ -786,7 +786,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 		}
 	}
-	
+
 	function _modKtaiEmojiEncode ($vars) {
 		if (is_array($vars)) {
 			foreach($vars as $key=>$var) {
@@ -796,17 +796,18 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 		static $mpc;
 		static $to;
-		
+		static $euc = FALSE;
+
 		$to = $mpc = NULL;
-		
-		if (! XC_CLASS_EXISTS('MobilePictogramConverter')) {
-			HypCommonFunc::loadClass('MobilePictogramConverter');
-		}
-		
+
 		if (is_null($mpc)) {
+			if (! XC_CLASS_EXISTS('MobilePictogramConverter')) {
+				HypCommonFunc::loadClass('MobilePictogramConverter');
+			}
+
 			$carrier = '';
 			$mpc = '';
-			
+
 			$from_encode = '';
 			switch (HYP_POST_ENCODING) {
 				case 'UTF-8':
@@ -820,13 +821,39 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				case 'SJIS-WIN':
 					$from_encode = MPC_FROM_CHARSET_SJIS;
 					break;
+				case 'EUCJP-WIN':
+				case 'EUC-JP':
+					$euc = TRUE;
+					$from_encode = MPC_FROM_CHARSET_SJIS; // fake
+					// EUC-JP なフォームからで絵文字が化けている場合に備えて除去。結果的に絵文字対応できない。
+					$vars = preg_replace('/[\x00-\x08\x11-\x12\x14-\x1f\x7f]+/', '', $vars);
+					if ($vars !== $vars) {
+						$from_encode = '';
+					}
+					break;
 			}
-			
+
 			if ($from_encode) {
-				switch ($this->HypKTaiRender->vars['ua']['carrier']) {
+				$check = '';
+				if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
+					$check = $this->HypKTaiRender->vars['ua']['carrier'];
+				} else {
+					$ua = $_SERVER['HTTP_X_ORIGINAL_USER_AGENT'];
+					if (preg_match('#(?:(SoftBank|Vodafone|J-PHONE)|(DoCoMo)|(UP\.Browser))#i', $ua, $match)) {
+						if (! empty($match[1])) {
+							$check = 'softbank';
+						} else if (! empty($match[2])) {
+							$check = 'docomo';
+						} else {
+							$check = 'au';
+						}
+					}
+				}
+				switch ($check) {
 					case 'docomo':
 						$to = MPC_TO_FOMA;
 						$carrier = MPC_FROM_FOMA;
+
 						break;
 					case 'softbank':
 						$to = MPC_TO_SOFTBANK;
@@ -836,29 +863,35 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 						$to = MPC_TO_EZWEB;
 						$carrier = MPC_FROM_EZWEB;
 						break;
+					default:
+						$carrier = '';
 				}
 				if ($carrier) {
 					$mpc =& MobilePictogramConverter::factory('', $carrier, $from_encode, MPC_FROM_OPTION_RAW);
 				}
 			}
 		}
-		
-		if (! $mpc) return $vars;
-		
-		$mpc->setString($vars);
-		return $mpc->Convert($to, MPC_TO_OPTION_MODKTAI);
+
+		if (! $mpc || ! $vars) return $vars;
+
+		if ($euc) {
+			return $mpc->euc2ktaimod($vars);
+		} else {
+			$mpc->setString($vars);
+			return $mpc->Convert($to, MPC_TO_OPTION_MODKTAI);
+		}
 	}
-	
+
 	function obFilter( $s ) {
-		
+
 		if ($s === '' || strpos($s, '<html') === FALSE) return $s;
-		
+
 		if (function_exists('mb_convert_encoding') && $this->configEncoding && $this->encode !== $this->configEncoding) {
 			$this->msg_words_highlight = mb_convert_encoding($this->msg_words_highlight, $this->encode, $this->configEncoding);
 		}
-		return HypGetQueryWord::word_highlight($s, constant($this->q_word2), $this->encode, $this->msg_words_highlight);
+		return HypGetQueryWord::word_highlight($s, (defined($this->q_word2)? constant($this->q_word2) : constant($this->q_word)), $this->encode, $this->msg_words_highlight);
 	}
-	
+
 	function smartRedirect( $s ) {
 		$part = substr($s, 0, 4096);
 		if ($s === '' || strpos($part, '<html') === FALSE) return $s;
@@ -903,7 +936,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	btn.style.cursor = 'pointer';
 	btn.value = 'OK ( ' + wait + ' sec to Close )';
 	btn.onclick = function(){elm.style.display = 'none'};
-	elm.appendChild(btn);	
+	elm.appendChild(btn);
 }($wait));
 //]]>
 </script>
@@ -929,13 +962,13 @@ EOD;
 			return $s;
 		}
 	}
-	
+
 	function formFilter( $s ) {
-		
+
 		if ($s === '' || strpos($s, '<html') === FALSE) return $s;
-		
+
 		$insert = '';
-		
+
 		// スパムロボット用の罠を仕掛ける
 		if (! empty($this->post_spam_trap_set)) {
 			$insert .= "\n<input name=\"{$this->post_spam_trap}\" type=\"text\" size=\"1\" style=\"display:none;speak:none;\" autocomplete=\"off\" />";
@@ -956,7 +989,7 @@ EOD;
 		}
 		return $s;
 	}
-	
+
 	function keitaiFilter ( $s ) {
 
 		if ($s === '') return;
@@ -964,9 +997,9 @@ EOD;
 		$head = $header = $body = $footer = $pagetitle = '';
 		$header_template = $body_template = $footer_template = '';
 		$encode = '';
-		
+
 		$rebuilds = $this->k_tai_conf['rebuilds'];
-		
+
 		// テンプレート読み込み
 		if ($rebuilds && $this->k_tai_conf['template']) {
 			$templates_dir = dirname(dirname( __FILE__ )) . '/ktairender/templates/' . $this->k_tai_conf['template']  . '/';
@@ -977,7 +1010,7 @@ EOD;
 				}
 			}
 		}
-		
+
 		// Is RSS?
 		if (preg_match('/<(?:feed.+?<entry|(?:(?:rss|rdf).+?<channel))/isS', $s)) {
 			HypCommonFunc::loadClass('HypRss2Html');
@@ -987,7 +1020,7 @@ EOD;
 			//$s = mb_convert_encoding($s, $this->encode, $r->encoding);
 			$encode = $r->encoding;
 		}
-		
+
 		// preg_match では、サイズが大きいページで正常処理できないことがあるので。
 		$arr1 = explode('<head', $s, 2);
 		if (isset($arr1[1]) && strpos($arr1[1], '</head>') !== FALSE) {
@@ -1001,12 +1034,12 @@ EOD;
 		}
 
 		$r =& $this->HypKTaiRender;
-		
+
 		if ($head && ! $encode) {
 			$encode = HypCommonFunc::get_encoding_by_meta($head, TRUE);
 		}
 		if (! $encode) $encode = $this->encode;
-		
+
 		if ($body) {
 			// 無視する部分(<!--HypKTaiIgnore-->...<!--/HypKTaiIgnore-->)を削除
 			while(strpos($body, '<!--HypKTaiIgnore-->') !== FALSE) {
@@ -1058,16 +1091,16 @@ EOD;
 				}
 				$body .= '<!--blockMenu-->' . join(' / ', $block_menu) . '<!--/blockMenu-->';
 			}
-			
+
 			if ($rebuilds) {
 				$parts = array();
 				$found = FALSE;
-				
+
 				if (! empty($_SESSION['hyp_redirect_message'])){
 					$body = '<!--redirectMessage-->' . $_SESSION['hyp_redirect_message'] . '<!--/redirectMessage-->' . $body;
 					unset($_SESSION['hyp_redirect_message']);
 				}
-				
+
 				if (isset($_GET[$this->k_tai_conf['getKeys']['block']]) && isset($blocks[$_GET[$this->k_tai_conf['getKeys']['block']]])) {
 					$body .= '<!--toMain-->' . $this->k_tai_conf['icon']['toMain'].'<a href="'.$base.'">' . $this->k_tai_conf['msg']['toMain'] . '</a><!--/toMain-->';
 					$body .= '<!--blockContent--><ns>' . $blocks[$_GET[$this->k_tai_conf['getKeys']['block']]]['content'] . '</ns><!--/blockContent-->';
@@ -1087,7 +1120,7 @@ EOD;
 						}
 					}
 				}
-				
+
 				if ($found) {
 					if (isset($_GET[$this->k_tai_conf['getKeys']['block']]) && isset($blocks[$_GET[$this->k_tai_conf['getKeys']['block']]])) {
 						if (empty($parts['content'])) {
@@ -1125,7 +1158,7 @@ EOD;
 								$uname = '<a href="' . XOOPS_URL . '/userinfo.php?uid=' . $this->HypKTaiRender->vars['ua']['xoopsUid'] . $guid . '">' . $uname . '</a>';
 							}
 							$easylogin = $uname . ' <a href="' . XOOPS_URL . '/user.php?op=logout">' . $this->k_tai_conf['msg']['logout'] . '</a>';
-							
+
 							// 簡単ログイン:設定 or 解除
 							if (isset($this->k_tai_conf['easyLoginConfPath']) && isset($this->k_tai_conf['easyLoginConfuid'])) {
 								$purl = parse_url(XOOPS_URL);
@@ -1134,9 +1167,9 @@ EOD;
 									$nowpath = preg_replace('#^' . $purl['path'] . '#', '', $nowpath);
 								}
 								if (strpos($nowpath, $this->k_tai_conf['easyLoginConfPath']) === 0 && $this->HypKTaiRender->vars['ua']['xoopsUid'] == @ $_GET[$this->k_tai_conf['easyLoginConfuid']]) {
-									
+
 									$uaUid = md5($r->vars['ua']['uid'] . XOOPS_DB_PASS);
-									
+
 									// Read easy login data file
 									$myroot = str_replace('/', '_', preg_replace('#https?://#i', '', XOOPS_URL));
 									$datfile = XOOPS_TRUST_PATH . '/cache/' . $myroot . '_easylogin.dat';
@@ -1145,7 +1178,7 @@ EOD;
 									} else {
 										$uids = array();
 									}
-	
+
 									if (isset($uids[$uaUid])) {
 										$add = '_EASYLOGINUNSET';
 										$msg = 'easyloginUnset';
@@ -1153,7 +1186,7 @@ EOD;
 										$add = '_EASYLOGINSET';
 										$msg = 'easyloginSet';
 									}
-									
+
 									if ($r->vars['ua']['carrier'] === 'docomo') {
 										$add .= '&guid=on';
 									}
@@ -1172,7 +1205,7 @@ EOD;
 						$body_template = str_replace('<' . $id . '>', $parts[$id], $body_template);
 						$footer_template = str_replace('<' . $id . '>', $parts[$id], $footer_template);
 					}
-					
+
 					if ($header_template) $header = $header_template;
 					if ($body_template) $body = $body_template;
 					if ($footer_template) $footer = $footer_template;
@@ -1195,7 +1228,7 @@ EOD;
 				header('Location: ' .$url);
 				return '';
 			}
-			
+
 			// Check RSS
 			$rss = array();
 			if (preg_match_all('#<link([^>]+?)>#iS', $head, $match)) {
@@ -1215,7 +1248,7 @@ EOD;
 			if ($rss) {
 				$body = '<div style="font-size:0.9em">' . $r->Config_icons['RSS'] . join('<br />' . $r->Config_icons['RSS'], $rss) . '</div>' . $body;
 			}
-			
+
 			$_head = '<head>';
 			if (preg_match('#<title[^>]*>(.*)</title>#isUS', $head, $match)) {
 				$pagetitle = $match[1];
@@ -1227,7 +1260,7 @@ EOD;
 			$_head .= '</head>';
 			$head = $_head;
 		}
-		
+
 		// Remove  xoopsCode buttons & Smilies buttons.
 		if (strpos($body, '<div id="message_bbcode_buttons_pre"') !== FALSE) {
 			$body = preg_replace('#<div id="message_bbcode_buttons_pre".+?/div>#sS', '', $body);
@@ -1239,51 +1272,51 @@ EOD;
 			$body = preg_replace('#<a name=\'moresmiley\'>.+?<textarea#sS', '<textarea', $body);
 			$body = preg_replace('#(?:<img |<a href="\#" )onclick=\'xoopsCodeSmilie\(.+?</a>\]#sS', '', $body);
 		}
-		
+
 		if ($r->vars['ua']['carrier'] === 'docomo') {
 			$body = preg_replace('/<form[^>]+?user\.php[^>]+?>/isS', '$0<input type="hidden" name="guid" value="ON">', $body);
 		}
-		
+
 		$googleAnalytics = '';
 		if ($this->k_tai_conf['googleAnalyticsId']) {
 			$googleAnalytics = $r->googleAnalyticsGetImgTag($this->k_tai_conf['googleAnalyticsId'], $pagetitle);
 		}
-		
+
 		$r->contents['header'] = $header . $googleAnalytics;
 		$r->contents['body'] = $body;
 		$r->contents['footer'] = $footer;
-		
+
 		$r->inputEncode = $encode;
 		$r->outputEncode = 'SJIS';
 		$r->outputMode = 'xhtml';
 		$r->langcode = _LANGCODE;
-		
+
 		$r->doOptimize();
-		
+
 		// Set <body> attribute
 		$bodyAttr = ($this->k_tai_conf['bodyAttribute'])? ' ' . trim($this->k_tai_conf['bodyAttribute']) : '';
 		if (! empty($r->vars['ua']['bodyAttribute'])) {
 			$bodyAttr = ' ' . trim($r->vars['ua']['bodyAttribute']);
 		}
-		
+
 		$s = $r->getHtmlDeclaration() . $head . '<body' . $bodyAttr . '>' . $r->outputBody . '</body></html>';
-		
+
 		$ctype = $r->getOutputContentType();
 
 		$r = NULL;
 		unset($r);
-		
+
 		header('Content-Type: ' . $ctype . '; charset=Shift_JIS');
 		header('Content-Length: ' . strlen($s));
 		header('Cache-Control: no-cache');
-		
+
 		return $s;
 	}
-	
+
 	function emojiFilter ($str) {
-		
+
 		if ($str === '' || strpos($str, '<html') === FALSE) return $str;
-		
+
 		if (preg_match('/\(\([eisv]:[0-9a-f]{4}\)\)|\[emj:\d{1,4}(?::(?:im|ez|sb))?\]/S', $str)) {
 			if (! XC_CLASS_EXISTS('MobilePictogramConverter')) {
 				HypCommonFunc::loadClass('MobilePictogramConverter');
@@ -1293,15 +1326,15 @@ EOD;
 			$mpc->setString($str, FALSE);
 			$str = $mpc->autoConvertModKtai();
 		}
-		
+
 		return $str;
 	}
-	
+
 	function sendMail ($spamlev) {
-		
+
 		global $xoopsUser;
 		$info = array();
-		
+
 		$info['TIME'] = date('r', time());
 		if (is_object($xoopsUser)) {
 			$info['UID'] = (int)$xoopsUser->uid();
@@ -1315,13 +1348,13 @@ EOD;
 		$info['HTTP_USER_AGENT'] = $_SERVER['HTTP_USER_AGENT'];
 		$info['REMOTE_ADDR'] = $_SERVER['REMOTE_ADDR'];
 		$info['SPAM LEVEL'] = $spamlev;
-		
+
 		$_info = '';
 		foreach($info as $key => $value)
 			$_info .= $key . ': ' . $value . "\n";
 
 		$_info .= str_repeat('-', 30) . "\n";
-		
+
 		$post = $_POST;
 		// Key:excerpt があればトラックかも->文字コード変換
 		if (isset($post['excerpt']) && function_exists('mb_convert_variables')) {
@@ -1337,10 +1370,10 @@ EOD;
 				mb_convert_variables($this->encode, 'auto', $post);
 			}
 		}
-		
+
 		$message = $_info . '$_POST :' . "\n" . print_r($post, TRUE);
 		$message .= "\n" . str_repeat('=', 30) . "\n\n";
-		
+
 		if ($this->send_mail_interval) {
 			$mail_tmp = XOOPS_TRUST_PATH . '/cache/' . str_replace('/', '_', preg_replace('#https?://#i', '', XOOPS_URL)) . '.SPAM.hyp';
 			if (! file_exists($mail_tmp)) {
@@ -1359,10 +1392,10 @@ EOD;
 				}
 			}
 		}
-		
+
 		$config_handler =& xoops_gethandler('config');
 		$xoopsConfig =& $config_handler->getConfigsByCat(XOOPS_CONF);
-		
+
 		$subject = '[' . $xoopsConfig['sitename'] . '] POST Spam Report';
 
 		$xoopsMailer =& getMailer();
@@ -1376,7 +1409,7 @@ EOD;
 		$xoopsMailer->reset();
 
 	}
-	
+
 	function googleAnalyticsFilter ($str) {
 		if (strpos($str, 'var pageTracker = _gat._getTracker(') !== FALSE) {
 			if (preg_match('#<script.+?_gat\._getTracker\("([^"]+?)"\).+?</script>#sS', $str, $match)) {
@@ -1396,9 +1429,9 @@ if (is_file(XOOPS_ROOT_PATH.'/class/hyp_common/hyp_preload.conf.php')) {
 
 if (! XC_CLASS_EXISTS('HypCommonPreLoad')) {
 class HypCommonPreLoad extends HypCommonPreLoadBase {
-	
+
 	function HypCommonPreLoad (& $controller) {
-		
+
 		// 各機能のメインスイッチ (On = 1, Off = 0)
 		$this->use_set_query_words   = 0; // 検索ワードを定数にセット
 		$this->use_words_highlight   = 0; // 検索ワードをハイライト表示
@@ -1408,19 +1441,19 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_trap_set    = 0; // 無効フィールドのBot罠を自動で仕掛ける
 		$this->use_k_tai_render      = 0; // 携帯対応レンダーを有効にする
 		$this->use_smart_redirect    = 0; // スマートリダイレクトを有効にする
-				
+
 		// 各種設定
 		$this->configEncoding = 'EUC-JP'; // このファイルの文字コード
-		
+
 		$this->encodehint_word = 'ぷ';    // POSTエンコーディング判定用文字
 		$this->encodehint_name = 'HypEncHint'; // POSTエンコーディング判定用 Filed name
 		$this->detect_order = 'ASCII, JIS, UTF-8, eucJP-win, EUC-JP, SJIS-win, SJIS';
-		
-		$this->msg_words_highlight = 'これらのキーワードがハイライトされています'; 
-		
+
+		$this->msg_words_highlight = 'これらのキーワードがハイライトされています';
+
 		$this->no_proxy_check  = '/^(127\.0\.0\.1|192\.168\.1\.)/'; // 除外IP
 		$this->msg_proxy_check = 'Can not post from public proxy.';
-		
+
 		// POST SPAM
 		$this->use_mail_notify    = 1;    // POST SPAM メール通知 0:なし, 1:SPAM判定のみ, 2:すべて
 		$this->send_mail_interval = 60;   // まとめ送りのインターバル(分) (0 で随時送信)
@@ -1431,16 +1464,16 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_word  = 10;      // Spam Word の加算ポイント
 		$this->post_spam_filed = 200;     // Spam 無効フィールドの加算ポイント
 		$this->post_spam_trap  = '___url';// Spam 罠用無効フィールド名
-		
+
 		$this->post_spam_user  = 150;     // POST SPAM 閾値: ログインユーザー
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
 		$this->post_spam_badip = 100;     // アクセス拒否リストへ登録する閾値
-		
+
 		// Protector 併用設定 (Protector の拒否IP登録の保護グループ設定も有効)
 		$this->post_spam_badip_ttl     = 900;     // アクセス拒否の拒否継続時間[Sec](0:無期限,null:Protector不使用)
 		$this->post_spam_badip_forever = 200;     // 無期限アクセス拒否閾値
 		$this->post_spam_badip_ttl0    = 2592000; // 無期限アクセス拒否継続時間[Sec](0:本当に無期限)
-		
+
 		// Proxy Checkers
 		$this->post_spam_checkers = array(
 			//'list.dsbl.org',
@@ -1450,44 +1483,44 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 				'/^192\.168\.1\.2/'
 			),
 		);
-	
+
 		// POST SPAM のポイント加算設定
 		$this->post_spam_rules = array(
 			// 同じURLが1行に3回 11pt
 			"/((?:ht|f)tps?:\/\/[!~*'();\/?:\@&=+\$,%#\w.-]+).+?\\1.+?\\1/i" => 11,
-			
+
 			// 65文字以上の英数文字のみで構成されている 15pt
 			// '/^[\x00-\x7f\s]{65,}$/' => 15,
-			
+
 			// 無効な文字コードがある 31pt
 			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f]+/' => 31,
-			
+
 			// よくあるSPAM 15pt
 			'/^\s*(?:Hi|Aloha)! http:\/\//i' => 15,
 		);
-		
+
 		// 無効なフィールド定義
 		$this->ignore_fileds = array(
 			// 'url' => array('newbb/post.php', 'comment_post.php'),
 		);
-		
+
 		// 検索ワード定数名
 		$this->q_word  = 'XOOPS_QUERY_WORD';         // 検索ワード
-		$this->q_word2 = 'XOOPS_QUERY_WORD2';        // 検索ワード分かち書き
+		$this->q_word2 = 'XOOPS_QUERY_WORD2';        // 検索ワード分かち書き(分かち書き不使用なら空文字''で設定)
 		$this->se_name = 'XOOPS_SEARCH_ENGINE_NAME'; // 検索元名
-	
+
 		// KAKASI での分かち書き結果のキャッシュ先
 		$this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
-		
+
 		// スマートリダイレクトのポップアップ最短秒数
 		$this->smart_redirect_min_sec = 5;
-		
+
 		/////////////////////////
 		// 携帯対応レンダー設定
-		
+
 		// 携帯端末判定用 UA 正規表現
 		$this->k_tai_conf['ua_regex'] = '#(?:SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser|DDIPOCKET|WILLCOM)#';
-		
+
 		// HTML再構築用タグ設定
 		$this->k_tai_conf['rebuilds'] = array(
 			'headerlogo'     => array( 'above' => '<center>',
@@ -1523,50 +1556,50 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			'subMenu'        => array( 'above' => '<div id="submenu" style="background-color:#ccccff"><h2 style="text-align:center">サブメニュー</h2></div>',
 			                          'below' => ''),
 		);
-		
+
 		// 携帯用XOOPSテーマセット
 		$this->k_tai_conf['themeSet'] = 'ktai_default';
-		
+
 		// 携帯用XOOPSテンプレートセット
 		$this->k_tai_conf['templateSet'] = '';
-		
+
 		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';
-		
+
 		// <body> attributes
 		$this->k_tai_conf['bodyAttribute'] = '';
-		
+
 		// 無効にするブロックの bid (Block Id) (無指定:フィルタリングしない)
 		$this->k_tai_conf['disabledBlockIds'] = array();
-		
+
 		// 有効にするブロックの bid (Block Id) (無指定:フィルタリングしない)
 		$this->k_tai_conf['limitedBlockIds'] = array();
-		
+
 		// 常に表示するブロックの bid (Block Id) (メインメニューなど)
 		$this->k_tai_conf['showBlockIds'] = array();
 
 		// インラインイメージのリサイズ最大ピクセル
 		$this->k_tai_conf['pictSizeMax'] = '200';
-		
+
 		// インラインイメージを表示するホスト名(後方一致)
 		$this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com', 'google.com');
-		
+
 		// 直接画像を表示するホスト名(後方一致)
 		$this->k_tai_conf['directImgHosts'] = array('google-analytics.com', 'maps.google.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
-		
+
 		// リダイレクトスクリプトを経由しないホスト名(後方一致)
 		$this->k_tai_conf['directLinkHosts'] = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com', 'afl.rakuten.co.jp', 'maps.google.com');
 
 		// 外部リンク用リダイレクトスクリプト
 		$this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/gate.php?way=redirect&amp;_d=0&amp;_u=0&amp;_x=0&amp;l=';
-		
+
 		// Easy login を有効にする
 		$this->k_tai_conf['easyLogin'] = 1;
 		// Easy login で IP アドレス帯域をチェックしない
 		$this->k_tai_conf['noCheckIpRange'] = 0;
 		// docomo の端末IDを確認する間隔(秒)
 		$this->k_tai_conf['docomoGuidTTL'] = 300;
-		
+
 		// リンクメッセージ
 		$this->k_tai_conf['msg']['easylogin'] = '簡単ログイン';
 		$this->k_tai_conf['msg']['logout'] = 'ログアウト';
@@ -1575,7 +1608,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->k_tai_conf['msg']['toMain'] = '本文を表示';
 		$this->k_tai_conf['msg']['mainMenu'] = 'メインメニュー';
 		$this->k_tai_conf['msg']['subMenu'] = 'サブメニュー';
-		
+
 		// アイコン
 		$this->k_tai_conf['icon']['first']   = '((s:465d))';
 		$this->k_tai_conf['icon']['prev']    = '((s:465b))';
@@ -1584,31 +1617,31 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->k_tai_conf['icon']['extLink'] = '((i:f8d9))';
 		$this->k_tai_conf['icon']['hTag']    = '((i:f8e4))';
 		$this->k_tai_conf['icon']['RSS']     = '((e:f699))';
-		
+
 		$this->k_tai_conf['icon']['toMain']  = '((e:f7e4))';
-		
+
 		// style
 		$this->k_tai_conf['style']['highlight'] = 'background-color:#ffc0cb';
-		
+
 		// Easy login: 設定 or 解除リンクを表示するURI(XOOPS_URL以降)とuidのGETキーと挿入位置
 		$this->k_tai_conf['easyLoginConfPath'] = '/userinfo.php';
 		$this->k_tai_conf['easyLoginConfuid'] = 'uid';
 		$this->k_tai_conf['easyLoginConfInsert'] = 'content';
-		
+
 		// GET query keys
 		$this->k_tai_conf['getKeys']['page'] = '_p_';
 		$this->k_tai_conf['getKeys']['hash'] = '_h_';
 		$this->k_tai_conf['getKeys']['block'] = '_b_';
-		
+
 		//// Google Adsense 設定
 		// config ファイルのパス
 		$this->k_tai_conf['googleAdsense']['config'] = '';
 		// 挿入場所 ('header', 'body', 'footer') の下、無指定時はページ最上部
 		$this->k_tai_conf['googleAdsense']['below'] = '';
-		
+
 		// Google Analytics 設定
 		$this->k_tai_conf['googleAnalyticsId'] = '';
-		
+
 		// <a> タグの href 属性の書き換えルール
 		//$this->k_tai_conf['urlRewrites']['regex'][] = '';
 		//$this->k_tai_conf['urlRewrites']['tostr'][] = '';
@@ -1620,7 +1653,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// 携帯対応レンダー設定 以上
 		/////////////////////////////
 
-		
+
 		///////////////////////////////
 		// 以下は変更してはいけません。
 		parent::HypCommonPreLoadBase($controller);
