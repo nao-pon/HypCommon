@@ -9,9 +9,9 @@
  */
 
 class HypCommonPreLoad extends HypCommonPreLoadBase {
-	
+
 	function HypCommonPreLoad (& $controller) {
-		
+
 		// 各機能のメインスイッチ (On = 1, Off = 0)
 		$this->use_set_query_words   = 0; // 検索ワードを定数にセット
 		$this->use_words_highlight   = 0; // 検索ワードをハイライト表示
@@ -21,19 +21,19 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_trap_set    = 0; // 無効フィールドのBot罠を自動で仕掛ける
 		$this->use_k_tai_render      = 0; // 携帯対応レンダーを有効にする
 		$this->use_smart_redirect    = 0; // スマートリダイレクトを有効にする
-				
+
 		// 各種設定
 		$this->configEncoding = 'EUC-JP'; // このファイルの文字コード
-		
+
 		$this->encodehint_word = 'ぷ';    // POSTエンコーディング判定用文字
 		$this->encodehint_name = 'HypEncHint'; // POSTエンコーディング判定用 Filed name
 		$this->detect_order = 'ASCII, JIS, UTF-8, eucJP-win, EUC-JP, SJIS-win, SJIS';
-		
-		$this->msg_words_highlight = 'これらのキーワードがハイライトされています'; 
-		
+
+		$this->msg_words_highlight = 'これらのキーワードがハイライトされています';
+
 		$this->no_proxy_check  = '/^(127\.0\.0\.1|192\.168\.1\.)/'; // 除外IP
 		$this->msg_proxy_check = 'Can not post from public proxy.';
-		
+
 		// POST SPAM
 		$this->use_mail_notify    = 1;    // POST SPAM メール通知 0:なし, 1:SPAM判定のみ, 2:すべて
 		$this->send_mail_interval = 60;   // まとめ送りのインターバル(分) (0 で随時送信)
@@ -44,7 +44,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_word  = 10;      // Spam Word の加算ポイント
 		$this->post_spam_filed = 200;     // Spam 無効フィールドの加算ポイント
 		$this->post_spam_trap  = '___url';// Spam 罠用無効フィールド名
-		
+
 		$this->post_spam_user  = 50;      // POST SPAM 閾値: ログインユーザー
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
 		$this->post_spam_badip = 100;     // アクセス拒否リストへ登録する閾値
@@ -53,7 +53,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_badip_ttl     = 900;     // アクセス拒否の拒否継続時間[Sec](0:無期限,null:Protector不使用)
 		$this->post_spam_badip_forever = 200;     // 無期限アクセス拒否閾値
 		$this->post_spam_badip_ttl0    = 2592000; // 無期限アクセス拒否継続時間[Sec](0:本当に無期限)
-	
+
 		// Proxy Checkers
 		$this->post_spam_checkers = array(
 			//'list.dsbl.org',
@@ -68,39 +68,39 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_rules = array(
 			// 同じURLが1行に3回 11pt
 			"/((?:ht|f)tps?:\/\/[!~*'();\/?:\@&=+\$,%#\w.-]+).+?\\1.+?\\1/i" => 11,
-			
+
 			// 65文字以上の英数文字のみで構成されている 15pt
 			// '/^[\x00-\x7f\s]{65,}$/' => 15,
-			
+
 			// 無効な文字コードがある 31pt
 			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f]+/' => 31,
 
 			// よくあるSPAM 15pt
 			'/^\s*(?:Hi|Aloha)! http:\/\//i' => 15,
 		);
-		
+
 		// 無効なフィールド定義
 		$this->ignore_fileds = array(
 			// 'url' => array('newbb/post.php', 'comment_post.php'),
 		);
-		
+
 		// 検索ワード定数名
 		$this->q_word  = 'XOOPS_QUERY_WORD';         // 検索ワード
-		$this->q_word2 = 'XOOPS_QUERY_WORD2';        // 検索ワード分かち書き
+		$this->q_word2 = 'XOOPS_QUERY_WORD2';        // 検索ワード分かち書き(分かち書き不使用なら空文字''で設定)
 		$this->se_name = 'XOOPS_SEARCH_ENGINE_NAME'; // 検索元名
-	
+
 		// KAKASI での分かち書き結果のキャッシュ先
 		$this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
-		
+
 		// スマートリダイレクトのポップアップ最短秒数
 		$this->smart_redirect_min_sec = 5;
-		
+
 		/////////////////////////
 		// 携帯対応レンダー設定
-		
+
 		// 携帯端末判定用 UA 正規表現
 		$this->k_tai_conf['ua_regex'] = '#(?:SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser|DDIPOCKET|WILLCOM)#';
-		
+
 		// HTML再構築用タグ設定
 		$this->k_tai_conf['rebuilds'] = array(
 			'headerlogo'     => array( 'above' => '<center>',
@@ -136,48 +136,48 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			'subMenu'        => array( 'above' => '<ns><div id="submenu" style="background-color:#ccccff"><h2 style="text-align:center">サブメニュー</h2></div>',
 			                          'below' => '</ns>'),
 		);
-		
+
 		// 携帯用XOOPSテーマセット
 		$this->k_tai_conf['themeSet'] = 'ktai_default';
-		
+
 		// 携帯用XOOPSテンプレートセット
 		$this->k_tai_conf['templateSet'] = '';
-		
+
 		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';
-		
+
 		// <body> attributes
 		$this->k_tai_conf['bodyAttribute'] = '';
-		
+
 		// 無効にするブロックの bid (Block Id) (無指定:フィルタリングしない)
 		$this->k_tai_conf['disabledBlockIds'] = array();
-		
+
 		// 有効にするブロックの bid (Block Id) (無指定:フィルタリングしない)
 		$this->k_tai_conf['limitedBlockIds'] = array();
-		
+
 		// 常に表示するブロックの bid (Block Id) (メインメニューなど)
 		$this->k_tai_conf['showBlockIds'] = array();
 
 		// インラインイメージのリサイズ最大ピクセル
 		$this->k_tai_conf['pictSizeMax'] = '200';
-		
+
 		// インラインイメージを表示するホスト名(後方一致)
 		$this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com', 'google.com');
-		
+
 		// 直接画像を表示するホスト名(後方一致)
 		$this->k_tai_conf['directImgHosts'] = array('google-analytics.com', 'maps.google.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
-		
+
 		// リダイレクトスクリプトを経由しないホスト名(後方一致)
 		$this->k_tai_conf['directLinkHosts'] = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com', 'afl.rakuten.co.jp', 'maps.google.com');
 
 		// 外部リンク用リダイレクトスクリプト
 		$this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/gate.php?way=redirect&amp;_d=0&amp;_u=0&amp;_x=0&amp;l=';
-		
+
 		// Easy login を有効にする
 		$this->k_tai_conf['easyLogin'] = 1;
 		// Easy login で IP アドレス帯域をチェックしない
 		$this->k_tai_conf['noCheckIpRange'] = 0;
-		
+
 		// リンクメッセージ
 		$this->k_tai_conf['msg']['easylogin'] = '簡単ログイン';
 		$this->k_tai_conf['msg']['logout'] = 'ログアウト';
@@ -186,7 +186,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->k_tai_conf['msg']['toMain'] = '本文を表示';
 		$this->k_tai_conf['msg']['mainMenu'] = 'メインメニュー';
 		$this->k_tai_conf['msg']['subMenu'] = 'サブメニュー';
-		
+
 		// アイコン
 		$this->k_tai_conf['icon']['first']   = '((s:465d))';
 		$this->k_tai_conf['icon']['prev']    = '((s:465b))';
@@ -195,31 +195,31 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->k_tai_conf['icon']['extLink'] = '((i:f8d9))';
 		$this->k_tai_conf['icon']['hTag']    = '((i:f8e4))';
 		$this->k_tai_conf['icon']['RSS']     = '((e:f699))';
-		
+
 		$this->k_tai_conf['icon']['toMain']  = '((e:f7e4))';
-		
+
 		// style
 		$this->k_tai_conf['style']['highlight'] = 'background-color:#ffc0cb';
-		
+
 		// Easy login: 設定 or 解除リンクを表示するURI(XOOPS_URL以降)とuidのGETキーと挿入位置
 		$this->k_tai_conf['easyLoginConfPath'] = '/userinfo.php';
 		$this->k_tai_conf['easyLoginConfuid'] = 'uid';
 		$this->k_tai_conf['easyLoginConfInsert'] = 'content';
-		
+
 		// GET query keys
 		$this->k_tai_conf['getKeys']['page'] = '_p_';
 		$this->k_tai_conf['getKeys']['hash'] = '_h_';
 		$this->k_tai_conf['getKeys']['block'] = '_b_';
-		
+
 		//// Google Adsense 設定
 		// config ファイルのパス
 		$this->k_tai_conf['googleAdsense']['config'] = '';
 		// 挿入場所 ('header', 'body', 'footer') の下、無指定時はページ最上部
 		$this->k_tai_conf['googleAdsense']['below'] = '';
-		
+
 		// Google Analytics 設定
 		$this->k_tai_conf['googleAnalyticsId'] = '';
-		
+
 		// <a> タグの href 属性の書き換えルール
 		//$this->k_tai_conf['urlRewrites']['regex'][] = '';
 		//$this->k_tai_conf['urlRewrites']['tostr'][] = '';
@@ -231,11 +231,11 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// 携帯対応レンダー設定 以上
 		/////////////////////////////
 
-		
+
 		///////////////////////////////
-		// 以下は変更してはいけません。		
+		// 以下は変更してはいけません。
 		parent::HypCommonPreLoadBase($controller);
-		
+
 	}
 }
 ?>
