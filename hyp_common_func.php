@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.65 2009/09/01 01:33:41 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.66 2009/11/17 05:05:37 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -18,10 +18,10 @@ class HypCommonFunc
 		}
 		return $version;
 	}
-	
+
 	function loadClass($name) {
 		if (XC_CLASS_EXISTS($name)) return;
-		
+
 		$dir = dirname(__FILE__);
 		switch($name) {
 			case 'HypSimpleAmazon':
@@ -50,7 +50,7 @@ class HypCommonFunc
 				break;
 		}
 	}
-	
+
 	// 1バイト文字をエンティティ化
 	function str_to_entity(&$str)
 	{
@@ -64,7 +64,7 @@ class HypCommonFunc
 		$str = $e_mail;
 		return $str;
 	}
-	
+
 	// ",' で括ったフレーズ対応スプリット
 	function phrase_split($str)
 	{
@@ -74,7 +74,7 @@ class HypCommonFunc
 		$words = str_replace("\x08"," ",$words);
 		return $words;
 	}
-	
+
 	// 配列対応 & gpc 対応のstripslashes
 	function stripslashes_gpc(&$v)
 	{
@@ -96,12 +96,12 @@ class HypCommonFunc
 		}
 		return $v;
 	}
-	
+
 	// RSS関連のキャッシュを削除する
 	function clear_rss_cache($files=array())
 	{
 		include_once XOOPS_ROOT_PATH.'/class/template.php';
-		
+
 		if (empty($files) || !is_array($files))
 		{
 			$files = array(
@@ -115,7 +115,7 @@ class HypCommonFunc
 				'db:whatsnew_block_date.html',
 			);
 		}
-		
+
 		$tpl = new XoopsTpl();
 		$tpl->xoops_setCaching(2);
 		foreach($files as $tgt)
@@ -123,19 +123,19 @@ class HypCommonFunc
 			if ($tgt) {$tpl->clear_cache($tgt);}
 		}
 	}
-	
+
 	// RPC Update Ping を打つ
 	function update_rpc_ping($to = '')
 	{
 		global $xoopsConfig;
-		
+
 		//RSSキャッシュファイルを削除
 		HypCommonFunc::clear_rss_cache();
-		
+
 		if (! $to) {
 			$to = 'http://api.my.yahoo.co.jp/RPC2 http://ping.myblog.jp http://ping.bloggers.jp/rpc/ http://blog.goo.ne.jp/XMLRPC http://ping.cocolog-nifty.com/xmlrpc http://rpc.technorati.jp/rpc/ping';
 		}
-		
+
 		$update_ping = preg_split ( "/[\s,]+/" , $to);
 
 		$ping_blog_name = $xoopsConfig['sitename'];
@@ -147,20 +147,20 @@ class HypCommonFunc
 			$ping_url
 			);
 		$p->setEncording(_CHARSET);
-		
+
 		foreach($update_ping as $to) {
 			list($url, $extended) = array_pad(explode(' ', trim($to)), 2, '');
 			$url = trim($url);
-			$extended = $extended? TRUE : FALSE; 
+			$extended = $extended? TRUE : FALSE;
 			$p->addSendTo($url, $extended);
 		}
-		
+
 		$p->send();
-		
+
 		$p = NULL;
 		unset($p);
 	}
-	
+
 	function make_context($text, $words=array(), $l=255, $parts=3, $delimiter='...', $caseInsensitive = TRUE, $whitespaceCompress = TRUE)
 	{
 		static $strcut = '';
@@ -168,10 +168,10 @@ class HypCommonFunc
 			$strcut = create_function ( '$a,$b,$c', (function_exists('mb_strcut'))?
 				'return mb_strcut($a,$b,$c);':
 				'return substr($a,$b,$c);');
-		
+
 		$limit = $parts + 1;
 		$text = str_replace(array('&lt;','&gt;','&quot;','&#039;','&amp;'),array('<','>','"',"'",'&'),$text);
-		
+
 		if (is_array($words)) {
 			$words = join(' ', $words);
 		}
@@ -181,7 +181,7 @@ class HypCommonFunc
 		} else {
 			$q_word = '?!';
 		}
-		
+
 		$match = array();
 		$ret = $text;
 		$reg = '/(' . $q_word . ')/S';
@@ -194,7 +194,7 @@ class HypCommonFunc
 			}
 			$arr = preg_split($reg, $ret, $limit, PREG_SPLIT_DELIM_CAPTURE);
 			$count = count($arr);
-			
+
 			$ret = '';
 			if ($count === 1) {
 				$ret = $arr[0];
@@ -252,13 +252,13 @@ class HypCommonFunc
 			$ret = preg_replace('/&#?[A-Za-z0-9]{2,6}$/', '', $ret);
 			$ret .= $delimiter;
 		}
-		
+
 		$ret = htmlspecialchars($ret, ENT_NOQUOTES);
 		$ret = preg_replace('/&amp;(#?[A-Za-z0-9]{2,6}?;)/', '&$1', $ret);
-		
+
 		return $ret;
 	}
-	
+
 	function set_need_refresh($mode)
 	{
 		if ($mode)
@@ -270,13 +270,14 @@ class HypCommonFunc
 			setcookie ("HypNeedRefresh", "", time() - 3600);
 		}
 	}
-	
+
 	// HTML の meta タグから文字エンコーディングを取得する
 	function get_encoding_by_meta($html, $ret_empty = FALSE)
 	{
 		$ret = $ret_empty? '' : 'EUC-JP,UTF-8,Shift_JIS,JIS';
 		$codesets = array(
 			'shift_jis' => 'Shift_JIS',
+			'shift-jis' => 'Shift_JIS',
 			'x-sjis' => 'Shift_JIS',
 			'euc-jp' => 'EUC-JP',
 			'x-euc-jp' => 'EUC-JP',
@@ -294,7 +295,7 @@ class HypCommonFunc
 			}
 			else
 			{
-				return $ret;
+				return $ret? ($match[1] . ',' . $ret) : $encode;
 			}
 		}
 		else
@@ -302,7 +303,7 @@ class HypCommonFunc
 			return $ret;
 		}
 	}
-	
+
 	// 携帯用に画像を(リサイズして)変換する
 	function img4ktai($file, $maxsize = 128, $allowpng = FALSE, $allconvert = FALSE, $quality = 50) {
 		//GD のバージョンを取得
@@ -310,39 +311,39 @@ class HypCommonFunc
 		if (is_null($gd_ver)) {
 			$gd_ver = HypCommonFunc::gdVersion();
 		}
-		
+
 		// gd fuction のチェック
 		if ($gd_ver < 1 || !function_exists("imagecreate")) return FALSE;//gdをサポートしていない
-		
+
 		// リサイズ
 		$resized = HypCommonFunc::ImageResize($file, $maxsize . 'x' . $maxsize, $quality);
 
 		$size = @ getimagesize($file);
 		if (! $size) return FALSE;
-		
+
 		// Image type
 		$imgtype = $size[2];
 		$allowtypes = array(IMAGETYPE_GIF, IMAGETYPE_JPEG);
 		if ($allowpng) $allowtypes[] = IMAGETYPE_PNG;
-		
+
 		// JPEG以外はファイルサイズが大きければとりあえず変換する ( > 10k)
 		if ($imgtype !== IMAGETYPE_JPEG && filesize($file) > 10240) {
 			$allconvert = TRUE;
 		}
-		
+
 		// リサイズされなかったなら変換しない
 		if (! $allconvert && ! $resized && in_array($imgtype, $allowtypes)) return FALSE;
-		
+
 		$src_im = @ imagecreatefromstring(file_get_contents($file));
 		if (! $src_im) return FALSE;
 
 		// gd のバージョンによる関数名の定義
 		$imagecreate = ($gd_ver >= 2)? "imagecreatetruecolor" : "imagecreate";
 		$imageresize = ($gd_ver >= 2)? "imagecopyresampled" : "imagecopyresized";
-		
+
 		$width = $size[0];
 		$height = $size[1];
-		
+
 		if (imagecolorstotal($src_im)) {
 			// PaletteColor
 			$colortransparent = imagecolortransparent($src_im);
@@ -365,7 +366,7 @@ class HypCommonFunc
 			}
 		}
 		imagecopymerge($dst_im, $src_im, 0, 0, 0, 0, $width, $height, 100);
-		
+
 		// とりあえず JPEG で保存
 		imagejpeg($dst_im, $file);
 		clearstatcache();
@@ -385,13 +386,13 @@ class HypCommonFunc
 			}
 			unlink($temp);
 		}
-		
+
 		@ imagedestroy($dst_im);
 		@ imagedestroy($src_im);
-		
+
 		return TRUE;
 	}
-	
+
 	// 携帯用にリサイズした画像の元のサイズを得る
 	function get_imagesize4ktai($url, $maxsize, $allowpng) {
 		$cachepath = XOOPS_ROOT_PATH . '/class/hyp_common/cache';
@@ -403,30 +404,30 @@ class HypCommonFunc
 		}
 		return '';
 	}
-	
+
 	// サムネイル画像を作成。
 	// 成功ならサムネイルのファイルのパス、不成功なら元ファイルパスを返す
 	function make_thumb($o_file, $s_file, $max_width, $max_height, $zoom_limit="1,95", $refresh=FALSE, $quality=75)
 	{
 		// すでに作成済み
 		if (!$refresh && file_exists($s_file)) return $s_file;
-		
+
 		$size = @getimagesize($o_file);
 		if (!$size) return $o_file;//画像ファイルではない
-		
+
 		// 元画像のサイズ
 		$org_w = $size[0];
 		$org_h = $size[1];
-		
+
 		if ($max_width >= $org_w && $max_height >= $org_h) return $o_file;//指定サイズが元サイズより大きい
-		
+
 		// 縮小率の設定
 		list($zoom_limit_min,$zoom_limit_max) = explode(",",$zoom_limit);
 		$zoom = min(($max_width/$org_w),($max_height/$org_h));
 		if (!$zoom || $zoom < $zoom_limit_min/100 || $zoom > $zoom_limit_max/100) return $o_file;//ZOOM値が範囲外
-		
+
 		@unlink($s_file);
-		
+
 		if (defined('HYP_IMAGEMAGICK_PATH') && HYP_IMAGEMAGICK_PATH)
 		{
 			// ImageMagick を使用
@@ -442,7 +443,7 @@ class HypCommonFunc
 			return HypCommonFunc::make_thumb_gd($o_file, $s_file, $zoom, $quality, $size[2], $org_w, $org_h);
 		}
 	}
-	
+
 	function make_thumb_gd($o_file, $s_file, $zoom, $quality, $type ,$org_w, $org_h)
 	{
 		//GD のバージョンを取得
@@ -451,21 +452,21 @@ class HypCommonFunc
 		{
 			$gd_ver = HypCommonFunc::gdVersion();
 		}
-		
+
 		// gd fuction のチェック
 		if ($gd_ver < 1 || !function_exists("imagecreate")) return $o_file;//gdをサポートしていない
-		
+
 		// gd のバージョンによる関数名の定義
 		$imagecreate = ($gd_ver >= 2)? "imagecreatetruecolor" : "imagecreate";
 		$imageresize = ($gd_ver >= 2)? "imagecopyresampled" : "imagecopyresized";
-		
+
 		$width = $org_w * $zoom;
 		$height = $org_h * $zoom;
-		
+
 		// サムネイルのファイルタイプが指定されている？(.jpg)
 		$s_ext = "";
 		$s_ext = preg_replace("/\.([^\.]+)$/","$1",$s_file);
-		
+
 		switch($type)
 		{
 			case "1": //gif形式
@@ -570,7 +571,7 @@ class HypCommonFunc
 		//chmod($o_file, 0666);
 		return $o_file;
 	}
-	
+
 	function make_thumb_imagemagick($o_file, $s_file, $zoom, $quality, $type ,$org_w, $org_h)
 	{
 		$zoom = intval($zoom * 100);
@@ -590,17 +591,17 @@ class HypCommonFunc
 		else
 		{
 			// safeモードの場合は、CGIを起動して取得してみる
-			
+
 			$cmds = "?m=r".
 					"&p=".rawurlencode(HYP_IMAGEMAGICK_PATH).
 					"&z=".$zoom.
 					"&q=".$quality.
 					"&o=".rawurlencode($ro_file).
 					"&s=".rawurlencode($rs_file);
-						
+
 			HypCommonFunc::exec_image_magick_cgi($cmds);
 		}
-		
+
 		if( ! is_readable( $s_file ) )
 		{
 			// can't exec convert, big thumbs!
@@ -611,14 +612,14 @@ class HypCommonFunc
 
 	// 画像をリサイズする
 	function ImageResize($img, $isize='', $quality=75) {
-		
+
 		$size = @getimagesize($img);
 		if (!$size) return false;//画像ファイルではない
-		
+
 		$img = realpath($img);
-		
+
 		if (!preg_match('/^([\d]+)?x([\d]+)?|([\d]+)%?$/i', trim($isize), $arg)) return false;
-		
+
 		if (!empty($arg[3])) {
 			$zoom = round($arg[3] / 100);
 		} else {
@@ -628,35 +629,35 @@ class HypCommonFunc
 			$zoom_h = $h / $size[1];
 			$zoom = min($zoom_w, $zoom_h);
 		}
-		
+
 		if ($zoom >= 1) return FALSE;
-		
+
 		$w = round($size[0] * $zoom);
 		$h = round($size[1] * $zoom);
-		
+
 		$tmp = $img . '.tmp';
 		$done = HypCommonFunc::make_thumb($img, $tmp, $w, $h, '1,99', TRUE, $quality);
-		
+
 		if ($done === $img) return false;
-		
+
 		unlink($img);
 		copy($tmp, $img);
 		unlink($tmp);
 		clearstatcache();
-		
+
 		return true;
 	}
-	
+
 	// 画像を角丸にする
 	function ImageMagickRoundCorner($o_file, $s_file = '', $corner = 10, $edge = 0, $refresh = FALSE) {
-		
+
 		if (!defined('HYP_IMAGEMAGICK_PATH') || !HYP_IMAGEMAGICK_PATH) return $o_file;
-		
+
 		if ($o_file === $s_file) $s_file = '';
-		
+
 		// すでに作成済み
 		if (!$refresh && $s_file && file_exists($s_file)) return $s_file;
-		
+
 		$is_own = FALSE;
 		if (!$s_file) {
 			// CGI を直接叩かれて悪戯されないように一時ファイルを利用
@@ -666,61 +667,61 @@ class HypCommonFunc
 
 		$size = @getimagesize($o_file);
 		if (!$size) return $o_file;//画像ファイルではない
-		
+
 		$ro_file = realpath($o_file);
 		$rs_file = realpath(dirname($s_file))."/".basename($s_file);
-		
+
 		if (file_exists($rs_file)) unlink($rs_file);
-		
+
 		// Make Thumb and check success
 		if ( ini_get('safe_mode') != "1" ) {
 			// 元画像のサイズ
 			$imw = $size[0];
 			$imh = $size[1];
 			$im_half = floor((min($imw, $imh)/2));
-		
+
 			// check value
 			$edge = min($edge, $im_half);
 			$corner = min($corner, $im_half);
-	
+
 			$tmpfile = $rs_file . '_tmp.png';
-	
+
 			$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -channel RGBA -fill white -draw "roundrectangle '.max(0,($edge-1)).','.max(1,($edge-1)).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" '.$ro_file.' -compose src_in -composite '.$tmpfile;
 			exec( HYP_IMAGEMAGICK_PATH . $cmd ) ;
-	
+
 			if ($edge) {
-				$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -fill none -stroke white -strokewidth '.$edge.' -draw "roundrectangle '.($edge-1).','.($edge-1).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" -shade 135x25 -blur 0x1 -normalize '.$tmpfile.' -compose overlay -composite '.$tmpfile;		
+				$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -fill none -stroke white -strokewidth '.$edge.' -draw "roundrectangle '.($edge-1).','.($edge-1).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" -shade 135x25 -blur 0x1 -normalize '.$tmpfile.' -compose overlay -composite '.$tmpfile;
 				exec( HYP_IMAGEMAGICK_PATH . $cmd ) ;
 			}
 			copy ($tmpfile, $rs_file);
 			unlink($tmpfile);
 		} else {
 			// safeモードの場合は、CGIを起動して取得してみる
-			
+
 			$cmds = "?m=ro".
 					"&p=".rawurlencode(HYP_IMAGEMAGICK_PATH).
 					"&z=".$corner.
 					"&q=".$edge.
 					"&o=".rawurlencode($ro_file).
 					"&s=".rawurlencode($rs_file);
-			
+
 			HypCommonFunc::exec_image_magick_cgi($cmds);
 		}
-		
+
 		if( ! is_readable( $rs_file ) ) {
 			if (file_exists($rs_file)) unlink($rs_file);
 			return $ro_file;
 		}
-		
+
 		if ($is_own) {
 			unlink($ro_file);
 			copy($rs_file, $ro_file);
 			unlink($rs_file);
 		}
-		
+
 		return $rs_file;
 	}
-	
+
 	// GD のバージョンを取得
 	// RETURN 0:GDなし, 1:Ver 1, 2:Ver 2
 	function gdVersion($user_ver = 0)
@@ -759,7 +760,7 @@ class HypCommonFunc
 		$gd_ver = $match[0];
 		return $match[0];
 	}
-	
+
 	function check_memory4gd($w,$h)
 	{
 		// GDで処理可能なメモリーサイズ
@@ -772,7 +773,7 @@ class HypCommonFunc
 		{
 			// ビットマップ展開時のメモリー上のサイズ
 			$bitmap_size = $w * $h * 3 + 54;
-			
+
 			$now_use_mem = intval(memory_get_usage());
 			if (!$now_use_mem) {
 				$now_use_mem = 2 * 1024 * 1024;
@@ -785,23 +786,23 @@ class HypCommonFunc
 		}
 		return true;
 	}
-	
+
 	// イメージを回転
 	function rotateImage($src, $count = 1, $quality = 95)
 	{
 		$src = realpath($src);
-		
+
 		if (!file_exists($src)) {
 			return false;
 		}
 
 		list($w, $h, $type) = @getimagesize($src);
-		
+
 		if (!$w || !$h || ((!defined('HYP_IMAGEMAGICK_PATH') || !HYP_IMAGEMAGICK_PATH) && $type != 2)) return false;
-		
+
 		$angle = (($count > 0 && $count < 4) ? $count : 0 ) * 90;
 		if (!$angle) return false;
-		
+
 		if (defined('HYP_JPEGTRAN_PATH') && HYP_JPEGTRAN_PATH && $type == 2)
 		{
 			// jpegtran を使用
@@ -829,7 +830,7 @@ class HypCommonFunc
 						"&z=".$angle.
 						"&q=".$quality.
 						"&s=".rawurlencode($src);
-							
+
 				return HypCommonFunc::exec_image_magick_cgi($cmds);
 			}
 		}
@@ -858,17 +859,17 @@ class HypCommonFunc
 						"&z=".$angle.
 						"&q=".$quality.
 						"&s=".rawurlencode($src);
-							
-				return HypCommonFunc::exec_image_magick_cgi($cmds);				
+
+				return HypCommonFunc::exec_image_magick_cgi($cmds);
 			}
 		}
 		else
 		{
 			// GD を使用
-			
+
 			// メモリーチェック
 			if (!HypCommonFunc::check_memory4gd($w,$h)) return false;
-			
+
 			$angle = 360 - $angle;
 			if (($in = imageCreateFromJpeg($src)) === false) {
 				return false;
@@ -877,25 +878,25 @@ class HypCommonFunc
 				$out = imageRotate($in, $angle, 0);
 			} elseif ($angle == 90 || $angle == 270) {
 				$size = ($w > $h ? $w : $h);
-				
-				$portrait = ($h > $w)? true : false; 
-				
+
+				$portrait = ($h > $w)? true : false;
+
 				// Create a square image the size of the largest side of our src image
 				if (($tmp = imageCreateTrueColor($size, $size)) == false) {
 					//echo "Failed create square trueColor<br>";
 					return false;
 				}
-	
+
 				// Exchange sides
 				if (($out = imageCreateTrueColor($h, $w)) == false) {
 					//echo "Failed create trueColor<br>";
 					return false;
 				}
-	
+
 				// Now copy our src image to tmp where we will rotate and then copy that to $out
 				imageCopy($tmp, $in, 0, 0, 0, 0, $w, $h);
 				$tmp2 = imageRotate($tmp, $angle, 0);
-	
+
 				// Now copy tmp2 to $out;
 				imageCopy($out, $tmp2, 0, 0, (($angle == 270 && !$portrait) ? abs($w - $h) : 0), (($angle == 90 && $portrait) ? abs($w - $h) : 0), $h, $w);
 				imageDestroy($tmp);
@@ -912,7 +913,7 @@ class HypCommonFunc
 			return true;
 		}
 	}
-	
+
 	// image_magick.cgi へアクセス
 	function exec_image_magick_cgi($cmds)
 	{
@@ -924,26 +925,26 @@ class HypCommonFunc
 		{
 			die('ERROR: "image_magick.cgi" path is not set.');
 		}
-		
+
 		$url .= $cmds;
-		
+
 		$d = new Hyp_HTTP_Request();
-	
+
 		$d->url = $url;
 		$d->connect_try = 2;
 		$d->connect_timeout = 5;
 		$d->read_timeout = 60;
-		
+
 		$d->get();
-		
+
 		if ($d->rc != 200) die("'".$url."' is NG. Not found or access denied.");
-		
+
 		$ret = trim((string)$d->data);
 		$ret = ($ret == "ERROR: 0")? true : false;
-		
+
 		return $ret;
 	}
-	
+
 	// 外部実行コマンドのパスを設定
 	function set_exec_path($dir)
 	{
@@ -951,14 +952,14 @@ class HypCommonFunc
 		HypCommonFunc::set_imagemagick_path($dir);
 		HypCommonFunc::set_hyp_image_magic_url();
 	}
-	
+
 	// Image Magick のパスを設定(定数化)
 	function set_imagemagick_path($dir)
 	{
 		// すでに設定済み
 		if (defined('HYP_IMAGEMAGICK_PATH')) return;
-		
-		if (substr($dir, -1) != "/") $dir .= "/"; 
+
+		if (substr($dir, -1) != "/") $dir .= "/";
 		if (@ file_exists($dir."convert"))
 		{
 			define ('HYP_IMAGEMAGICK_PATH', $dir);
@@ -971,20 +972,20 @@ class HypCommonFunc
 	{
 		// すでに設定済み
 		if (defined('HYP_JPEGTRAN_PATH')) return;
-		if (substr($dir, -1) != "/") $dir .= "/"; 
+		if (substr($dir, -1) != "/") $dir .= "/";
 		if (@ file_exists($dir."jpegtran"))
 		{
 			define ('HYP_JPEGTRAN_PATH', $dir);
 		}
 		return;
 	}
-	
-	
+
+
 	function set_hyp_image_magic_url($url='')
 	{
 		// すでに設定済み
 		if (defined('HYP_IMAGE_MAGICK_URL')) return;
-		
+
 		if ($url)
 		{
 			define('HYP_IMAGE_MAGICK_URL', $url);
@@ -1012,7 +1013,7 @@ class HypCommonFunc
 					$url  = ($_SERVER['SERVER_PORT'] == 443 ? 'https://' : 'http://'); // scheme
 					$url .= $_SERVER['HTTP_HOST'];	// host
 					$url .= ($_SERVER['SERVER_PORT'] == 80 ? '' : ':' . $_SERVER['SERVER_PORT']);  // port
-		
+
 					// DOCUMENT_ROOT と このファイル位置から URL を計算
 					if (!empty($_SERVER['DOCUMENT_ROOT']))
 					{
@@ -1025,7 +1026,7 @@ class HypCommonFunc
 		}
 		return;
 	}
-	
+
 	// 2ch BBQ あらしお断りシステム にリスティングされているかチェック
 	function IsBBQListed($safe_reg = '/^$/', $msg = true, $ip = NULL, $checker = array('list.dsbl.org', 'niku.2ch.net'))
 	{
@@ -1049,7 +1050,7 @@ class HypCommonFunc
 		}
 		return false;
 	}
-	
+
 	// 2ch BBQ チェック用汎用関数
 	function BBQ_Check($safe_reg = "/^(127\.0\.0\.1)/", $msg = true, $ip = NULL, $checker = array('list.dsbl.org', 'niku.2ch.net'))
 	{
@@ -1063,7 +1064,7 @@ class HypCommonFunc
 		}
 		return;
 	}
-	
+
 	// POST SPAM Check
 	function PostSpam_Check($post, $encode = '', $encodehint = '')
 	{
@@ -1091,7 +1092,7 @@ class HypCommonFunc
 				}
 			}
 		}
-		
+
 		static $filters = NULL;
 		if (is_null($filters)) {$filters = HypCommonFunc::PostSpam_filter();}
 		$counts = array();
@@ -1108,7 +1109,7 @@ class HypCommonFunc
 			{
 				// NULLバイト削除
 				$dat = str_replace("\0", '', $dat);
-				
+
 				// <a> タグの個数
 				$tmp['a'] = count(preg_split("/<a.+?\/a>/is",$dat)) - 1;
 				// [url] タグの個数
@@ -1145,7 +1146,7 @@ class HypCommonFunc
 		}
 		return $counts;
 	}
-	
+
 	// POST SPAM フィルター
 	function PostSpam_filter($reg="", $point=1)
 	{
@@ -1153,7 +1154,7 @@ class HypCommonFunc
 		if (empty($reg)) {return $regs;}
 		$regs[$reg] = $point;
 	}
-	
+
 	// POST SPAM Check 汎用関数
 	function get_postspam_avr($alink=1,$bb=1,$url=1,$encode='EUC-JP',$encodehint='')
 	{
@@ -1167,7 +1168,7 @@ class HypCommonFunc
 			return 0;
 		}
 	}
-	
+
 	// Input フィルター
 	function input_filter($param) {
 		if (is_array($param)) {
@@ -1180,27 +1181,27 @@ class HypCommonFunc
 			return $result;
 		}
 	}
-	
+
 	// 機種依存文字フィルター
 	function dependence_filter($post)
 	{
 		if (!isset($post) || !function_exists("mb_ereg_replace")) {return $post;}
-		
+
 		if (!defined('HYP_POST_ENCODING') || (HYP_POST_ENCODING !== 'EUC-JP' && HYP_POST_ENCODING !== 'EUCJP-WIN' && HYP_POST_ENCODING !== 'UTF-8')) {return $post;}
 
 		static $bef = null;
 		static $aft = null;
-		
+
 		if (is_null($bef))
 		{
 			$mac = (empty($_SERVER["HTTP_USER_AGENT"]))? FALSE : strpos(strtolower($_SERVER["HTTP_USER_AGENT"]),"mac");
-			
+
 			if ($mac && HYP_POST_ENCODING !== 'UTF-8') {return $post;}
-			
+
 			$enc = (HYP_POST_ENCODING === 'UTF-8')? '_utf8' : '';
-			
+
 			$datfile = ($mac === FALSE)? dirname(__FILE__).'/win_ext'.$enc.'.dat' : dirname(__FILE__).'/mac_ext'.$enc.'.dat';
-	
+
 			if (file_exists($datfile))
 			{
 				$bef = $aft = array();
@@ -1208,18 +1209,18 @@ class HypCommonFunc
 				{
 					if ($line[0] != "/" && $line[0] != "#")
 					{
-						list($bef[],$aft[]) = explode("\t",rtrim($line));	
+						list($bef[],$aft[]) = explode("\t",rtrim($line));
 					}
 				}
 			}
 		}
-		
+
 		if (is_array($post))
 		{
 			foreach ($post as $_key=>$_val)
 			{
 				$post[$_key] = HypCommonFunc::dependence_filter($_val);
-			}	
+			}
 		}
 		else
 		{
@@ -1227,17 +1228,17 @@ class HypCommonFunc
 
 			// 半角カナを全角に
 			//$post = mb_convert_kana($post, "KV", "EUC-JP");
-			
+
 			// 変換テーブル
 			for ($i=0; $i<sizeof($bef); $i++)
 			{
 				$post = mb_ereg_replace($bef[$i], $aft[$i], $post);
-			}	
+			}
 		}
 
 		return $post;
 	}
-	
+
 	// 文字エンコード変換前に範囲外の文字を実体参照値に変換する
 	function encode_numericentity(& $arg, $toencode, $fromencode, $keys = array()) {
 		$fromencode = strtoupper($fromencode);
@@ -1274,16 +1275,16 @@ class HypCommonFunc
 						$str .= $org;
 					} else {
 						$str .= mb_encode_numericentity($org, $convmap, $fromencode);
-					} 
+					}
 				}
 				$arg = $str;
 			}
 		}
 		return;
 	}
-	
+
 	// リファラーから検索語と検索エンジンを取得し定数に定義する
-	function set_query_words($qw="HYP_QUERY_WORD",$qw2="HYP_QUERY_WORD2",$en="HYP_SEARCH_ENGINE_NAME",$tmpdir="",$enc='EUC-JP')
+	function set_query_words($qw="HYP_QUERY_WORD",$qw2="HYP_QUERY_WORD2",$en="HYP_SEARCH_ENGINE_NAME",$tmpdir="",$enc='EUC-JP',$use_kakasi=TRUE)
 	{
 		if (!defined($qw))
 		{
@@ -1300,7 +1301,7 @@ class HypCommonFunc
 			}
 		}
 	}
-	
+
 	// php.ini のサイズ記述をバイト値に変換
 	function return_bytes($val) {
 		$val = trim(strval($val));
@@ -1336,7 +1337,7 @@ class HypCommonFunc
 			}
 			sort($pages, SORT_STRING);
 		}
-		
+
 		++$nest;
 		$reg = HYpCommonFunc::get_matcher_regex_safe_sub($pages);
 		$regs = preg_split("/(\d+)\x08/", $reg, -1, PREG_SPLIT_DELIM_CAPTURE);
@@ -1362,19 +1363,19 @@ class HypCommonFunc
 		}
 		return join($spliter, $pats);
 	}
-	
+
 	function get_matcher_regex_safe_sub (& $array, $offset = 0, $sentry = NULL, $pos = 0, $nest = 0)
 	{
 		++$nest;
 		$limit = 1024 * 30;
-		
+
 		if (empty($array)) return '(?!)'; // Zero
 		if ($sentry === NULL) $sentry = count($array);
-		
+
 		// Too short. Skip this
 		$skip = ($pos >= mb_strlen($array[$offset]));
 		if ($skip) ++$offset;
-	
+
 		// Generate regex for each value
 		$regex = '';
 		$index = $offset;
@@ -1390,15 +1391,15 @@ class HypCommonFunc
 					$regex .= '|'; // OR
 				}
 			}
-	
+
 			// Get one character from left side of the value
 			$char = mb_substr($array[$index], $pos, 1);
-	
+
 			// How many continuous keys have the same letter
 			// at the same position?
 			for ($i = $index; $i < $sentry; ++$i)
 				if (mb_substr($array[$i], $pos, 1) !== $char) break;
-			
+
 			if ($index < ($i - 1)) {
 				// Some more keys found
 				// Recurse
@@ -1411,7 +1412,7 @@ class HypCommonFunc
 			}
 			$index = $i;
 		}
-		
+
 		if ($skip || $multi){
 			$regex = '(?:' . $regex . ')';
 		}
@@ -1423,7 +1424,7 @@ class HypCommonFunc
 	{
 		if( empty( $ip ) ) $ip = $_SERVER['REMOTE_ADDR'] ;
 		if( empty( $ip ) ) return false ;
-		
+
 		if (!is_null($protectorTTL) && XC_CLASS_EXISTS('Protector')) {
 			global $xoopsUser;
 			$protector =& Protector::getInstance();
@@ -1441,14 +1442,14 @@ class HypCommonFunc
 					$time = 0;
 				}
 				$protector->register_bad_ips($time);
-			}	
+			}
 		} else {
 			$db = Database::getInstance() ;
 			$rs = $db->query( "SELECT conf_value FROM ".$db->prefix("config")." WHERE conf_name='bad_ips' AND conf_modid=0 AND conf_catid=1" ) ;
 			list( $bad_ips_serialized ) = $db->fetchRow( $rs ) ;
 			$bad_ips = unserialize( $bad_ips_serialized ) ;
 			$bad_ips[] = $ip ;
-		
+
 			$conf_value = addslashes( serialize( array_unique( $bad_ips ) ) ) ;
 			$db->queryF( "UPDATE ".$db->prefix("config")." SET conf_value='$conf_value' WHERE conf_name='bad_ips' AND conf_modid=0 AND conf_catid=1" ) ;
 		}
@@ -1464,12 +1465,12 @@ class HypCommonFunc
 			$html = $ret;
 		}
 	}
-	
+
 	// IDN ( Internationalized Domain Name ) encoder & decoder
 	function convertIDN ($host, $mode = 'auto', $encode = '') {
 		static $converted = array(); // For convert cache
 		static $idn; // idna_convert object
-		
+
 		// build object
 		if (! is_object($idn)) {
 			if (!function_exists('mb_convert_encoding')) {
@@ -1478,11 +1479,11 @@ class HypCommonFunc
 			require_once dirname(__FILE__) . '/idna/idna_convert.class.php';
 			$idn = new idna_convert();
 		}
-		
+
 		if (! $encode) {
 			$encode = mb_internal_encoding();
 		}
-		
+
 		if ($mode !== 'encode' && $mode !== 'decode') {
 			if (preg_match('/[^A-Za-z0-9.-]/', $host)) {
 				if (! $encode) {
@@ -1495,7 +1496,7 @@ class HypCommonFunc
 				$mode = 'pass';
 			}
 		}
-		
+
 		if ($mode === 'encode') {
 			// Check cache
 			if (isset($converted[$encode][$host])) {
@@ -1526,21 +1527,23 @@ class HypCommonFunc
 			$converted[$encode][$decoded] = $encoded;
 			return $decoded;
 		}
-		
+
 		return $host;
 	}
-	
+
 	// parse_url for IDN (simple version)
 	function i18n_parse_url ($url) {
-		$reg = '#^([A-Za-z0-9]+)://([^/"<>:]+):?([\d]*)([^?]*)\??([^\#]*)\#?(.*)$#';
+		$reg = '#^([A-Za-z0-9]+)://(?:([A-Za-z0-9_-]+):([A-Za-z0-9_-]+)@)?([^/"<>:]+):?([\d]*)([^?]*)\??([^\#]*)\#?(.*)$#';
 		if (preg_match($reg, $url, $match)) {
 			$ret = array();
 			if (! empty($match[1])) $ret['scheme'] = $match[1];
-			if (! empty($match[2])) $ret['host'] = $match[2];
-			if (! empty($match[3])) $ret['port'] = $match[3];
-			if (! empty($match[4])) $ret['path'] = $match[4];
-			if (! empty($match[5])) $ret['query'] = $match[5];
-			if (! empty($match[6])) $ret['fragment'] = $match[6];
+			if (! empty($match[2])) $ret['user'] = $match[2];
+			if (! empty($match[3])) $ret['pass'] = $match[3];
+			if (! empty($match[4])) $ret['host'] = $match[4];
+			if (! empty($match[5])) $ret['port'] = $match[5];
+			if (! empty($match[6])) $ret['path'] = $match[6];
+			if (! empty($match[7])) $ret['query'] = $match[7];
+			if (! empty($match[8])) $ret['fragment'] = $match[8];
 			if (preg_match('/[^A-Za-z0-9.-]/', $ret['host'])) {
 				$ret['host'] = HypCommonFunc::convertIDN($ret['host'], 'encode');
 			}
@@ -1549,11 +1552,11 @@ class HypCommonFunc
 			return FALSE;
 		}
 	}
-	
+
 	// Make Emoji pad
 	function make_emoji_pad ($id, $checkmsg = '', $clearDisplayId = '', $emojiurl = '', $writeJS = TRUE, $emj_list = NULL) {
 		$useList = ($emj_list !== 'all');
-		
+
 		if ($useList && ! is_array($emj_list)) {
 			$emj_list = array(
 				140,141,142,143,144,1021,1022,1023,1024,1025,1026,1027,1029,1030,1031,1032,
@@ -1574,7 +1577,7 @@ class HypCommonFunc
 
 		if (! $checkmsg) $checkmsg = 'Emoji pad';
 		if (! $emojiurl) $emojiurl = ((defined('XOOPS_URL'))? XOOPS_URL : '.') . '/images/emoji';
-		
+
 		$html = <<<EOD
 <div class="norich">
 <input type="checkbox" id="emoji_onoff_$id" onclick="if(this.checked){xoopsGetElementById('emoji_buttons_pre_$id').style.display='block';xoopsGetElementById('$id').focus();}else{xoopsGetElementById('emoji_buttons_pre_$id').style.display='none'};" /><label for="emoji_onoff_$id">$checkmsg</label>
@@ -1607,7 +1610,7 @@ EOD;
 		$mpc->setImagePath($emojiurl);
 		$mpc->setString($html, FALSE);
 		$html = $mpc->autoConvertModKtai();
-		
+
 		$jshtml = $writeJS? str_replace(array('"', "\r\n", "\r", "\n"), array('\\"', ''), $html) : '';
 		$ret = $writeJS? '' : $html;
 
@@ -1636,7 +1639,7 @@ if (typeof hypEmojiPadSet != 'function') {
 EOD;
 		return $ret;
 	}
-	
+
 	// flock safty file_get_contents()
 	function flock_get_contents ($filename, $maxRetry = 10) {
 		$return = FALSE;
@@ -1658,7 +1661,7 @@ EOD;
 		}
 		return $return;
 	}
-	
+
 	function flock_put_contents ($filename, $src, $mode = 'wb', $maxRetry = 10) {
 		$return = FALSE;
 		if (is_string($filename) && ! empty($filename)) {
@@ -1697,9 +1700,10 @@ class Hyp_HTTP_Request
 	var $ua='';
 
 	var $uri='';
-	
+	var $hash = '';
+
 	var $iniLoaded = FALSE;
-	
+
 	// リダイレクト回数制限
 	var $redirect_max=10;
 	// 同期モード or 非同期モード
@@ -1712,26 +1716,26 @@ class Hyp_HTTP_Request
 	var $read_timeout=10;
 	// POST文字エンコード
 	var $content_charset='';
-	
+
 	var $network_reg = '/^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
-	
+
 	// プロキシ使用？
 	var $use_proxy=0;
-	
+
 	// proxy ホスト
 	var $proxy_host='proxy.xxx.yyy.zzz';
-	
+
 	// proxy ポート番号
 	var $proxy_port='';
-	
+
 	// プロキシサーバを使用しないホストのリスト
-	var $no_proxy=array( 
-		'127.0.0.1', 
-		'localhost', 
-		//'192.168.1.0/24', 
-		//'no-proxy.com', 
+	var $no_proxy=array(
+		'127.0.0.1',
+		'localhost',
+		//'192.168.1.0/24',
+		//'no-proxy.com',
 	);
-	
+
 	// プロキシ認証
 	var $need_proxy_auth=0;
 	var $proxy_auth_user='';
@@ -1746,12 +1750,12 @@ class Hyp_HTTP_Request
 	function Hyp_HTTP_Request()
 	{
 		$this->ua = 'PHP/'.PHP_VERSION;
-		
+
 		// Load "http_request.ini"
 		$ini_file = dirname(__FILE__) . '/ini/http_request.ini';
 		if (file_exists($ini_file)) {
 			$ini_array = parse_ini_file($ini_file);
-			
+
 			$keys = array(
 				'use_proxy',
 				'proxy_host',
@@ -1771,11 +1775,11 @@ class Hyp_HTTP_Request
 					}
 				}
 			}
-			
+
 			$this->iniLoaded = TRUE;
 		}
 	}
-		
+
 	function init()
 	{
 		$this->url     = '';
@@ -1784,7 +1788,7 @@ class Hyp_HTTP_Request
 		$this->post    = array();
 		$this->ua      = "PHP/".PHP_VERSION;
 		$this->getSize = null;
-		
+
 		// result
 		$this->query = '';   // Query String
 		$this->rc = '';      // Response Code
@@ -1795,7 +1799,7 @@ class Hyp_HTTP_Request
 	{
 		$max_execution_time = ini_get('max_execution_time');
 		$max_execution_time = ($max_execution_time)? $max_execution_time : 30;
-		
+
 		$rc = array();
 		$arr = HypCommonFunc::i18n_parse_url($this->url);
 		if (!$arr)
@@ -1806,30 +1810,30 @@ class Hyp_HTTP_Request
 			$this->data   = 'Bad Request';
 			return;
 		}
-				
+
 		if (!$this->connect_try) $this->connect_try = 1;
-		
+
 		$via_proxy = $this->use_proxy ? ! $this->in_the_net($this->no_proxy, $arr['host']) : FALSE;
-		
+
 		// query
 		$arr['query'] = isset($arr['query']) ? '?'.$arr['query'] : '';
 		// port
 		$arr['port'] = isset($arr['port']) ? $arr['port'] : 80;
-		
+
 		$url_base = $arr['scheme'].'://'.$arr['host'].':'.$arr['port'];
 		$url_path = isset($arr['path']) ? $arr['path'] : '/';
 		$this->uri = ($via_proxy ? $url_base : '').$url_path.$arr['query'];
 		$this->method = strtoupper($this->method);
 		$method = ($this->method == 'HEAD')? 'GET' : $this->method;
 		$readsize = ($this->method == 'HEAD')? 1024 : 4096;
-		
+
 		$query = $method.' '.$this->uri." HTTP/1.0\r\n";
 		$query .= "Host: ".$arr['host']."\r\n";
 		if (!empty($this->ua)) $query .= "User-Agent: ".$this->ua."\r\n";
 		if (!is_null($this->getSize)) $query .= 'Range: bytes=0-' . ($this->getSize - 1) . "\r\n";
-		
-		// proxyのBasic認証 
-		if ($this->need_proxy_auth and isset($this->proxy_auth_user) and isset($this->proxy_auth_pass)) 
+
+		// proxyのBasic認証
+		if ($this->need_proxy_auth and isset($this->proxy_auth_user) and isset($this->proxy_auth_pass))
 		{
 			$query .= 'Proxy-Authorization: Basic '.
 				base64_encode($this->proxy_auth_user.':'.$this->proxy_auth_pass)."\r\n";
@@ -1841,9 +1845,9 @@ class Hyp_HTTP_Request
 			$query .= 'Authorization: Basic '.
 				base64_encode($arr['user'].':'.$arr['pass'])."\r\n";
 		}
-		
+
 		$query .= $this->headers;
-		
+
 		// POST 時は、urlencode したデータとする
 		if ($this->method == 'POST')
 		{
@@ -1855,7 +1859,7 @@ class Hyp_HTTP_Request
 					$_send[] = $name.'='.urlencode($val);
 				}
 				$data = join('&',$_send);
-				
+
 				if (preg_match('/^[a-zA-Z0-9_-]+$/', $this->content_charset)) {
 					// Legacy but simple
 					$query .= 'Content-Type: application/x-www-form-urlencoded' . "\r\n";
@@ -1880,17 +1884,17 @@ class Hyp_HTTP_Request
 		{
 			$query .= "\r\n";
 		}
-		
+
 		//set_time_limit($this->connect_timeout * $this->connect_try + 60);
 		$fp = $connect_try_count = 0;
 		while( !$fp && $connect_try_count < $this->connect_try )
 		{
 			@set_time_limit($this->connect_timeout + $max_execution_time);
-			
+
 			if ($now_execution_time = ini_get('max_execution_time')) {
 				$this->connect_timeout = min($this->connect_timeout, max(5, $now_execution_time - 10));
 			}
-			
+
 			$errno = 0;
 			$errstr = "";
 			$fp = @ fsockopen(
@@ -1910,9 +1914,21 @@ class Hyp_HTTP_Request
 			$this->data   = $errstr; // エラーメッセージ
 			return;
 		}
-		
-		fputs($fp, $query);
-		
+
+		// 非同期モード
+		if (!$this->blocking) {
+			socket_set_blocking($fp, 0);
+		}
+
+//		fputs($fp, $query);
+		$fwrite = 0;
+		for ($written = 0; $written < strlen($query); $written += $fwrite) {
+			$fwrite = fwrite($fp, substr($query, $written));
+			if (!$fwrite) {
+				break;
+			}
+		}
+
 		// 非同期モード
 		if (!$this->blocking)
 		{
@@ -1923,7 +1939,7 @@ class Hyp_HTTP_Request
 			$this->data   = 'Blocking mode is FALSE';
 			return;
 		}
-		
+
 		$response = '';
 		while (!feof($fp)
 			&& ($this->method != 'HEAD' || strpos($response,"\r\n\r\n") === FALSE)
@@ -1953,11 +1969,10 @@ class Hyp_HTTP_Request
 			}
 		}
 		fclose($fp);
-		
 		$resp = array_pad(explode("\r\n\r\n",$response,2), 2, '');
 		$rccd = array_pad(explode(' ',$resp[0],3), 3, ''); // array('HTTP/1.1','200','OK\r\n...')
 		$rc = (integer)$rccd[1];
-		
+
 		// Redirect
 		switch ($rc)
 		{
@@ -1966,10 +1981,11 @@ class Hyp_HTTP_Request
 			case 302: // Moved Temporarily
 			case 301: // Moved Permanently
 				$matches = array();
-				if (preg_match('/^Location: (.+)$/m',$resp[0],$matches)
+				if (preg_match('/^Location: (.+?)(#.+)?$/im',$resp[0],$matches)
 					and --$this->redirect_max > 0)
 				{
 					$this->url = trim($matches[1]);
+					$this->hash = isset($matches[2])? trim($matches[2]) : '';
 					if (!preg_match('/^https?:\//',$this->url)) // no scheme
 					{
 						if ($this->url{0} != '/') // Relative path
@@ -1979,11 +1995,11 @@ class Hyp_HTTP_Request
 						}
 						// add sheme,host
 						$this->url = $url_base.$this->url;
-					} 
+					}
 					return $this->get();
 				}
 		}
-		
+
 		$this->query = $query;    // Query String
 		$this->rc = $rc;          // Response Code
 		$this->header = $resp[0]; // Header
@@ -1997,16 +2013,16 @@ class Hyp_HTTP_Request
 	{
 		if (empty($networks) || $host == '') return FALSE;
 		if (! is_array($networks)) $networks = array($networks);
-	
+
 		$matches = array();
-	
+
 		if (preg_match($this->network_reg, $host, $matches)) {
 			$ip = $matches[1];
 		} else {
 			$ip = gethostbyname($host); // May heavy
 		}
 		$l_ip = ip2long($ip);
-	
+
 		foreach ($networks as $network) {
 			if (preg_match($this->network_reg, $network, $matches) &&
 			    is_long($l_ip) && long2ip($l_ip) == $ip) {
@@ -2017,7 +2033,7 @@ class Hyp_HTTP_Request
 				$mask  = is_numeric($mask) ?
 					pow(2, 32) - pow(2, 32 - $mask) : // '8' means '8-bit mask'
 					ip2long($mask);                   // '255.0.0.0' (the same)
-	
+
 				if (($l_ip & $mask) == $l_net) return TRUE;
 			} else {
 				// $host seems not IPv4 address. May be a DNS name like 'foobar.example.com'?
@@ -2026,7 +2042,7 @@ class Hyp_HTTP_Request
 						return TRUE;
 			}
 		}
-	
+
 		return FALSE; // Not found
 	}
 }
@@ -2087,7 +2103,7 @@ function memory_get_usage()
 // ImageMagick のパス設定ファイルがあれば読み込む
 if (file_exists(dirname(__FILE__)."/execpath.inc.php"))
 {
-	include_once(dirname(__FILE__)."/execpath.inc.php");	
+	include_once(dirname(__FILE__)."/execpath.inc.php");
 }
 // ImageMagick のパスを指定 (多くは /usr/bin/ ?)
 HypCommonFunc::set_exec_path("/usr/bin/");
@@ -2103,7 +2119,7 @@ if (! function_exists('file_get_contents')) {
 			trigger_error('file_get_contents() failed to open stream: No such file or directory', E_USER_WARNING);
 			return false;
 		}
- 
+
 		clearstatcache();
 		if ($fsize = @filesize($filename)) {
 			$data = fread($fh, $fsize);
@@ -2113,7 +2129,7 @@ if (! function_exists('file_get_contents')) {
 				$data .= fread($fh, 8192);
 			}
 		}
- 
+
 		fclose($fh);
 		return $data;
 	}
