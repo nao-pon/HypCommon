@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/02/11 by nao-pon http://hypweb.net/
- * $Id: favicon.php,v 1.9 2009/04/16 08:56:05 nao-pon Exp $
+ * $Id: favicon.php,v 1.10 2009/11/17 04:42:20 nao-pon Exp $
  */
 
 /**
@@ -50,7 +50,7 @@ define('UNIX_TIME', (isset($_SERVER['REQUEST_TIME'])? $_SERVER['REQUEST_TIME'] :
 
 if (! defined('FAVICON_ADMIN_MODE')) define('FAVICON_ADMIN_MODE', FALSE);
 
-function get_favicon_url($url)
+function get_favicon($url)
 {
     if (! $url || ! is_url($url)) return false;
     if (time() <= get_timestamp($url) + FAVICON_CACHE_TTL) {
@@ -124,7 +124,7 @@ function output_image($icon, $time = 0)
 {
     $filename = get_image_filename($icon);
     $mime = get_mimetype_from_name($icon);
-    
+
     if (function_exists('mb_http_output')) {
         mb_http_output('pass');
     }
@@ -150,24 +150,27 @@ function update_cache($url)
     	touch($garbage);
     	clear_cache();
     }
-    
+
+	$url_org = $url;
     $html = http_get_contents($url, 4096);
+    $_url = $url;
+    check_group($url);
+	if ($url !== $_url) {
+		$html = http_get_contents($url, 4096);
+	}
     if ($html === false) {        // connection failed or timed out
         $favicon = 'DefaultIcon';
-        //return false;
     } else if ($html === null) {  // 404 status code or unsupported scheme
         $favicon = 'ErrorIcon';
     } else {
         $url  = parse_url($url);
         $base = $url['scheme'] . '://' . $url['host'] . (isset($url['port']) ? ':' . $url['port'] : '');
         $url  = $base . (isset($url['path']) ? $url['path'] : '/');
-
         if (preg_match('/<link ([^>]*)rel=[\'"]?(?:shortcut )?icon[\'"]?([^>]*)/si', $html, $matches)) {
             $link = implode(' ', $matches);
 
             if (preg_match('/href=[\'"]?(https?:\/\/)?([^\'" ]+)/si', $link, $matches)) {
                 $favicon = $matches[2];
-
                 if ($matches[1]) {
                     $favicon = $matches[1] . $favicon;
                 } else if ($favicon[0] === '/') {
@@ -202,7 +205,7 @@ function update_cache($url)
         }
     }
 
-    $filename = get_url_filename($url);
+    $filename = get_url_filename($url_org);
     file_put_contents($filename, $favicon);
     return $favicon;
 }
@@ -212,7 +215,7 @@ function http_get_contents(& $url, $size = 0)
     file_put_contents(get_url_filename($url), 'DefaultIcon');
 
 	include_once dirname(dirname(__FILE__)) . '/hyp_common_func.php';
-	
+
 	$ht = new Hyp_HTTP_Request();
 	$ht->init();
 	$ht->url = $url;
@@ -246,28 +249,20 @@ function get_mimetype($data)
 
 function get_extention($data)
 {
-    //$temp = tempnam(FAVICON_CACHE_DIR, 'ico');
-    //@ file_put_contents($temp, $data);
-    //clearstatcache();
-    //if (@ getimagesize($temp)) {
-	//   unlink($temp);
-	    if (strncmp("\x00\x00\x01\x00", $data, 4) === 0) {
-	        // ICO
-	        return '.ico';
-	    } else if (strncmp("\x89PNG\x0d\x0a\x1a\x0a", $data, 8) === 0) {
-	        // PNG
-	        return '.png';
-	    } else if (strncmp('GIF87a', $data, 6) === 0 || strncmp('GIF89a', $data, 6) === 0) {
-	        // GIF
-	        return '.gif';
-	    } else if (strncmp("\xff\xd8", $data, 2) === 0) {
-	        // JPEG
-	        return '.jpg';
-	    }
-	    return false;
-    //}
-    //@ unlink($temp);
-    //return false;
+    if (strncmp("\x00\x00\x01\x00", $data, 4) === 0) {
+        // ICO
+        return '.ico';
+    } else if (strncmp("\x89PNG\x0d\x0a\x1a\x0a", $data, 8) === 0) {
+        // PNG
+        return '.png';
+    } else if (strncmp('GIF87a', $data, 6) === 0 || strncmp('GIF89a', $data, 6) === 0) {
+        // GIF
+        return '.gif';
+    } else if (strncmp("\xff\xd8", $data, 2) === 0) {
+        // JPEG
+        return '.jpg';
+    }
+    return false;
 }
 
 function get_mimetype_from_name($favicon)
@@ -292,7 +287,7 @@ function get_mimetype_from_name($favicon)
 
 function is_url(& $url)
 {
-	
+
 	if ($url[0] === '/') {
 		$p_url  = parse_url(XOOPS_URL);
         $base = $p_url['scheme'] . '://' . $p_url['host'] . (isset($p_url['port']) ? ':' . $p_url['port'] : '');
@@ -306,6 +301,13 @@ function is_url(& $url)
 
 	$url = preg_replace('/index\.[^.]+$/i', '', $url);
 
+	check_group($url);
+
+	$url = preg_replace('/([" \x80-\xff]+)/e', 'rawurlencode("$1")', $url);
+	return (preg_match('/(?:https?|ftp|news):\/\/[!~*\'();\/?:\@&=+\$,%#\w.-]+/', $url));
+}
+
+function check_group(& $url) {
 	$hosts = get_hosts();
 	if ($hosts) {
 		$p_url = parse_url($url);
@@ -319,13 +321,13 @@ function is_url(& $url)
 			array_shift($_parts);
 		}
 	}
-
-	//exit($url);
-	$url = preg_replace('/([" \x80-\xff]+)/e', 'rawurlencode("$1")', $url);
-	return (preg_match('/(?:https?|ftp|news):\/\/[!~*\'();\/?:\@&=+\$,%#\w.-]+/', $url));
 }
 
 function get_hosts() {
+	static $hosts = array();
+
+	if ($hosts) return $hosts;
+
 	$cache = FAVICON_CACHE_DIR . 'group.hosts';
 	if (is_file($cache)) {
 		 $mtime = filemtime($cache);
@@ -338,7 +340,6 @@ function get_hosts() {
 		 }
 	}
 
-	$hosts = array();
 	$_hosts = file(FAVICON_TRUST_PATH . '/group.def.hosts');
 	if (is_file(FAVICON_TRUST_PATH . '/group.hosts')) {
 		$_hosts = array_merge($_hosts, file(FAVICON_TRUST_PATH . '/group.hosts'));
@@ -367,7 +368,7 @@ function redirect_icon($url)
 function output_icon($icon) {
 
 	$time = filemtime(get_image_filename($icon));
-	
+
 	if ((isset($_SERVER['HTTP_IF_NONE_MATCH']) && $time == $_SERVER['HTTP_IF_NONE_MATCH'])
 	   || $time <= if_modified_since()) {
 	    header('HTTP/1.1 304 Not Modified');
@@ -440,7 +441,7 @@ if (isset($_GET['clear'])) {
 
 $favicon = false;
 if (isset($_GET['url'])) {
-	$favicon = get_favicon_url(rawurldecode($_GET['url']));
+	$favicon = get_favicon(rawurldecode($_GET['url']));
 }
 
 if ($favicon === false) {
