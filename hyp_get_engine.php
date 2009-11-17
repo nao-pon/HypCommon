@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_get_engine.php,v 1.9 2009/03/01 23:42:25 nao-pon Exp $
+// $Id: hyp_get_engine.php,v 1.10 2009/11/17 05:05:59 nao-pon Exp $
 // HypGetQueryWord Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -13,35 +13,36 @@ class HypGetQueryWord
 	var $encode = 'EUC-JP';
 	function set_constants($qw='HYP_QUERY_WORD',$qw2='HYP_QUERY_WORD2',$en='HYP_SEARCH_ENGINE_NAME',$tmpdir='',$enc='EUC-JP')
 	{
-		list($getengine_name,$getengine_query,$getengine_query2) = HypGetQueryWord::se_getengine($tmpdir,$enc);
+		$use_kakasi = ($qw2);
+		list($getengine_name,$getengine_query,$getengine_query2) = HypGetQueryWord::se_getengine($tmpdir,$enc,$use_kakasi);
 		define($qw , $getengine_query);
-		define($qw2, $getengine_query2);
+		if ($use_kakasi) define($qw2, $getengine_query2);
 		define($en , $getengine_name);
 	}
 
-	function se_getengine($tmpdir,$enc)
+	function se_getengine($tmpdir,$enc,$use_kakasi)
 	{
 		$_query = array_merge($_POST,$_GET);
 		$_query = HypCommonFunc::stripslashes_gpc($_query);
-		
+
 		$query = (isset($_query['query']))? $_query['query'] : "";
 		if (!$query) $query = (isset($_query['word']))? $_query['word'] : "";
 		if (!$query) $query = (isset($_query['mes']))? $_query['mes'] : "";
-		
+
 		$se_name=""; //Default
-		
+
 		if (!$query)
 		{
 			$reffer="";
 			if(isset($_SERVER['HTTP_REFERER'])) $reffer=$_SERVER['HTTP_REFERER'];
-			
+
 			if ($reffer)
 			{
 				if(substr($reffer,-1)=="/") $reffer=substr($reffer,0,strlen($reffer)-1);
-				
+
 				$se=file(dirname(__FILE__)."/hyp_search_engines.dat");
 				$found=0;
-				
+
 				foreach($se as $linea)
 				{
 					$linea=trim($linea);
@@ -65,12 +66,12 @@ class HypGetQueryWord
 					if(count($vars)>1)
 					{
 						$query=explode(chop($tmp[2]),$vars[1]);
-						
+
 						if(count($query)>1)
 						{
 							$query = explode("&",$query[1]);
 							$query = $query[0];
-						}	
+						}
 					}
 				}
 			}
@@ -81,13 +82,13 @@ class HypGetQueryWord
 
 		//Googleのキャッシュからの場合
 		$query = preg_replace("/^cache\:[^ ]+ /",'',$query);
-		
+
 		if (function_exists('mb_convert_kana')) $query = mb_convert_kana($query,"KVas",$enc);
-		
+
 		//$query = preg_replace("/( |\+|,|、|・)+/"," ",$query);
-		
+
 		$query2 = $query;
-		if ($query2)
+		if ($use_kakasi && $query2)
 		{
 			// 分かち書き
 			include_once(dirname(__FILE__)."/hyp_kakasi.php");
@@ -98,16 +99,16 @@ class HypGetQueryWord
 			}
 			$kakasi->get_wakatigaki($query2);
 		}
-		
+
 		return array($se_name,$query,$query2);
 	}
 
-	function se_search($string,$mask){ 
-		static $in=array('.', '^', '$', '{', '}', '(', ')', '[', ']', '+', '*', '?'); 
-		static $out=array('\\.', '\\^', '\\$', '\\{', '\\}', '\\(', '\\)', '\\[', '\\]', '\\+', '.*', '.'); 
-		$mask='^'.str_replace($in,$out,$mask).'$'; 
-		return(ereg($mask,$string)); 
-	}  
+	function se_search($string,$mask){
+		static $in=array('.', '^', '$', '{', '}', '(', ')', '[', ']', '+', '*', '?');
+		static $out=array('\\.', '\\^', '\\$', '\\{', '\\}', '\\(', '\\)', '\\[', '\\]', '\\+', '.*', '.');
+		$mask='^'.str_replace($in,$out,$mask).'$';
+		return(ereg($mask,$string));
+	}
 
 	// escuni2euc - convert "IE escaped Unicode" to "EUC-JP"
 	//
@@ -118,7 +119,7 @@ class HypGetQueryWord
 	function uni2utf8($uniescape)
 	{
 		$c = "";
-		
+
 		$n = intval(substr($uniescape, -4), 16);
 		if ($n < 0x7F) {// 0000-007F
 			$c .= chr($n);
@@ -138,7 +139,7 @@ class HypGetQueryWord
 	function se_escuni2euc($escunistr)
 	{
 		$eucstr = "";
-		
+
 		while(eregi("(.*)(%u[0-9A-F][0-9A-F][0-9A-F][0-9A-F])(.*)$", $escunistr, $fragment)) {
 			$eucstr = mb_convert_encoding(HypGetQueryWord::uni2utf8($fragment[2]).$fragment[3], $this->encode, 'UTF-8').$eucstr;
 			$escunistr = $fragment[1];
@@ -169,9 +170,9 @@ class HypGetQueryWord
 					create_function('$arr', 'return $arr[1]? $arr[1] : ((strpos($arr[2], \'class=\') === FALSE)? "$arr[2] class=\"ext\">" : "$arr[0]");') ,
 					$body
 				);
-		
+
 		if (!$q_word || !$body) return $body;
-		
+
 		if (function_exists("xoops_gethandler"))
 		{
 			$config_handler =& xoops_gethandler('config');
@@ -179,7 +180,7 @@ class HypGetQueryWord
 		}
 		else
 			$xoopsConfigSearch['keyword_min'] = 3;
-	
+
 		//検索語ハイライト
 		$search_word = '';
 		//$words = array_flip(preg_split('/\s+/',$q_word,-1,PREG_SPLIT_NO_EMPTY));
@@ -214,9 +215,9 @@ class HypGetQueryWord
 	function get_search_words($words, $special=false, $enc='EUC-JP')
 	{
 		$retval = array();
-		
+
 		//if (defined('XOOPS_USE_MULTIBYTES') && XOOPS_USE_MULTIBYTES && (!function_exists('mb_strlen') || !function_exists('mb_substr'))) return $retval;
-		
+
 		// Perlメモ - 正しくパターンマッチさせる
 		// http://www.din.or.jp/~ohzaki/perl.htm#JP_Match
 		$eucpre = $eucpost = '';
@@ -244,7 +245,7 @@ class HypGetQueryWord
 			(function_exists('mb_substr')) ?
 				'return mb_substr($str,$start,$len,$enc);' : 'return substr($str,$start,$len);'
 		);
-	
+
 		foreach ($words as $word)
 		{
 			// 英数字は半角,カタカナは全角,ひらがなはカタカナに
