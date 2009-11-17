@@ -8,7 +8,7 @@ define('MPC_TO_OPTION_MODKTAI' , 'MODKTAI'); // mod_ktai用コード
 // {{{ class MPC_common
 /**
 * 絵文字変換ベースクラス
-* 
+*
 * @author   ryster <ryster@php-develop.org>
 * @license  http://www.opensource.org/licenses/mit-license.php The MIT License
 * @link     http://php-develop.org/MobilePictogramConverter/
@@ -20,104 +20,104 @@ class MPC_Common
     * @var mixed
     */
     var $string;
-    
+
     /**
     * 変換する文字列の文字コード (MPC_FROM_CHARSET_SJIS, MPC_FROM_CHARSET_UTF8)
     * @var string
     */
     var $from_charset;
-    
+
     /**
     * 変換する文字列の絵文字タイプ (MPC_FROM_FOMA, MPC_FROM_EZWEB, MPC_FROM_SOFTBANK)
     * @var string
     */
     var $from;
-    
+
     /**
     * 変換後絵文字タイプ (MPC_TO_FOMA, MPC_TO_EZWEB, MPC_TO_SOFTBANK)
     * @var string
     */
     var $to;
-    
+
     /**
     * 変換オプション (MPC_TO_OPTION_RAW, MPC_TO_OPTION_WEB, MPC_TO_OPTION_IMG)
     * @var string
     */
     var $option;
-    
+
     /**
     * 変換する文字列の絵文字タイプ (MPC_FROM_OPTION_RAW, MPC_FROM_OPTION_WEB, MPC_FROM_OPTION_IMG)
     * @var string
     */
     var $strtype;
-    
+
     /**
     * i-mode絵文字画像格納パス
     * @var string
     */
     var $i_img_path = 'img/i/';
     var $i_img_size = array('16', '16');
-    
+
     /**
     * EZweb絵文字画像格納パス
     * @var string
     */
     var $e_img_path = 'img/e/';
-    
+
     /**
     * SoftBank絵文字画像格納パス
     * @var string
     */
     var $s_img_path = 'img/s/';
-    
+
     /**
     * i-mode => EZweb変換マップ (map/i2e_table.php参照)
     * @var array
     */
     var $i2e_table = array();
-    
+
     /**
     * i-mode => SoftBank変換マップ (map/i2s_table.php参照)
     * @var array
     */
     var $i2s_table = array();
-    
+
     /**
     * SoftBank => i-mode変換マップ (map/s2i_table.php参照)
     * @var array
     */
     var $s2i_table = array();
-    
+
     /**
     * SoftBank => EZweb変換マップ (map/s2e_table.php参照)
     * @var array
     */
     var $s2e_table = array();
-    
+
     /**
     * EZweb => i-mode変換マップ (map/e2i_table.php参照)
     * @var array
     */
     var $e2i_table = array();
-    
+
     /**
     * EZweb => SoftBank変換マップ (map/e2s_table.php参照)
     * @var array
     */
     var $e2s_table = array();
-    
+
     /**
     * EZweb(icon番号) => EZweb(Shift_JIS Hex)変換マップ (map/e2icon_table.php参照)
     * @var array
     */
     var $e2icon_table = array();
-    
+
     /**
     * [emj:\d] => i-mode変換マップ (map/emj2i_table.php参照)
     * @var array
     */
     var $emj2i_table = array();
-    
+
     /**
     * [emj:\d] => SoftBank変換マップ (map/emj2s_table.php参照)
     * @var array
@@ -129,37 +129,37 @@ class MPC_Common
     * @var string
     */
     var $substitute = '〓';
-    
+
     /**
     * 文字列（dec）格納変数
     * @var array
     */
     var $decstring = array();
-    
+
     /**
     * インクリメント用
     * @var integer
     */
     var $i = 0;
-    
+
     /**
     * 添字配列用
     * @var integer
     */
     var $n = 0;
-    
+
     /**
     * 文字列格納変数
     * @var array
     */
     var $unPictograms = array();
-    
+
     /**
     * 絵文字格納変数
     * @var array
     */
     var $Pictograms = array();
-    
+
     /**
     * モバイルユーザーエージェント
     * @var array
@@ -169,13 +169,13 @@ class MPC_Common
        'SoftBank' => '/^(?:(?:SoftBank|Vodafone|J-PHONE)\/\d\.\d|MOT-)/',
        'EZweb'    => '/^(?:KDDI-[A-Z]+\d+[A-Z]? )?UP\.Browser\//',
     );
-	
+
     /**
     * ユーザーエージェント
     * @var string
     */
 	var $userAgent = NULL;
-	
+
     function mail2ModKtai($str ,$mail, $charset) {
 		$to = $this->mail_host = '';
 		if (preg_match('/docomo\.ne\.jp$/i', $mail)) {
@@ -210,7 +210,7 @@ class MPC_Common
 		}
 		return $str;
     }
-    
+
     function jis2ktaimod ($match) {
 		$str = strtolower(substr($match[0], 4));
 		$_str = $str;
@@ -236,14 +236,14 @@ class MPC_Common
 			case MPC_FROM_EZWEB:
 			    $first = substr($str, 0, 2 );
 			    $second = substr( $str, 2, 2);
-			
+
 			    // 最初の2文字を変換
 				$sjis1 = hexdec($first);
 				$sjis1 = ($sjis1 - hexdec("21"))/2 + hexdec("81");
 				if($sjis1 >= hexdec("9e")) {
 		    		$sjis1 += hexdec("40");
 		    	}
-			
+
 			    //最後の2文字を変換
 			    $buf = hexdec($first) % 2;
 			    $sjis2 = hexdec($second);
@@ -255,11 +255,11 @@ class MPC_Common
 			    if ($sjis2 >= hexdec("7f")) {
 			    	$sjis2++;
 			    }
-			
+
 			    // 16進数に変換
 			    $sjis1 = strtolower(dechex($sjis1));
 			    $sjis2 = strtolower(dechex($sjis2));
-		
+
 			    // Eメール送出用SJISからKDDI絵文字用SJISに変換
 			    if ( $sjis1 === 'eb' ) {
 			        $sjis1 = 'f6';
@@ -270,16 +270,31 @@ class MPC_Common
 			    } else if ($sjis1 === "ee" ) {
 			        $sjis1 = "f4";
 			    }
-		    
+
 			    $buf = $sjis1 . $sjis2;
-					
+
 			    return '((e:' . $buf . '))';
 
 		}
 		return $_str;
     }
-    
-    
+
+    function euc2ktaimod($str) {
+    	if ($this->from === MPC_FROM_SOFTBANK) {
+			$ex = '\'((s:\' . join(\'))((s:\', explode(\' \', rtrim(chunk_split(strtolower(bin2hex(str_replace(\'\\"\', \'"\', \'$1\'))), 4, \' \')))) . \'))\'';
+			$str = preg_replace('/[\x1B][\x24]((?:[G|E|F|O|P|Q][\x21-\x7E])+)[\x0F]?/e', $ex, $str);
+    	} else {
+    		$prefix = ($this->from === MPC_FROM_FOMA)? 'i' : 'e';
+			$old = mb_substitute_character();
+			mb_substitute_character('long');
+			$str = mb_convert_encoding($str, 'EUC-JP', 'EUC-JP');
+			mb_substitute_character($old);
+			$ex = '\'(('.$prefix.':\'.strtolower(\'$1\').\'))\'';
+			$str = preg_replace('/BAD\+([0-9A-F]{4})/ie', $ex, $str);
+    	}
+    	return $str;
+    }
+
     /**
     * ユーザーエージェントからキャリアを自動判別し
     * mod_ktai コードから対応する絵文字に自動変換 by nao-pon
@@ -287,7 +302,7 @@ class MPC_Common
     *
     * @return string
     */
-    
+
     function autoConvertModKtai()
     {
         $useragent = (is_null($this->userAgent))? $_SERVER['HTTP_USER_AGENT'] : $this->userAgent;
@@ -304,19 +319,19 @@ class MPC_Common
             $to     = 'COMMON';
             $option = MPC_TO_OPTION_IMG;
         }
-        
+
         $this->setTo($to);
         $this->setOption($option);
         $str = $this->getString();
-        
+
         $str = preg_replace_callback('/(<head.+?\/head>|<script.+?\/script>|<style.+?\/style>|<textarea.+?\/textarea>|<[^<>]+?>)|\(\(([eisv]):([0-9a-f]{4})\)\)|\[emj:(\d{1,4})(?::(im|sb|ez))?\]/isS', array(& $this, '_decodeModKtai'), $str);
 
         return $str;
     }
-    
+
     /**
     * mod_ktai コードをデコード (サブ関数) by nao-pon
-    * 
+    *
     * @param string $match
     * @return string
     */
@@ -343,7 +358,7 @@ class MPC_Common
             }
             return $match[0];
         }
-        
+
         if (isset($match[4])) {
 	    	$emj_table = 'emj2i_table';
 	    	$match[2] = 'i';
@@ -389,12 +404,12 @@ class MPC_Common
 			}
 			*/
         }
-        
+
         $mode = strtolower($match[2]);
         if ($mode === 'v') {
         	$mode = 's';
         }
-        
+
         // ezweb convert to icon number
         $dec = HexDec($match[3]);
         if ($mode === 'e') {
@@ -404,7 +419,7 @@ class MPC_Common
             $dec = intval(array_search($dec , $this->e2icon_table));
         }
         $_dec = $dec;
-        
+
         //exists check
         switch($mode) {
             case 'i':
@@ -424,7 +439,7 @@ class MPC_Common
         if (! isset($table_array[$dec])) {
             return $match[0];
         }
-        
+
         // set convert table
         $table = '';
         switch($this->to) {
@@ -449,7 +464,7 @@ class MPC_Common
             default:
                 $decode_func = $mode . '_options_encode';
         }
-        
+
         // convert
         if ($table) {
             if (empty($this->$table)) {
@@ -458,7 +473,7 @@ class MPC_Common
             $table_array =& $this->$table;
             $dec = (isset($table_array[$dec]))? $table_array[$dec] : FALSE;
         }
-        
+
         // show image if nonexist
         $_option = '';
         if (! is_numeric($dec)) {
@@ -467,19 +482,19 @@ class MPC_Common
             $this->setOption(MPC_TO_OPTION_IMG);
             $decode_func = $mode . '_options_encode';
         }
-        
+
         // decode
         $ret = $this->$decode_func($dec);
-        
+
         if ($_option) $this->setOption($_option);
-        
+
         return $ret;
     }
-    
+
     /**
     * ユーザーエージェントからキャリアを自動判別し
     * 対応する絵文字に自動変換
-    * 
+    *
     * @return string
     */
     function autoConvert($toCharset = null)
@@ -498,13 +513,13 @@ class MPC_Common
             $to     = str_replace('MPC_', '', strtoupper(get_class($this)));
             $option = MPC_TO_OPTION_IMG;
         }
-        
+
         return $this->Convert($to, $option, $toCharset);
     }
-    
+
     /**
     * 絵文字を指定した絵文字の指定したフォーマットへ変換
-    * 
+    *
     * @param integer $data
     * @return string
     */
@@ -514,7 +529,7 @@ class MPC_Common
         $to   = $this->getTo();
         $c    = ($to == MPC_TO_EZWEB) ? 'e' : (($to == MPC_TO_SOFTBANK) ? 's' : 'i');
         $options_encode = $c.'_options_encode';
-        
+
         $data = ($to == $this->getFrom()) ? $data : $this->MapSearch($data, $this->getTo());
         if (gettype($data) == 'integer') {
             $buf = $this->$options_encode($data);
@@ -530,10 +545,10 @@ class MPC_Common
         }
         return $buf;
     }
-    
+
     /**
     * 絵文字変換マップを検索
-    * 
+    *
     * @param  integer $key
     * @param  integer $to
     * @return string
@@ -550,10 +565,10 @@ class MPC_Common
         $mapping = $this->$map;
         return (empty($mapping[$key]) == false) ? $mapping[$key] : $this->getSubstitute();
     }
-    
+
     /**
     * i-mode絵文字（10進数）を指定されたフォーマットへ変換
-    * 
+    *
     * @param  integer $dec
     * @return string
     */
@@ -578,10 +593,10 @@ class MPC_Common
         }
         return $buf;
     }
-    
+
     /**
     * EZweb絵文字（icon番号）を指定されたフォーマットへ変換
-    * 
+    *
     * @param  integer $iconno
     * @return string
     */
@@ -611,10 +626,10 @@ class MPC_Common
         }
         return $buf;
     }
-    
+
     /**
     * SoftBank絵文字（10進数）を指定されたフォーマットへ変換
-    * 
+    *
     * @param  integer $dec
     * @return string
     */
@@ -632,7 +647,7 @@ class MPC_Common
                 }
                 $char3 = $dec2 + $num;
                 $buf   = pack('C*', 0xEE, $char2, $char3);
-                
+
                 if ($this->getFromCharset() === 'SJIS') {
                     if (($char2 == 0x80 && ($char3 >= 0x81 && $char3 <= 0xBF)) || ($char2 == 0x81 && ($char3 >= 0x80 && $char3 <= 0x9A))) {
                         $diff = (($char2 == 0x80 && $char3 == 0xBF) || ($char2 == 0x81 && ($char3 >= 0x80 && $char3 <= 0x9A))) ? 6465 : 6464;
@@ -647,7 +662,7 @@ class MPC_Common
                     } else {
                         $diff = 5792;
                     }
-                    
+
                     $buf = pack('H*', dechex(hexdec(bin2hex(mb_convert_encoding($buf, 'unicode', 'UTF-8'))) + $diff));
                 }
                 break;
@@ -664,11 +679,11 @@ class MPC_Common
         }
         return $buf;
     }
-    
+
     /**
     * 文字列の検査
     * 絵文字の可能性があるなら文字列（10進数）を格納した配列を返す
-    * 
+    *
     * return array
     */
     function Inspection()
@@ -695,7 +710,7 @@ class MPC_Common
             return null;
         }
     }
-    
+
     /**
     * 現在の文字列（10進数を取得）
     *
@@ -708,10 +723,10 @@ class MPC_Common
         }
         return null;
     }
-    
+
     /**
     * 文字列（10進数）を格納
-    * 
+    *
     * @param array
     */
     function setDS($decstrings)
@@ -720,10 +735,10 @@ class MPC_Common
             $this->decstring = $decstrings;
         }
     }
-    
+
     /**
     * 文字列を配列に格納
-    * 
+    *
     * @param string $str
     */
     function setUnPictogram($str)
@@ -731,30 +746,30 @@ class MPC_Common
         $this->unPictograms[$this->n] = $str;
         $this->n++;
     }
-    
+
     /**
     * 文字列を取得
-    * 
+    *
     * @return array
     */
     function getUnPictograms()
     {
         return $this->unPictograms;
     }
-    
+
     /**
     * 格納されている文字列を開放
-    * 
+    *
     * @return void
     */
     function ReleaseUnPictograms()
     {
         $this->unPictograms = array();
     }
-    
+
     /**
     * 絵文字を配列に格納
-    * 
+    *
     * @param string $pictogram
     */
     function setPictogram($pictogram)
@@ -762,40 +777,40 @@ class MPC_Common
         $this->Pictograms[$this->n] = $pictogram;
         $this->n++;
     }
-    
+
     /**
     * 絵文字を取得
-    * 
+    *
     * @return array
     */
     function getPictograms()
     {
         return $this->Pictograms;
     }
-    
+
     /**
     * 格納されている絵文字を開放
-    * 
+    *
     * @return void
     */
     function ReleasePictograms()
     {
         $this->Pictograms = array();
     }
-    
+
     /**
     * メモリ開放
-    * 
+    *
     * @return void
     */
     function Clean()
     {
         $this->i2e_table = $this->i2s_table = $this->s2i_table = $this->s2e_table = $this->e2i_table = $this->e2s_table = $this->e2icon_table = array();
     }
-    
+
     /**
     * 指定したキャリアのRegexを取得
-    * 
+    *
     * @param string $carrier
     * @return string
     */
@@ -803,11 +818,11 @@ class MPC_Common
     {
         return $this->mobile_user_agent[$carrier];
     }
-    
-    
+
+
     /**
     * 絵文字画像格納ディレクトリの一括設定
-    * 
+    *
     * @param string $path
     */
     function setImagePath($path)
@@ -817,67 +832,67 @@ class MPC_Common
         $this->setEZwebImagePath($path.'/e/');
         $this->setSoftBankImagePath($path.'/s/');
     }
-    
+
     /**
     * FOMA絵文字画像格納ディレクトリの設定
-    * 
+    *
     * @param string $path
     */
     function setFOMAImagePath($path)
     {
         $this->i_img_path = $path;
     }
-    
+
     /**
     * 設定されているFOMA絵文字画像格納ディレクトリを取得
-    * 
+    *
     * @return string
     */
     function getFOMAImagePath()
     {
         return $this->i_img_path;
     }
-    
+
     /**
     * EZweb絵文字画像格納ディレクトリの設定
-    * 
+    *
     * @param string $path
     */
     function setEZwebImagePath($path)
     {
         $this->e_img_path = $path;
     }
-    
+
     /**
     * 設定されているEZweb絵文字画像格納ディレクトリを取得
-    * 
+    *
     * @return string
     */
     function getEZwebImagePath()
     {
         return $this->e_img_path;
     }
-    
+
     /**
     * SoftBank絵文字画像格納ディレクトリの設定
-    * 
+    *
     * @param string $path
     */
     function setSoftBankImagePath($path)
     {
         $this->s_img_path = $path;
     }
-    
+
     /**
     * 設定されているSoftBank絵文字画像格納ディレクトリを取得
-    * 
+    *
     * @return string
     */
     function getSoftBankImagePath()
     {
         return $this->s_img_path;
     }
-    
+
     /**
     * 変換する文字列の設定
     *
@@ -892,7 +907,7 @@ class MPC_Common
             $this->string = $string;
         }
     }
-    
+
     /**
     * 設定されている変換する文字列を取得
     *
@@ -902,7 +917,7 @@ class MPC_Common
     {
         return $this->string;
     }
-    
+
     /**
     * 変換前絵文字のキャリア設定 (MPC_FROM_FOMA, MPC_FROM_EZWEB, MPC_FROM_SOFTBANK)
     *
@@ -912,7 +927,7 @@ class MPC_Common
     {
         $this->from = $from;
     }
-    
+
     /**
     * 設定されている変換前絵文字キャリアを取得
     *
@@ -922,7 +937,7 @@ class MPC_Common
     {
         return $this->from;
     }
-    
+
     /**
     * 変換後絵文字のキャリア設定 (MPC_TO_FOMA, MPC_TO_EZWEB, MPC_TO_SOFTBANK)
     *
@@ -932,7 +947,7 @@ class MPC_Common
     {
         $this->to = $to;
     }
-    
+
     /**
     * 設定されている変換後絵文字のキャリアを取得
     *
@@ -942,7 +957,7 @@ class MPC_Common
     {
         return $this->to;
     }
-    
+
     /**
     * 変換オプション設定 (MPC_TO_OPTION_RAW, MPC_TO_OPTION_WEB, MPC_TO_OPTION_IMG)
     *
@@ -952,7 +967,7 @@ class MPC_Common
     {
         $this->option = $option;
     }
-    
+
     /**
     * 設定されている変換オプションを取得
     *
@@ -962,7 +977,7 @@ class MPC_Common
     {
         return $this->option;
     }
-    
+
     /**
     * 変換前絵文字のタイプ設定 (MPC_FROM_OPTION_RAW, MPC_FROM_OPTION_WEB, MPC_FROM_OPTION_IMG)
     *
@@ -972,7 +987,7 @@ class MPC_Common
     {
         $this->strtype = $strtype;
     }
-    
+
     /**
     * 設定されている変換前絵文字のタイプを取得
     *
@@ -982,7 +997,7 @@ class MPC_Common
     {
         return $this->strtype;
     }
-    
+
     /**
     * 変換する文字列の文字コードを設定 (MPC_FROM_CHARSET_SJIS, MPC_FROM_CHARSET_UTF8)
     *
@@ -992,20 +1007,20 @@ class MPC_Common
     {
         $this->from_charset = strtoupper($charset);
     }
-    
+
     /**
     * 設定されている変換する文字列の文字コードを取得
-    * 
+    *
     * @return string
     */
     function getFromCharset()
     {
         return $this->from_charset;
     }
-    
+
     /**
     * 指定した、正規表現を取得
-    * 
+    *
     * @param $type (WEB, IMG)
     * @return string
     */
@@ -1014,25 +1029,25 @@ class MPC_Common
             return $this->regex[$type];
         }
     }
-    
+
     /**
     * 代替文字列設定
-    * 
+    *
     * @param mixed $str
     */
     function setSubstitute($str) {
         $this->substitute = $str;
     }
-    
+
     /**
     * 設定されている代替文字列を取得
-    * 
+    *
     * @return string
     */
     function getSubstitute() {
         return $this->substitute;
     }
-    
+
     /**
     * 10進数（配列）を16進数に変換
     * @param array $decs
