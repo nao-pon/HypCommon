@@ -90,12 +90,14 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->post_spam_a)) $this->post_spam_a   = 1;
 		if (! isset($this->post_spam_bb)) $this->post_spam_bb  = 1;
 		if (! isset($this->post_spam_url)) $this->post_spam_url = 1;
+		if (! isset($this->post_spam_unhost)) $this->post_spam_unhost= 5;
 		if (! isset($this->post_spam_host)) $this->post_spam_host  = 31;
 		if (! isset($this->post_spam_word)) $this->post_spam_word  = 10;
 		if (! isset($this->post_spam_filed)) $this->post_spam_filed = 200;
 		if (! isset($this->post_spam_trap)) $this->post_spam_trap  = '___url';
 		if (! isset($this->post_spam_user)) $this->post_spam_user  = 150;
 		if (! isset($this->post_spam_guest)) $this->post_spam_guest = 15;
+		if (! isset($this->post_spam_pass_names)) $this->post_spam_pass_names = 'reference_quote,msg_before,msg_after';
 		if (! isset($this->post_spam_badip)) $this->post_spam_badip = 100;
 		if (! isset($this->post_spam_badip_ttl)) $this->post_spam_badip_ttl = 900;
 		if (! isset($this->post_spam_badip_forever)) $this->post_spam_badip_forever = 200;
@@ -110,7 +112,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		);
 		if (! isset($this->post_spam_rules)) $this->post_spam_rules = array(
 			"/((?:ht|f)tps?:\/\/[!~*'();\/?:\@&=+\$,%#\w.-]+).+?\\1.+?\\1/i" => 11,
-			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f]+/' => 31
+			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f]+/' => 31,
+			'/^\s*(?:Hi|Aloha)! (?:<a[^>]+?href=|\[url=|http:\/\/)/i' => 15,
 		);
 		if (! isset($this->ignore_fileds)) $this->ignore_fileds = array();
 
@@ -240,6 +243,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				// Session setting
 				@ ini_set('session.use_trans_sid', 0);
 				if (! $this->HypKTaiRender->vars['ua']['allowCookie']) {
+					$parseUrl = parse_url(XOOPS_URL);
+					if ($_SERVER['HTTP_HOST'] !== $parseUrl['host']) {
+						header('HTTP', true, 400);
+						exit('400 Bad Request');
+					}
 					@ ini_set('session.use_cookies',      '0');
 					@ ini_set('session.use_only_cookies', '0');
 				} else {
@@ -419,6 +427,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					}
 				}
 
+				// チェックをパスするフィールド名
+				if (! empty($this->post_spam_pass_names)) {
+					HypCommonFunc::PostSpam_filter('pass_keys', explode(',', $this->post_spam_pass_names));
+				}
+
 				// 無効なフィールド定義
 				if (! empty($this->post_spam_trap)) {
 					$this->ignore_fileds[$this->post_spam_trap] = array('');
@@ -488,6 +501,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					// 閾値
 					$spamlev = (is_object($xoopsUser))? $this->post_spam_user : $this->post_spam_guest;
 					$level = HypCommonFunc::get_postspam_avr($this->post_spam_a, $this->post_spam_bb, $this->post_spam_url, $this->encode, $this->encodehint_name);
+
+					// URL中の存在しないホスト名をチェック
+					if ($this->post_spam_unhost && ! is_object($xoopsUser)) {
+						$level += HypCommonFunc::URL_Check($_POST) * $this->post_spam_unhost;
+					}
+
 					if ($level > $spamlev) {
 						$ttl = ($level > $this->post_spam_badip_forever)? $this->post_spam_badip_ttl0 : $this->post_spam_badip_ttl;
 						if ($level > $this->post_spam_badip) { HypCommonFunc::register_bad_ips(null, $ttl); }
@@ -607,6 +626,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			// emoji Filter
 			if (! empty($this->use_k_tai_render)) {
 				ob_start(array(& $this, 'emojiFilter'));
+			}
+
+			if (isset($_SERVER['HTTP_X_ORIGINAL_USER_AGENT']) && $this->encode !== 'UTF-8'){
+				ob_start(array(& $this, 'utf8Filter'));
 			}
 		}
 
@@ -1293,6 +1316,8 @@ EOD;
 
 		$r->doOptimize();
 
+		$charset = (strtoupper($r->outputEncode) === 'UTF-8')? 'UTF-8' : 'Shift_JIS';
+
 		// Set <body> attribute
 		$bodyAttr = ($this->k_tai_conf['bodyAttribute'])? ' ' . trim($this->k_tai_conf['bodyAttribute']) : '';
 		if (! empty($r->vars['ua']['bodyAttribute'])) {
@@ -1306,7 +1331,7 @@ EOD;
 		$r = NULL;
 		unset($r);
 
-		header('Content-Type: ' . $ctype . '; charset=Shift_JIS');
+		header('Content-Type: ' . $ctype . '; charset=' . $charset);
 		header('Content-Length: ' . strlen($s));
 		header('Cache-Control: no-cache');
 
@@ -1327,6 +1352,17 @@ EOD;
 			$str = $mpc->autoConvertModKtai();
 		}
 
+		return $str;
+	}
+
+	function utf8Filter($str) {
+		if (strpos($str, '<html') !== FALSE) {
+			$str = preg_replace('/^(<\?xml[^>]+?encoding=["\'])[a-z0-9_-]+/i', '$1UTF-8', $str);
+			$str = preg_replace('/(<meta[^>]+?http-equiv=["\']content-type["\'][^>]+?charset=)[a-z0-9_-]+/i', '$1UTF-8', $str);
+
+			$str = mb_convert_encoding($str, 'UTF-8', $this->encode);
+			header('Content-Type: text/html; charset=UTF-8');
+		}
 		return $str;
 	}
 
@@ -1460,6 +1496,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_a   = 1;         // <a> タグ 1個あたりのポイント
 		$this->post_spam_bb  = 1;         // BBリンク 1個あたりのポイント
 		$this->post_spam_url = 1;         // URL      1個あたりのポイント
+		$this->post_spam_unhost= 5;       // 不明 HOST の加算ポイント
 		$this->post_spam_host  = 31;      // Spam HOST の加算ポイント
 		$this->post_spam_word  = 10;      // Spam Word の加算ポイント
 		$this->post_spam_filed = 200;     // Spam 無効フィールドの加算ポイント
@@ -1468,6 +1505,11 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_user  = 150;     // POST SPAM 閾値: ログインユーザー
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
 		$this->post_spam_badip = 100;     // アクセス拒否リストへ登録する閾値
+
+		// 処理をパスするフォームフィールド名 (,<カンマ> 区切り)
+		// reference_quote : d3forum
+		// msg_before,msg_after : PukiWikiMod
+		$this->post_spam_pass_names = 'reference_quote,msg_before,msg_after';
 
 		// Protector 併用設定 (Protector の拒否IP登録の保護グループ設定も有効)
 		$this->post_spam_badip_ttl     = 900;     // アクセス拒否の拒否継続時間[Sec](0:無期限,null:Protector不使用)
@@ -1496,7 +1538,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f]+/' => 31,
 
 			// よくあるSPAM 15pt
-			'/^\s*(?:Hi|Aloha)! http:\/\//i' => 15,
+			'/^\s*(?:Hi|Aloha)! (?:<a[^>]+?href=|\[url=|http:\/\/)/i' => 15,
 		);
 
 		// 無効なフィールド定義
