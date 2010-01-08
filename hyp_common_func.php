@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.66 2009/11/17 05:05:37 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.67 2010/01/08 08:43:19 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -20,8 +20,9 @@ class HypCommonFunc
 	}
 
 	function loadClass($name) {
-		if (XC_CLASS_EXISTS($name)) return;
+		if (XC_CLASS_EXISTS($name)) return TRUE;
 
+		$ret = TRUE;
 		$dir = dirname(__FILE__);
 		switch($name) {
 			case 'HypSimpleAmazon':
@@ -48,7 +49,18 @@ class HypCommonFunc
 			case 'MobilePictogramConverter':
 				include_once $dir . '/mpc/MobilePictogramConverter.php';
 				break;
+			case 'IXR_Client':
+			case 'IXR_Server':
+				include_once $dir . '/IXR_Library/IXR_Library.inc.php';
+				break;
+			case 'TwitterOAuth':
+				include_once $dir . '/twitteroauth/twitteroauth.php';
+				include_once $dir . '/twitteroauth/OAuth.php';
+				break;
+			default:
+				$ret = FALSE;
 		}
+		return $ret;
 	}
 
 	// 1バイト文字をエンティティ化
@@ -1065,6 +1077,35 @@ class HypCommonFunc
 		return;
 	}
 
+	// URL Check
+	function URL_Check(& $post) {
+		static $func = NULL;
+		$counter = 0;
+		if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+			if (! $func) {
+				$func = create_function('$match','
+$ok = FALSE;
+$parsed = parse_url($match[0]);
+if (isset($parsed[\'host\'])) {
+	$ip = gethostbyname($parsed[\'host\']);
+	$ok = (preg_match(\'/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\', $ip));
+}
+return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
+			}
+			if (is_array($post)) {
+				foreach (array_keys($post) as $key) {
+					$counter += HypCommonFunc::URL_Check($post[$key]);
+				}
+			} else {
+				$post = preg_replace_callback('#(https?://)([^\s]+)#i', $func, $post, -1, $counter);
+				$counter += substr_count($post, "\x08");
+				$post = str_replace("\x08", ' ', $post);
+			}
+		}
+		return $counter;
+	}
+
+
 	// POST SPAM Check
 	function PostSpam_Check($post, $encode = '', $encodehint = '')
 	{
@@ -1097,8 +1138,17 @@ class HypCommonFunc
 		if (is_null($filters)) {$filters = HypCommonFunc::PostSpam_filter();}
 		$counts = array();
 		$counts[0] = $counts[1] = $counts[2] = $counts[3] = 0;
+
+		if (isset($filters['pass_keys'])) {
+			$ignore_keys = $filters['pass_keys'];
+			unset($filters['pass_keys']);
+		} else {
+			$ignore_keys = array();
+		}
+
 		foreach($post as $key => $dat)
 		{
+			if (in_array($key, $ignore_keys)) continue;
 			$tmp = array();
 			$tmp['a'] = $tmp['bb'] = $tmp['url'] = $tmp['filter'] = 0;
 			if (is_array($dat))
@@ -1191,48 +1241,49 @@ class HypCommonFunc
 
 		static $bef = null;
 		static $aft = null;
+		static $mac = null;
 
-		if (is_null($bef))
-		{
+		if (is_null($mac)) {
 			$mac = (empty($_SERVER["HTTP_USER_AGENT"]))? FALSE : strpos(strtolower($_SERVER["HTTP_USER_AGENT"]),"mac");
+		}
 
-			if ($mac && HYP_POST_ENCODING !== 'UTF-8') {return $post;}
+		if ($mac && HYP_POST_ENCODING !== 'UTF-8') {return $post;}
 
+		if (is_null($bef)) {
 			$enc = (HYP_POST_ENCODING === 'UTF-8')? '_utf8' : '';
 
 			$datfile = ($mac === FALSE)? dirname(__FILE__).'/win_ext'.$enc.'.dat' : dirname(__FILE__).'/mac_ext'.$enc.'.dat';
 
-			if (file_exists($datfile))
-			{
+			if (file_exists($datfile)) {
 				$bef = $aft = array();
-				foreach(file($datfile) as $line)
-				{
-					if ($line[0] != "/" && $line[0] != "#")
-					{
+				foreach(file($datfile) as $line) {
+					if ($line[0] != "/" && $line[0] != "#") {
 						list($bef[],$aft[]) = explode("\t",rtrim($line));
 					}
 				}
 			}
 		}
 
-		if (is_array($post))
-		{
-			foreach ($post as $_key=>$_val)
-			{
+		//if (is_array($post)) {
+		if (HypCommonFunc::is_multi_array($post)) {
+			foreach ($post as $_key=>$_val) {
 				$post[$_key] = HypCommonFunc::dependence_filter($_val);
 			}
-		}
-		else
-		{
+		} else {
 			mb_regex_encoding(HYP_POST_ENCODING);
 
 			// 半角カナを全角に
 			//$post = mb_convert_kana($post, "KV", "EUC-JP");
 
 			// 変換テーブル
-			for ($i=0; $i<sizeof($bef); $i++)
-			{
-				$post = mb_ereg_replace($bef[$i], $aft[$i], $post);
+			for ($i=0; $i<sizeof($bef); $i++) {
+				if (is_array($post)) {
+					foreach ($post as $_key=>$_val) {
+						$post[$_key] = mb_ereg_replace($bef[$i], $aft[$i], $_val);
+					}
+				} else {
+					$post = mb_ereg_replace($bef[$i], $aft[$i], $post);
+				}
 			}
 		}
 
@@ -1464,6 +1515,19 @@ class HypCommonFunc
 		if (! is_null($ret)) {
 			$html = $ret;
 		}
+	}
+
+	// $var が多元配列かを検査
+	function is_multi_array($var) {
+		if (!is_array($var)) return FALSE;
+		$ret = FALSE;
+		foreach($var as $chk) {
+			if (is_array($chk)) {
+				$ret = TRUE;
+				break;
+			}
+		}
+		return $ret;
 	}
 
 	// IDN ( Internationalized Domain Name ) encoder & decoder
