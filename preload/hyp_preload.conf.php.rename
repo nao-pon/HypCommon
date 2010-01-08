@@ -40,6 +40,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_a   = 1;         // <a> タグ 1個あたりのポイント
 		$this->post_spam_bb  = 1;         // BBリンク 1個あたりのポイント
 		$this->post_spam_url = 1;         // URL      1個あたりのポイント
+		$this->post_spam_unhost= 5;       // 不明 HOST の加算ポイント
 		$this->post_spam_host  = 31;      // Spam HOST の加算ポイント
 		$this->post_spam_word  = 10;      // Spam Word の加算ポイント
 		$this->post_spam_filed = 200;     // Spam 無効フィールドの加算ポイント
@@ -48,6 +49,11 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_user  = 50;      // POST SPAM 閾値: ログインユーザー
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
 		$this->post_spam_badip = 100;     // アクセス拒否リストへ登録する閾値
+
+		// 処理をパスするフォームフィールド名 (,<カンマ> 区切り)
+		// reference_quote : d3forum
+		// msg_before,msg_after : PukiWikiMod
+		$this->post_spam_pass_names = 'reference_quote,msg_before,msg_after';
 
 		// Protector 併用設定 (Protector の拒否IP登録の保護グループ設定も有効)
 		$this->post_spam_badip_ttl     = 900;     // アクセス拒否の拒否継続時間[Sec](0:無期限,null:Protector不使用)
@@ -76,7 +82,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			'/[\x00-\x08\x11-\x12\x14-\x1f\x7f]+/' => 31,
 
 			// よくあるSPAM 15pt
-			'/^\s*(?:Hi|Aloha)! http:\/\//i' => 15,
+			'/^\s*(?:Hi|Aloha)! (?:<a[^>]+?href=|\[url=|http:\/\/)/i' => 15,
 		);
 
 		// 無効なフィールド定義
