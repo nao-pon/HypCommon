@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.43 2009/10/01 23:27:34 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.44 2010/01/08 08:35:22 nao-pon Exp $
  */
 
 if (! function_exists('XC_CLASS_EXISTS')) {
@@ -22,6 +22,7 @@ class HypKTaiRender
 	var $outputMode = 'html';
 	var $inputEncode = '';
 	var $outputEncode = 'SJIS';
+	var $outputEncodeForce = '';
 	var $myRoot = '';
 	var $pagekey = '_p_';
 	var $hashkey = '_h_';
@@ -57,31 +58,31 @@ class HypKTaiRender
 	var $Config_botReg = '/Googlebot-Mobile|Y!J-(?:SRD|MBS)|froute\.jp|ichiro\/mobile|LD_mobile_bot/i';
 	var $Config_docomoGuidTTL = 300;
 	var $Config_imageTwiceDisplayWidth = 0;
-	
+
 	function HypKTaiRender () {
-		
+
 		$this->keymap['prev'] = '4';
 		$this->keymap['next'] = '6';
-		
+
 		$this->Config_icons['first'] = '((s:465d))';
 		$this->Config_icons['prev']  = '((s:465b))';
 		$this->Config_icons['next']  = '((s:465a))';
 		$this->Config_icons['last']  = '((s:465c))';
-		
+
 		$this->Config_icons['extLink'] = '((i:f8d9))';
 		$this->Config_icons['hTag']    = '((i:f8e4))';
 		$this->Config_icons['RSS']     = '((e:f699))';
-		
+
 		$this->Config_style['pageNavi'] = 'text-align:center;background-color:#EEFFBF';
 		$this->Config_style['olul']     = 'margin-left:1em;padding:0';
 		$this->Config_style['li']       = 'padding-left:0;margin-left:0';
-		
+
 		$this->contents['header'] = '';
 		$this->contents['body'] = '';
 		$this->contents['footer'] = '';
-		
+
 		$this->SERVER = $_SERVER;
-		
+
 		$this->session_name = '';
 
 		// モジュールなどで、mainfile.php を呼ぶ前に$_SERVER['REQUEST_URI'] を書き換える場合
@@ -89,22 +90,22 @@ class HypKTaiRender
 		if (isset($_SERVER['_REQUEST_URI'])) {
 			$this->SERVER['REQUEST_URI'] = $_SERVER['_REQUEST_URI'];
 		}
-		
+
 		// mod_rewrite に影響されないアクセスURI上の QUERY_STRING を取得
 		list(,$this->SERVER['QUERY_STRING']) = array_pad(explode('?', $this->SERVER['REQUEST_URI'], 2), 2, '');
-		
+
 		$this->myRoot = 'http' . (!empty($this->SERVER['HTTPS'])? 's' : '' ) . '://'
 		         . $this->SERVER['SERVER_NAME'] . (($this->SERVER['SERVER_PORT'] == 80)? '' : ':'.$this->SERVER['SERVER_PORT']);
 		$this->myRoot = rtrim($this->myRoot, '/');
-		
+
 		$this->inputEncode = mb_internal_encoding();
-		
+
 		$this->_uaSetup();
 
 		// Amazon ECS DetailPageURL Rewrite
 		$this->Config_urlRewrites['regex'][] = '#^(http://(?:www\.)?amazon\.[^/]+?)/(?:[^/]+?/)?dp/([a-z0-9]+).+?tag%3D([a-z0-9-]+).*$#iS';
 		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?ie=UTF8&amp;dl=1&amp;uid=NULLGWDOCOMO&amp;lc=msn&amp;a=$2&amp;at=$3&amp;url=%2Fgp%2Faw%2Fd.html';
-	
+
 		// Amazon Search results link Rewrite
 		$this->Config_urlRewrites['regex'][] = '#^(http://(?:www\.)?amazon.[^/]+?)/gp/search\?.+?tag=([a-z0-9]+).+?keywords=([^& \'"]+).*$#iS';
 		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?ie=UTF8&amp;k=$3&amp;uid=NULLGWDOCOMO&amp;at=$2&amp;m=&amp;url=%2Fgp%2Faw%2Fs.html&amp;lc=mqs';
@@ -114,7 +115,7 @@ class HypKTaiRender
 		// Rakuten
 		$this->Config_urlRewrites['regex'][] = '#^(http://hb\.afl\.rakuten\.co\.jp/hgc/[^/]+?/\?)pc=.+?&amp;m=#';
 		$this->Config_urlRewrites['tostr'][] = '$1m=';
-		
+
 		// Remove control keys
 		if (isset($_SERVER['QUERY_STRING'])) {
 			$_SERVER['QUERY_STRING'] = ltrim($this->removeQueryFromUrl('?' . $_SERVER['QUERY_STRING'], array($this->pagekey, $this->hashkey)), '?');
@@ -123,7 +124,7 @@ class HypKTaiRender
 			$_SERVER['argv'][0] = ltrim($this->removeQueryFromUrl('?' . $_SERVER['argv'][0], array($this->pagekey, $this->hashkey)), '?');
 		}
 	}
-	
+
 	function & getSingleton () {
 		static $my = NULL;
 		if (! $my) {
@@ -131,12 +132,12 @@ class HypKTaiRender
 		}
 		return $my;
 	}
-	
+
 	function set_myRoot ($url) {
 		$parsed_url = parse_url($url);
 		$this->myRoot = $parsed_url['scheme'].'://'.$parsed_url['host'].(isset($parsed_url['port'])? ':' . $parsed_url['port'] : '');
 	}
-	
+
 	function marge_urlRewites ($key, $arr) {
 		if (in_array($key, array('urlRewrites', 'urlImgRewrites'))) {
 			if (is_array($arr) && is_array($arr['regex']) && is_array($arr['tostr'])) {
@@ -152,7 +153,7 @@ class HypKTaiRender
 			}
 		}
 	}
-	
+
 	function removeSID ($url) {
 		if (! $this->session_name) $this->session_name = session_name();
 		return $this->removeQueryFromUrl($url, $this->session_name);
@@ -172,7 +173,7 @@ class HypKTaiRender
 		$url = rtrim($url, '?');
 		return $url;
 	}
-	
+
 	function addSID ($url, $rootURL = '') {
 		if (! $this->session_name) $this->session_name = session_name();
 		if (! $rootURL) $rootURL = $this->myRoot;
@@ -195,19 +196,19 @@ class HypKTaiRender
 
 	// Device ID のチェック
 	function checkDeviceId($key = '') {
-		
+
 		if ($this->vars['ua']['isBot'] ||
 			strpos($this->myRoot . $this->SERVER['REQUEST_URI'], str_replace('&amp;', '&', $this->Config_redirect)) === 0
 		) {
 			return true;
 		}
-		
+
 		if ($this->vars['ua']['carrier'] === 'docomo') {
 			// docomo only
 			if (empty($_POST)) {
 				$now = time();
 				if (! isset($_SESSION['hypKtaiStartTime'])) $_SESSION['hypKtaiStartTime'] = 0;
-				
+
 				if ($_SESSION['hypKtaiStartTime'] + $this->Config_docomoGuidTTL < $now && strpos(strtolower($this->SERVER['REQUEST_URI']), 'guid=') === FALSE) {
 					$_SESSION['hypKtaiStartTime'] = $now;
 					// 未取得なので guid=on をつけてリダイレクト
@@ -228,9 +229,9 @@ class HypKTaiRender
 			$addPath = XOOPS_TRUST_PATH . '/PEAR';
 			if (strpos($incPath, $addPath) === FALSE) {
 				ini_set('include_path',  $incPath . PATH_SEPARATOR . $addPath);
-			}			
+			}
 			require_once 'Crypt/Blowfish.php';
-			$blowfish = new Crypt_Blowfish($key); // Crypt_Blowfish => 1.0.1 
+			$blowfish = new Crypt_Blowfish($key); // Crypt_Blowfish => 1.0.1
 			//$blowfish = Crypt_Blowfish::factory('ecb', $key); // Crypt_Blowfish => 1.1.0RC1
 
 			if (strpos(strtolower($this->SERVER['REQUEST_URI']), 'guid=') === FALSE && ! $this->vars['ua']['uid'] && isset($_SESSION['hypKtaiUserId'])) {
@@ -266,17 +267,22 @@ class HypKTaiRender
 		$this->session_name = session_name();
 		$this->session_id = session_id();
 		$this->SID = ($this->session_id)? $this->session_name . '=' . $this->session_id : '';
-		
+
 		// Need SID ?
-		if (! $this->vars['ua']['allowCookie'] && $this->session_id && ! $this->vars['ua']['isBot']) {			
+		if (! $this->vars['ua']['allowCookie'] && $this->session_id && ! $this->vars['ua']['isBot']) {
 			$this->vars['needSID'] = TRUE;
 		} else {
 			$this->vars['needSID'] = FALSE;
 		}
 	}
-	
+
 	function doOptimize () {
 		setlocale( LC_CTYPE, 'C');
+
+		if ($this->outputEncodeForce) {
+			$this->outputEncode = $this->outputEncodeForce;
+		}
+
 		$this->parsed_base = parse_url($this->myRoot);
 		$this->setupSID();
 
@@ -293,21 +299,22 @@ class HypKTaiRender
 				}
 			}
 		}
-		
+
 		$header = mb_convert_encoding($this->html_diet_for_hp($header), $this->outputEncode, $this->inputEncode);
 		$body = mb_convert_encoding($this->html_diet_for_hp($body), $this->outputEncode, $this->inputEncode);
 		$footer = mb_convert_encoding($this->html_diet_for_hp($footer), $this->outputEncode, $this->inputEncode);
-		
+
 		$googleAdsenseHtml = '';
 		if ($this->Config_googleAdSenseConfig && is_file($this->Config_googleAdSenseConfig)) {
 			include $this->Config_googleAdSenseConfig;
 			@ include_once dirname(__FILE__) . '/googleAdsense.php';
 			if (XC_CLASS_EXISTS('googleAdsense')) {
 				$googleAdsense = new googleAdsense();
+				$GLOBALS['google']['oe'] = strtolower($this->outputEncode);
 				$googleAdsenseHtml = $googleAdsense->getHtml();
 			}
 		}
-		
+
 		foreach(array('header', 'body', 'footer') as $var) {
 			$str =& $$var;
 			if (preg_match('/\(\([eisv]:[0-9a-f]{4}\)\)|\[emj:\d{1,4}(?::(?:im|ez|sb))?\]/S', $str)) {
@@ -318,18 +325,18 @@ class HypKTaiRender
 				$str = $mpc->autoConvertModKtai();
 			}
 		}
-		
+
 		$pager = '';
-		
+
 		$pnum = empty($_GET[$this->pagekey])? 0 : intval($_GET[$this->pagekey]);
-		
+
 		$extra_len = strlen($header . $footer . $googleAdsenseHtml);
 
 		if ($this->maxSize && (strlen($body) + $extra_len) > $this->maxSize) {
-			
+
 			$margin = 200;
 			$this->splitMaxSize = $this->maxSize - $extra_len - $margin;
-			
+
 			list($pages, $ids) = $this->html_split($body);
 
 			if (isset($_GET[$this->hashkey]) && isset($ids[$_GET[$this->hashkey]])) {
@@ -344,19 +351,19 @@ class HypKTaiRender
 				list(, $_ids) = $this->html_split($footer, $pnum);
 				$ids = array_merge($ids, $_ids);
 			}
-			
+
 			$pageids = array();
 			if ($ids) {
 				foreach($ids as $_h => $_p) {
 					$pageids[$_p][] = $_h;
 				}
 			}
-			
+
 			$pagecount = count($pages);
 			$pnum = max(0, min($pnum, $pagecount - 1));
-			
+
 			$body = $pages[$pnum];
-			
+
 			if (! empty($pageids[$pnum])) {
 				rsort($pageids[$pnum]);
 				$h_reg = array();
@@ -368,7 +375,7 @@ class HypKTaiRender
 			} else {
 				$h_reg = '(?!)';
 			}
-			
+
 			// Make page navigation
 			$base = '?';
 			$join = '';
@@ -382,9 +389,9 @@ class HypKTaiRender
 					$this->pagekey = '&amp;' . $this->pagekey;
 				}
 			}
-			
+
 			$accesskey = 'accesskey';
-			
+
 			$prev = $pnum - 1;
 			$next = $pnum + 1;
 			if ($pnum > 0) {
@@ -411,17 +418,17 @@ class HypKTaiRender
 				$mpc->setString($pager);
 				$pager = $mpc->autoConvertModKtai();
 			}
-			
+
 		} else {
 			$h_reg = preg_quote($this->hashkey, '/') . '=[^&#]+';
 		}
-		
+
 		$body = str_replace(array('<ns>', '</ns>'), '', $body);
-		
+
 		// Optimize query strings
 		$_func = create_function(
 			'$match',
-			'if ($match[3][0] === \'?\') $match[3] = preg_replace(\'/^.*?'.$h_reg.'(#[^#]+)?$/\', \'?' . $this->SERVER['QUERY_STRING'] . '$1\', $match[3]);' . 
+			'if ($match[3][0] === \'?\') $match[3] = preg_replace(\'/^.*?'.$h_reg.'(#[^#]+)?$/\', \'?' . $this->SERVER['QUERY_STRING'] . '$1\', $match[3]);' .
 			'$match[3] = preg_replace(\'/(?:&(?:amp;)?)+/\', \'&amp;\', $match[3]);' .
 			'$match[3] = str_replace(\'?&amp;\', \'?\', $match[3]);' .
 			'$match[3] = str_replace(array(\'?#\', \'&amp;#\'), \'#\', $match[3]);' .
@@ -431,7 +438,7 @@ class HypKTaiRender
 		$header = preg_replace_callback($_reg, $_func, $header);
 		$body   = preg_replace_callback($_reg, $_func, $body);
 		$footer = preg_replace_callback($_reg, $_func, $footer);
-		
+
 		if ($googleAdsenseHtml) {
 			if (in_array($this->Config_googleAdSenseBelow, array('header', 'body', 'footer'))) {
 				${$this->Config_googleAdSenseBelow} .= $googleAdsenseHtml;
@@ -439,9 +446,9 @@ class HypKTaiRender
 				$header = $googleAdsenseHtml . $header;
 			}
 		}
-		
+
 		$this->outputBody = $header . $pager . $body . $pager . $footer;
-		
+
 		if ($this->inputHtml) {
 			$this->outputHtml = '<html><head>' . $this->outputHead . '</head><body>' . $this->outputBody . '</body></html>';
 		}
@@ -483,7 +490,7 @@ class HypKTaiRender
 		// Hint character for encoding judgment
 		if (! empty($this->Config_encodeHintWord)) {
 			$body = preg_replace('/<form[^>]+?>/isS',
-				'$0' . 
+				'$0' .
 				'<input name="' . $this->Config_encodeHintName . '" type="hidden" value="' . $this->Config_encodeHintWord . '"/>',
 				$body);
 		}
@@ -491,7 +498,7 @@ class HypKTaiRender
 		//// Remove etc.
 		// <a> with JavaScript
 		$body = preg_replace('#<a[^>]+?href=(?:"|\')?javascript:[^>]+?>(.+?)</a>#is', '$1', $body);
-		
+
 		// go back button
 		$body = preg_replace('#<input[^>]+?onclick=(?:"|\')?(?:javascript:)?history\.[^>]*?>#is', '', $body);
 
@@ -525,33 +532,33 @@ class HypKTaiRender
 			$body = preg_replace($reg, '$1$2', $body);
 		}
 		$body = str_replace(array("\x07", "\x08"), array("\\'", '\\"'), $body);
-		
+
 		// form enctype="multipart/form-data"
 		if (! $this->vars['ua']['allowFormData']) {
 			$body = preg_replace('#(<form[^>]+?)enctype=("|\')multipart/form-data\\2([^>]*?>)#', '$1$3', $body);
 			$body = preg_replace('#<input[^>]+?type=("|\')file\\1[^>]*?>#', '', $body);
 		}
-		
+
 		// css property
 		$reg = '#(<[^>]+?style=[\'"][^\'"]*?)\s*(?<!-)(?:display:\s*non|width|height|margin|padding|float|position|left|top|right|bottom|overflow)[^;\'"]+(?:[ ;]+)?([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
-		
+
 		// password to text
 		$body = preg_replace('#(<input[^>]*?\s+type=[\'"])password#iS', '$1text', $body);
-		
+
 		// id to name
 		$body = preg_replace_callback('#<([a-zA-Z]+)([^>]+)>#sS', array(& $this, '_attr_idToname'), $body);
-		
+
 		$pat = $rep = array();
-		
+
 		$pat[] = '#<!--.+?-->#sS';
 		$rep[] = '';
-		
+
 		$pat[] = '#<((?:no)?script|style)\b.+?/\\1>#sS';
 		$rep[] = '';
-		
+
 		$pat[] = '#</?(?:code|label|small|script|link|strong|b)\b[^>]*>#S';
 		$rep[] = '';
 
@@ -578,13 +585,13 @@ class HypKTaiRender
 			$pat[] = '#(<h[1-4][^>]*?>)#S';
 			$rep[] = '$1' . $this->Config_icons['hTag'];
 		}
-		
+
 		if ($this->outputMode === 'xhtml') {
 			$pat[] = '#(<(?:[bh]r|img)\b[^>]*?[^/])>#S';
 			$rep[] = '$1/>';
 		}
 
-		
+
 		$body = preg_replace($pat, $rep, $body);
 
 		if ($this->outputMode === 'xhtml') {
@@ -595,7 +602,7 @@ class HypKTaiRender
 			$rep = array('>'  , '>' , ''     , '[/del]');
 		}
 		$body = str_replace($pat, $rep, $body);
-		
+
 		// marquee for docomo xhtml
 		if ($this->outputMode === 'xhtml' && $this->vars['ua']['carrier'] === 'docomo') {
 			$body = preg_replace_callback(
@@ -642,18 +649,18 @@ class HypKTaiRender
 
 		// Remove empty elements
 		$body = preg_replace('#<([bipqsu]|(?!textarea|td)[a-z]{2,})(?: [^>]+)?></\\1>#', '', $body);
-		
+
 		$body = $this->html_give_session_id($body);
 
 		// Host name
 		$body = preg_replace('#(<[^>]+? (?:href|src)=[\'"]?)'.preg_quote($this->myRoot, '#').'/?#iS', '$1/', $body);
-		
+
 		return $body;
 	}
 
 	// HTML を指定サイズ内に収まるように分割する
 	function html_split($html, $startnum = 0) {
-		
+
 		// 分割の必要性チェック
 		if (strlen($html) < $this->splitMaxSize) {
 			// id or name のチェック
@@ -664,11 +671,11 @@ class HypKTaiRender
 			}
 			return array(array($html), $ids);
 		}
-		
+
 		// ページ分断で閉じられなかったらきちんと閉じて次ページの先頭で再度開くタグ
 		$checks = array('address', 'blockquote', 'center', 'div', 'dl', 'fieldset', 'ol', 'p', 'pre', 'table', 'td', 'tr', 'ul');
 		if ($this->outputMode === 'xhtml') $checks[] = 'li';
-		
+
 		$out = array();
 		$ids = array();
 		$stacks = array();
@@ -732,14 +739,14 @@ class HypKTaiRender
 				$i++;
 			}
 		}
-		
+
 		return array($out, $ids);
 	}
 
 	function html_give_session_id ($html) {
 		// For regex simplify
 		$html = str_replace('<a', "\x08", $html);
-		
+
 		// Check IMG & INPUT src
 		$html = preg_replace_callback('#(<(img|input)[^>]*?) src=([\'"])?([^\s"\'>]+)(?:\\3)?([^>]*>)([^\x08]*?</a>)?#isS',
 				array(& $this, '_html_check_img_src'), $html);
@@ -747,10 +754,10 @@ class HypKTaiRender
 		// Check A href
 		$html = preg_replace_callback('#(\x08[^>]*? href=([\'"])?)([^\s"\'>]+)(\\2)?#isS',
 				array(& $this, '_href_give_session_id'), $html);
-		
+
 		// Back to "<a" from "\x08"
 		$html = str_replace("\x08", '<a', $html);
-		
+
 		// Check FORM
 		if ($this->vars['needSID']) {
 			$sid_val = $this->session_id;
@@ -761,7 +768,7 @@ class HypKTaiRender
 					return $match[0] . \'<input type="hidden" name="'.$this->session_name.'" value="'.$sid_val.'" />\';'
 				), $html);
 		}
-		
+
 		return $html;
 	}
 
@@ -770,10 +777,10 @@ class HypKTaiRender
 		if (isset($results[$carrier][$address])) {
 			return $results[$carrier][$address];
 		}
-		
+
 		$ret = FALSE;
 		$ip_file = dirname(__FILE__) . '/ipranges/' . strtolower($carrier) . '.ip';
-		
+
 		if (file_exists($ip_file)) {
 			$iprange = file($ip_file);
 			$iprange = array_diff(array_map('trim', $iprange), array(''));
@@ -802,7 +809,7 @@ class HypKTaiRender
 		}
 		return $dec;
 	}
-	
+
 	function getOutputContentType () {
 		$ctype = 'text/html';
 		if ($this->outputMode === 'xhtml') {
@@ -812,7 +819,7 @@ class HypKTaiRender
 		}
 		return $ctype;
 	}
-	
+
 	function getRealUrl ($url) {
 		if (strpos($url, 'http') !== 0) {
 			if ($url[0] === '/') {
@@ -840,10 +847,10 @@ class HypKTaiRender
 		$url = $this->googleAnalyticsGetImgSrc($gaid, $title);
 		$url = str_replace('&', '&amp;', $url);;
 		return '<img src="' . $url . '" width="1" height="1" />';
-	}	
-	
+	}
+
 	function googleAnalyticsGetImgSrc($id, $title = '-') {
-		
+
 		$parsedUrl = parse_url($this->myRoot);
 
 		$host = $parsedUrl['host'];
@@ -866,10 +873,10 @@ class HypKTaiRender
 			$utmz = $hash.'.'.$now.'.1.1';
 			setcookie('___utmz', $utmz,  $now + 15768000, '/', $host);
 		}
-		
+
 		$utma_arr = explode('.', $utma);
 		$utmz_arr = explode('.', $utmz);
-		
+
 		if ($utma_arr[3] + 1800 < $now) {
 			$utmz_arr[1] = $utma_arr[3] = $utma_arr[4] =$now;
 			$utmz_arr[2] = ++$utma_arr[5];
@@ -878,10 +885,10 @@ class HypKTaiRender
 			setcookie('___utma', $utma,  $now + 63072000, '/', $host);
 			setcookie('___utmz', $utmz,  $now + 15768000, '/', $host);
 		}
-		
+
 		$_SESSION['hypKtai_utma'] = $utma;
 		$_SESSION['hypKtai_utmz'] = $utmz;
-		
+
 		$cookie = '__utma%3D'.$utma.'%3B%2B__utmz%3D'.$utmz.'.utmccn%3D(direct)%7Cutmcsr%3D(direct)%7Cutmcmd%3D(none)%3B%2B';
 
 		if (! $title) $title = '-';
@@ -897,9 +904,9 @@ class HypKTaiRender
 		} else {
 			$referer = '-';
 		}
-		
+
 		$querys = array();
-		
+
 		$querys['utmwv'] = '1.3';
 		$querys['qutmn'] = rand(1000000000, 9999999999);
 		$querys['utmcs'] = $this->outputEncode;
@@ -907,7 +914,7 @@ class HypKTaiRender
 		$querys['utmsc'] = '-'; //color
 		$querys['utmul'] = preg_replace('/^([a-zA-Z0-9_-]+).*?$/', '$1', @ $_SERVER['HTTP_ACCEPT_LANGUAGE']); //lang
 		$querys['utmje'] = '0'; // java
-		$querys['utmfl'] = '-' ; // flash version 
+		$querys['utmfl'] = '-' ; // flash version
 		$querys['utmdt'] = $title;
 		$querys['utmhn'] = $host;
 		$querys['utmhid'] = rand(1000000000, 2147483647);
@@ -920,10 +927,10 @@ class HypKTaiRender
 		foreach($querys as $key => $val) {
 			$data[] = $key . '=' . $val;
 		}
-		
+
 		return $parsedUrl['scheme'] . '://www.google-analytics.com/__utm.gif?' . join('&', $data);
 	}
-	
+
 	function _getUHash($d) {
 	    if (empty($d)) {
 	        return 1;
@@ -969,9 +976,9 @@ class HypKTaiRender
 	}
 
 	function _html_split_make_array ($html) {
-	
+
 		static $reg = '';
-		
+
 		if (!$reg) {
 
 			$u = '';
@@ -997,7 +1004,7 @@ class HypKTaiRender
 				default:
 					$p = '[^<>]';
 			}
-		
+
 			// できるだけひとまとめにする塊
 			$oneps = array(
 				'ns',
@@ -1034,10 +1041,10 @@ class HypKTaiRender
 				'(?:\s|' . $p . '){1,80}' .
 				')#sS'.$u;
 		}
-		
+
 		$first = '';
 		$last = '';
-		
+
 		if (preg_match('#^\s*(<([a-z]+?)[^>]*?>)(.*?)(</\\2>)\s*$#sS', $html, $match)) {
 			$first = $match[1];
 			$body = $match[3];
@@ -1085,12 +1092,12 @@ class HypKTaiRender
 		if ($last) $out[] = $last;
 		return $out;
 	}
-	
+
 	function _uaSetup () {
-		
+
 		$locale = setlocale( LC_CTYPE, '0');
 		setlocale( LC_CTYPE, 'C');
-		
+
 		$this->keybutton = array(
 			'1'	=>	'[1]',
 			'2'	=>	'[2]',
@@ -1115,20 +1122,20 @@ class HypKTaiRender
 		$this->vars['ua']['allowCookie'] = FALSE;
 		$this->vars['ua']['allowFormData'] = TRUE;
 		$this->vars['ua']['contentType'] = 'text/html';
-		
+
 		if (isset($this->SERVER['HTTP_USER_AGENT'])) {
 			$this->vars['ua']['isBot'] = preg_match($this->Config_botReg, $this->SERVER['HTTP_USER_AGENT']);
-			
+
 			if ( preg_match('#(?:^(?:KDDI-[^\s]+ |Mozilla/[0-9.]+\s*\()?|\b)([a-zA-Z.-]+)(?:/([0-9.]+))?#', $this->SERVER['HTTP_USER_AGENT'], $match) ) {
-			
+
 				$this->vars['ua']['agent'] = $ua_agent = $this->SERVER['HTTP_USER_AGENT'];
 				$this->vars['ua']['name'] = $ua_name = $match[1];
 				$this->vars['ua']['ver'] = $ua_vers = isset($match[2])? $match[2] : '';
 				$max_size = 100;
 				$carrier = '';
-				
+
 				$_sizelimit = 40;
-				
+
 				// Browser-name only
 				switch ($ua_name) {
 					case 'DoCoMo':
@@ -1146,7 +1153,7 @@ class HypKTaiRender
 						}
 						$max_size = min($_sizelimit, $max_size);
 						break;
-				
+
 					// UP.Browser
 					case 'UP.Browser':
 						$carrier = 'au';
@@ -1156,7 +1163,7 @@ class HypKTaiRender
 						}
 						$max_size = min($_sizelimit, $max_size);
 						break;
-				
+
 					// Vodafone (ex. J-PHONE)
 					case 'Vodafone':
 					case 'SoftBank':
@@ -1164,7 +1171,12 @@ class HypKTaiRender
 						$max_size = 300;
 						if (preg_match('/^(\d\.\d)/', $ua_vers, $matches)) {
 							switch($matches[1]){
-								case '1.0': $max_size = 300; break;
+								case '1.0': $max_size = 300;
+								//$_model = explode('/', $ua_agent);
+								//if (substr($_model[2], -2) !== 'SH') {
+								//	$this->outputEncodeForce = 'UTF-8';
+								//}
+								break;
 							}
 						}
 						$max_size = min($_sizelimit, $max_size);
@@ -1180,7 +1192,7 @@ class HypKTaiRender
 							}
 						}
 						break;
-					
+
 					case 'DDIPOCKET':
 					case 'WILLCOM':
 						$carrier = 'willcom';
@@ -1190,7 +1202,7 @@ class HypKTaiRender
 						}
 						$max_size = min($_sizelimit, $max_size);
 						break;
-					
+
 					case 'iPhone':
 					case 'iPod':
 						$max_size = 200;
@@ -1198,11 +1210,11 @@ class HypKTaiRender
 						break;
 
 				}
-				
+
 				if ($max_size) {
 					$this->maxSize = $max_size * 1024;
 				}
-				
+
 				// Set Key Button & $this->vars['ua']
 				switch ($carrier) {
 					case 'docomo':
@@ -1234,7 +1246,7 @@ class HypKTaiRender
 						$this->vars['ua']['contentType'] = 'application/xhtml+xml';
 						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//i-mode group (ja)//DTD XHTML i-XHTML(Locale/Ver.=ja/2.3) 1.0//EN" "i-xhtml_4ja_10.dtd">';
 						break;
-					
+
 					case 'au':
 						$this->keybutton = array(
 							'1'	=>	'<img localsrc="180">',
@@ -1262,7 +1274,7 @@ class HypKTaiRender
 						$this->vars['ua']['contentType'] = 'application/xhtml+xml';
 						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//OPENWAVE//DTD XHTML 1.0//EN" "http://www.openwave.com/DTD/xhtml-basic.dtd">';
 						break;
-					
+
 					case 'softbank':
 						$this->keybutton = array(
 							'1'	=>	chr(27).'$F<'.chr(15),
@@ -1361,7 +1373,7 @@ class HypKTaiRender
 		setlocale( LC_CTYPE, $locale);
 		return;
 	}
-	
+
 	function _attr_idToname ($match) {
 		$tag = strtolower($match[1]);
 		$pre = '';
@@ -1407,36 +1419,36 @@ class HypKTaiRender
 		}
 		return $pre . '<' . $match[1] . $match[2] . '>' . $add;
 	}
-	
+
 	function _href_give_session_id ($match) {
-		
+
 		$url = $match[3];
 		$ext_icon = '';
-				
+
 		// Decode numericentity (only ASCII)
 		$url = preg_replace('/&#([0-9]{2,3});/e', '($1 > 31 && $1 < 128)? chr($1) : "$0"', $url);
-		
+
 		// Url rewrite
 		if (! empty($this->Config_urlRewrites['regex']) && ! empty($this->Config_urlRewrites['tostr'])) {
 			$url = preg_replace($this->Config_urlRewrites['regex'], $this->Config_urlRewrites['tostr'], $url);
 		}
-		
+
 		$parsed_url = parse_url($url);
-		
+
 		if (strtolower(substr($url, 0, 6)) === 'mailto') {
 			$parsed_url['scheme'] = 'mailto';
 			$parsed_url['host'] = $this->parsed_base['host'];
 		}
 		if (empty($parsed_url['host']) || ($parsed_url['host'] === $this->parsed_base['host'] && $parsed_url['scheme'] === $this->parsed_base['scheme'])) {
 			$url = preg_replace('/(?:\?|&(?:amp;)?)' . $this->session_name . '=[^&#>]+/', '', $url);
-			
+
 			list($href, $hash) = array_pad(explode('#', $url, 2), 2, '');
-			
+
 			if (! $href) {
 				$href = isset($this->SERVER['QUERY_STRING'])? '?' . $this->SERVER['QUERY_STRING'] : '';
 				$href = preg_replace('/(?:\?|&(?:amp;)?)' . $this->session_name . '=[^&]+/', '', $href);
 			};
-			
+
 			$add = array();
 			if ($this->vars['needSID']) {
 				$add[] = $this->SID;
@@ -1449,7 +1461,7 @@ class HypKTaiRender
 			if ($add) $href .= ((strpos($href, "?") === FALSE)? '?' : '&amp;') . (join('&amp;', $add));
 
 			$url = $href . ($hash? '#' . $hash : '');
-			
+
 		} else if ($parsed_url['host'] !== $this->parsed_base['host']) {
 			$hostsReg = $this->_getHostsRegex($this->Config_directLinkHosts);
 			if (!preg_match($hostsReg, $parsed_url['host'])) {
@@ -1459,7 +1471,7 @@ class HypKTaiRender
 		}
 		return $ext_icon . $match[1] . $url . (isset($match[4])? $match[4] : '');
 	}
-	
+
 	function _html_check_img_src ($match) {
 		static $showHostReg = NULL;
 		static $directHostReg = NULL;
@@ -1476,7 +1488,7 @@ class HypKTaiRender
 				$directHostReg = $this->_getHostsRegex($this->Config_directImgHosts);
 			}
 		}
-		
+
 		$type = strtolower($match[2]);
 
 		if (! $this->vars['ua']['allowInputImage'] && $type === 'input') {
@@ -1492,7 +1504,7 @@ class HypKTaiRender
 		}
 
 		$parsed_url = parse_url($url);
-		
+
 		if (($this->Config_directImgHosts !== 'all' && empty($parsed_url['host']))
 		 || ($parsed_url['host'] === $this->parsed_base['host'] && $parsed_url['scheme'] === $this->parsed_base['scheme'])
 		 || (preg_match($showHostReg, $parsed_url['host']) && ! preg_match($directHostReg, $parsed_url['host']))) {
@@ -1500,7 +1512,7 @@ class HypKTaiRender
 			if (empty($parsed_url['host'])) {
 				$url = $this->getRealUrl($url);
 			}
-			
+
 			// Size tag
 			$reps = array();
 			$width = $height = '';
@@ -1518,7 +1530,7 @@ class HypKTaiRender
 			$_size = '';
 			$url = str_replace('&amp;', '&', $url);
 			$twice = (isset($this->vars['ua']['width']) && $this->Config_imageTwiceDisplayWidth && $this->vars['ua']['width'] >= $this->Config_imageTwiceDisplayWidth);
-			
+
 			if ($width && $height) {
 				$zoom = min($this->Config_pictSizeMax/$width, $this->Config_pictSizeMax/$height);
 				if ($zoom < 1) {
@@ -1563,7 +1575,7 @@ class HypKTaiRender
 			if (isset($reps['from'])) {
 				$ret = str_replace($reps['from'], $reps['to'], $ret);
 			}
-	
+
 			return $ret . (isset($match[6])? $match[6] : '');
 		} else {
 			if ($type === 'input') {
@@ -1585,7 +1597,7 @@ class HypKTaiRender
 			}
 		}
 	}
-	
+
 	function _getHostsRegex ($arr, $dem = '#') {
 		if (is_array($arr) && $arr) {
 			$hosts = array();
@@ -1599,18 +1611,18 @@ class HypKTaiRender
 		}
 		return $hostsReg;
 	}
-	
+
 	function & _getMobilePictogramConverter() {
 		if (! XC_CLASS_EXISTS('MobilePictogramConverter')) {
 			HypCommonFunc::loadClass('MobilePictogramConverter');
 		}
 		$mpc =& MobilePictogramConverter::factory_common();
 		$mpc->setImagePath($this->Config_emojiDir);
-		$mpc->setFromCharset(MPC_FROM_CHARSET_SJIS);
+		$mpc->setFromCharset((strtoupper($this->outputEncode) === 'UTF-8')? MPC_FROM_CHARSET_UTF8 : MPC_FROM_CHARSET_SJIS);
 		$mpc->userAgent = $this->vars['ua']['agent'];
 		return $mpc;
 	}
-	
+
 	function _debug($str) {
 		if (isset($_GET['debug'])) {
 			$out = '';
