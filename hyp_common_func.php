@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.67 2010/01/08 08:43:19 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.68 2010/01/09 12:46:25 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1097,7 +1097,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 					$counter += HypCommonFunc::URL_Check($post[$key]);
 				}
 			} else {
-				$post = preg_replace_callback('#(https?://)([^\s]+)#i', $func, $post, -1, $counter);
+				$post = preg_replace_callback('#(https?://)([^\s]+)#i', $func, $post);
 				$counter += substr_count($post, "\x08");
 				$post = str_replace("\x08", ' ', $post);
 			}
