@@ -1,9 +1,11 @@
 <?php
-// $Id: hyp_get_engine.php,v 1.10 2009/11/17 05:05:59 nao-pon Exp $
+// $Id: hyp_get_engine.php,v 1.11 2010/03/06 08:15:03 nao-pon Exp $
 // HypGetQueryWord Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
-require_once(dirname(__FILE__)."/hyp_common_func.php");
+if( ! XC_CLASS_EXISTS( 'HypCommonFunc' ) ) {
+	include dirname(__FILE__) . '/hyp_common_func.php';
+}
 
 if( ! XC_CLASS_EXISTS( 'HypGetQueryWord' ) )
 {
@@ -22,36 +24,36 @@ class HypGetQueryWord
 
 	function se_getengine($tmpdir,$enc,$use_kakasi)
 	{
-		$_query = array_merge($_POST,$_GET);
+		$_query = array_merge($_POST, $_GET);
 		$_query = HypCommonFunc::stripslashes_gpc($_query);
 
-		$query = (isset($_query['query']))? $_query['query'] : "";
-		if (!$query) $query = (isset($_query['word']))? $_query['word'] : "";
-		if (!$query) $query = (isset($_query['mes']))? $_query['mes'] : "";
+		$query = (isset($_query['query']))? $_query['query'] : '';
+		if (!$query) $query = (isset($_query['word']))? $_query['word'] : '';
+		if (!$query) $query = (isset($_query['mes']))? $_query['mes'] : '';
 
-		$se_name=""; //Default
+		$query2 = $se_name = ''; //Default
 
-		if (!$query)
+		if (! $query)
 		{
-			$reffer="";
+			$reffer='';
 			if(isset($_SERVER['HTTP_REFERER'])) $reffer=$_SERVER['HTTP_REFERER'];
 
 			if ($reffer)
 			{
-				if(substr($reffer,-1)=="/") $reffer=substr($reffer,0,strlen($reffer)-1);
+				$reffer = rtrim($reffer, '/');
 
-				$se=file(dirname(__FILE__)."/hyp_search_engines.dat");
+				$se=file(dirname(__FILE__).'/hyp_search_engines.dat');
 				$found=0;
 
 				foreach($se as $linea)
 				{
 					$linea=trim($linea);
-					if((substr($linea,0,2)!="//") && $linea!="")
+					if($linea && $linea[0] !== '/')
 					{
 						//$reffer=strtolower($reffer);
-						$tmp=explode("|",$linea);
+						$tmp=explode('|',$linea);
 						if(HypGetQueryWord::se_search($reffer,$tmp[1]))
-						if(strpos($reffer,chop($tmp[2]))!==false)
+						if(strpos($reffer,rtrim($tmp[2]))!==false)
 						{
 							$se_name=$tmp[0];
 							$found=1;
@@ -62,52 +64,54 @@ class HypGetQueryWord
 
 				if($found==1)
 				{
-					$vars=explode("?",$reffer);
+					$vars=explode('?',$reffer);
 					if(count($vars)>1)
 					{
-						$query=explode(chop($tmp[2]),$vars[1]);
+						$query=explode(rtrim($tmp[2]),$vars[1]);
 
 						if(count($query)>1)
 						{
-							$query = explode("&",$query[1]);
+							$query = explode('&',$query[1]);
 							$query = $query[0];
 						}
 					}
 				}
 			}
 		}
-		//デコード関数 by nao-pon
-		$encfrom = (isset($_GET['encode_hint']) && function_exists('mb_detect_encoding')) ? mb_detect_encoding ($_GET['encode_hint']) : "AUTO";
-		$query = HypGetQueryWord::se_urldecode_euc($query,$enc,$encfrom);
 
-		//Googleのキャッシュからの場合
-		$query = preg_replace("/^cache\:[^ ]+ /",'',$query);
+		if ($query) {
+			//デコード関数 by nao-pon
+			$encfrom = (isset($_GET['encode_hint']) && function_exists('mb_detect_encoding')) ? mb_detect_encoding ($_GET['encode_hint']) : "AUTO";
+			$query = HypGetQueryWord::se_urldecode_euc($query,$enc,$encfrom);
+			//Googleのキャッシュからの場合
+			$query = preg_replace('/^cache\:[^ ]+ /','',$query);
 
-		if (function_exists('mb_convert_kana')) $query = mb_convert_kana($query,"KVas",$enc);
+			if (function_exists('mb_convert_kana')) $query = mb_convert_kana($query,'KVas',$enc);
 
-		//$query = preg_replace("/( |\+|,|、|・)+/"," ",$query);
+			//$query = preg_replace("/( |\+|,|、|・)+/"," ",$query);
 
-		$query2 = $query;
-		if ($use_kakasi && $query2)
-		{
-			// 分かち書き
-			include_once(dirname(__FILE__)."/hyp_kakasi.php");
-			$kakasi = new Hyp_KAKASHI();
-			if ($tmpdir && is_writable($tmpdir))
+			$query2 = $query;
+			if ($use_kakasi && $query2)
 			{
-				$kakasi->tmp_dir = $tmpdir;
+				// 分かち書き
+				include_once(dirname(__FILE__).'/hyp_kakasi.php');
+				$kakasi = new Hyp_KAKASHI();
+				if ($tmpdir && is_writable($tmpdir))
+				{
+					$kakasi->tmp_dir = $tmpdir;
+				}
+				$kakasi->get_wakatigaki($query2);
 			}
-			$kakasi->get_wakatigaki($query2);
 		}
 
 		return array($se_name,$query,$query2);
 	}
 
 	function se_search($string,$mask){
-		static $in=array('.', '^', '$', '{', '}', '(', ')', '[', ']', '+', '*', '?');
-		static $out=array('\\.', '\\^', '\\$', '\\{', '\\}', '\\(', '\\)', '\\[', '\\]', '\\+', '.*', '.');
+		static $in=array('.', '^', '$', '{', '}', '(', ')', '[', ']', '+', '*', '?', '/');
+		static $out=array('\\.', '\\^', '\\$', '\\{', '\\}', '\\(', '\\)', '\\[', '\\]', '\\+', '.*', '.', '\\/');
 		$mask='^'.str_replace($in,$out,$mask).'$';
-		return(ereg($mask,$string));
+		return (preg_match('/'.$mask.'/', $string));
 	}
 
 	// escuni2euc - convert "IE escaped Unicode" to "EUC-JP"
@@ -140,7 +144,7 @@ class HypGetQueryWord
 	{
 		$eucstr = "";
 
-		while(eregi("(.*)(%u[0-9A-F][0-9A-F][0-9A-F][0-9A-F])(.*)$", $escunistr, $fragment)) {
+		while(preg_match('/(.*)(%u[0-9A-F][0-9A-F][0-9A-F][0-9A-F])(.*)$/i', $escunistr, $fragment)) {
 			$eucstr = mb_convert_encoding(HypGetQueryWord::uni2utf8($fragment[2]).$fragment[3], $this->encode, 'UTF-8').$eucstr;
 			$escunistr = $fragment[1];
 		}
@@ -150,7 +154,7 @@ class HypGetQueryWord
 	// 日本語(EUC-JP)対応のurldecode by nao-pon
 	function se_urldecode_euc($str,$enc,$encfrom){
 		if (function_exists('mb_convert_encoding') && $encfrom) {
-			if (eregi("%u[0-9A-F][0-9A-F][0-9A-F][0-9A-F]",$str)){
+			if (preg_match('/%u[0-9A-F][0-9A-F][0-9A-F][0-9A-F]/i',$str)){
 				$query = HypGetQueryWord::se_escuni2euc(urldecode($str));//for IE unicode+urlencoding
 			} else {
 				$query = urldecode($str);
@@ -187,10 +191,15 @@ class HypGetQueryWord
 		$words = array_flip(HypCommonFunc::phrase_split($q_word));
 		$keys = array();
 		$cnt = 0;
+		if (function_exists('mb_strlen')) {
+			$strlen = create_function('$str', 'return mb_strlen("$str");');
+		} else {
+			$strlen = create_function('$str', 'return strlen("$str");');
+		}
 		foreach ($words as $word=>$id)
 		{
-			if (strlen($word) < $xoopsConfigSearch['keyword_min']) continue;
-			$keys[$word] = strlen($word);
+			if ($strlen($word) < $xoopsConfigSearch['keyword_min']) continue;
+			$keys[$word] = $strlen($word);
 			$cnt++;
 			if ($cnt > 10) break;
 		}
