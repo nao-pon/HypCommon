@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.44 2010/01/08 08:35:22 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.45 2010/03/06 08:08:01 nao-pon Exp $
  */
 
 if (! function_exists('XC_CLASS_EXISTS')) {
@@ -428,7 +428,7 @@ class HypKTaiRender
 		// Optimize query strings
 		$_func = create_function(
 			'$match',
-			'if ($match[3][0] === \'?\') $match[3] = preg_replace(\'/^.*?'.$h_reg.'(#[^#]+)?$/\', \'?' . $this->SERVER['QUERY_STRING'] . '$1\', $match[3]);' .
+			'if ($match[3][0] === \'?\') $match[3] = preg_replace(\'/^.*?'.$h_reg.'(#[^#]+)?$/\', \'?' . str_replace("'", "\\'", $this->SERVER['QUERY_STRING']) . '$1\', $match[3]);' .
 			'$match[3] = preg_replace(\'/(?:&(?:amp;)?)+/\', \'&amp;\', $match[3]);' .
 			'$match[3] = str_replace(\'?&amp;\', \'?\', $match[3]);' .
 			'$match[3] = str_replace(array(\'?#\', \'&amp;#\'), \'#\', $match[3]);' .
@@ -484,7 +484,7 @@ class HypKTaiRender
 			create_function(
 				'$match',
 				'if ($match[3][0] !== \'#\') return $match[0];
-				return $match[1] . preg_replace(\'/#.*$/\', \'\', \'' . $this->SERVER['REQUEST_URI'] . '\') . (($match[3] !== \'#\')? $match[3] : \'\') . $match[4];'
+				return $match[1] . preg_replace(\'/#.*$/\', \'\', \'' . str_replace("'", "\\'", $this->SERVER['REQUEST_URI']) . '\') . (($match[3] !== \'#\')? $match[3] : \'\') . $match[4];'
 			), $body);
 
 		// Hint character for encoding judgment
@@ -844,92 +844,183 @@ class HypKTaiRender
 		if (! $this->vars['ua']['inIPRange']) {
 			return '';
 		}
+
 		$url = $this->googleAnalyticsGetImgSrc($gaid, $title);
-		$url = str_replace('&', '&amp;', $url);;
-		return '<img src="' . $url . '" width="1" height="1" />';
+
+		return $url? '<img src="' . str_replace('&', '&amp;', $url) . '" width="1" height="1" />' : '';
 	}
 
 	function googleAnalyticsGetImgSrc($id, $title = '-') {
 
+		$url = 'http://www.google-analytics.com/__utm.gif?';
+		$version = '4.4sh';
+		$cookie_name = '__utmmobile';
+		$cookie_path = '/';
+		$cookie_ttl = 63072000;
+
+		if (substr($id, 0, 2) === 'UA') {
+			$id = 'MO' . substr($id, 2);
+		}
+
 		$parsedUrl = parse_url($this->myRoot);
 
-		$host = $parsedUrl['host'];
-		$hash = $this->_getUHash($host);
-		$random = rand(1000000000, 2147483647);
-		$now = time();
-		if (isset($_COOKIE['___utma'])) {
-			$utma = $_COOKIE['___utma'];
-		} else if (isset($_SESSION['hypKtai_utma'])) {
-			$utma = $_SESSION['hypKtai_utma'];
-		} else {
-			$utma = $hash.'.'.$random.'.'.$now.'.'.$now.'.'.$now.'.1';
-			setcookie('___utma', $utma,  $now + 63072000, '/', $host);
+		$time = time();
+		$rand = rand(0, 0x7fffffff);
+		$domainName = $parsedUrl['host'];
+		$documentReferer = (! empty($_SERVER['HTTP_REFERER']))? $_SERVER['HTTP_REFERER'] : '-';
+		$documentPath = (isset($_SERVER['REQUEST_URI']))? $_SERVER['REQUEST_URI'] : '';
+		if ($documentPath) {
+			$documentPath = urldecode($documentPath);
 		}
-		if (isset($_COOKIE['___utmz'])) {
-			$utmz = $_COOKIE['___utmz'];
-		} else if (isset($_SESSION['hypKtai_utmz'])) {
-			$utmz = $_SESSION['hypKtai_utmz'];
-		} else {
-			$utmz = $hash.'.'.$now.'.1.1';
-			setcookie('___utmz', $utmz,  $now + 15768000, '/', $host);
-		}
-
-		$utma_arr = explode('.', $utma);
-		$utmz_arr = explode('.', $utmz);
-
-		if ($utma_arr[3] + 1800 < $now) {
-			$utmz_arr[1] = $utma_arr[3] = $utma_arr[4] =$now;
-			$utmz_arr[2] = ++$utma_arr[5];
-			$utma = join('.', $utma_arr);
-			$utmz = join('.', $utmz_arr);
-			setcookie('___utma', $utma,  $now + 63072000, '/', $host);
-			setcookie('___utmz', $utmz,  $now + 15768000, '/', $host);
-		}
-
-		$_SESSION['hypKtai_utma'] = $utma;
-		$_SESSION['hypKtai_utmz'] = $utmz;
-
-		$cookie = '__utma%3D'.$utma.'%3B%2B__utmz%3D'.$utmz.'.utmccn%3D(direct)%7Cutmcsr%3D(direct)%7Cutmcmd%3D(none)%3B%2B';
-
-		if (! $title) $title = '-';
+		$ip = (preg_match('/^([0-9]+\.[0-9]+\.[0-9]+.).*$/', $_SERVER['REMOTE_ADDR'], $match))? $match[1] . '0' : '';
 		$title = rawurlencode(mb_convert_encoding($title, 'UTF-8', $this->inputEncode));
+		$model = '';
+		if (! empty($this->vars['ua']['model'])) {
+			$model = str_replace(array(';', '='), array('%3B', '%3D'), $this->vars['ua']['model']);
+		}
+		$userVar = $this->vars['ua']['carrier'];
+		if ($model) $userVar .= ' ' . $model;
 
-		if (isset($_SERVER['HTTP_REFERER'])) {
-			$ph = parse_url($_SERVER['HTTP_REFERER']);
-			if (@ $_SERVER['SERVER_NAME'] == @ $ph['host']) {
-				$referer = '0';
+		$coustomVar = '8(Carrier*2!Model)9(' . $this->_crop_urlencode($this->vars['ua']['carrier'], 57) . '*2!' . $this->_crop_urlencode($model, 59) . ')11(1*2!1)';
+
+		$vid = '';
+		if (isset($_COOKIE[$cookie_name])) {
+			$vid = $_COOKIE[$cookie_name];
+		} else if (isset($_SESSION[$cookie_name])) {
+			$vid = $_SESSION[$cookie_name];
+		}
+		if (! $vid || ! preg_match('/^0x[0-9a-f]{16}$/i', $vid)) {
+			if ($this->vars['ua']['uid']) {
+				$md5key = $this->vars['ua']['uid'] . $id;
 			} else {
-				$referer = @ $ph['host'];
+				$md5key = $this->vars['ua']['agent'] . uniqid($rand, true);
 			}
-		} else {
-			$referer = '-';
+
+			$vid = '0x' . substr(md5($md5key), 0, 16);
+		}
+		$_SESSION[$cookie_name] = $vid;
+		setcookie($cookie_name, $vid, $time + $cookie_ttl, $cookie_path);
+
+		$query = array();
+		$query[] = 'utmwv='  . $version;
+		$query[] = 'utmn='   . $rand;
+		$query[] = 'utmhn='  . urlencode($domainName);
+		$query[] = 'utmr='   . urlencode($documentReferer);
+		$query[] = 'utmp='   . urlencode($documentPath);
+		$query[] = 'utmac='  . $id;
+		$query[] = 'utmcc='  . '__utma%3D999.999.999.999.999.1%3B__utmv%3D999.'  . urlencode($userVar) . '%3B';
+		$query[] = 'utmvid=' . $vid;
+		$query[] = 'utmip='  . $ip;
+		$query[] = 'utme='   . $coustomVar;
+		$query[] = 'utmdt='  . $title;
+
+		$url .= join('&', $query);
+
+		// SSL 環境 or URL文字数制限 1024 bytes amp;[3]*9 = 27, 1024 - 27 = 997
+		// サーバで代理送信
+		if (strtolower($parsedUrl['scheme']) === 'https' || strlen($url) > 997) {
+			$ht = new Hyp_HTTP_Request();
+			$ht->init();
+			$ht->url = $url;
+			$ht->headers = 'Accepts-Language: ' . $_SERVER['HTTP_ACCEPT_LANGUAGE'] . "\r\n";
+			$ht->ua = $_SERVER['HTTP_USER_AGENT'];
+			$ht->blocking = FALSE;
+			$ht->get();
+
+			$url = '';
 		}
 
-		$querys = array();
-
-		$querys['utmwv'] = '1.3';
-		$querys['qutmn'] = rand(1000000000, 9999999999);
-		$querys['utmcs'] = $this->outputEncode;
-		$querys['utmsr'] = '-'; //reso
-		$querys['utmsc'] = '-'; //color
-		$querys['utmul'] = preg_replace('/^([a-zA-Z0-9_-]+).*?$/', '$1', @ $_SERVER['HTTP_ACCEPT_LANGUAGE']); //lang
-		$querys['utmje'] = '0'; // java
-		$querys['utmfl'] = '-' ; // flash version
-		$querys['utmdt'] = $title;
-		$querys['utmhn'] = $host;
-		$querys['utmhid'] = rand(1000000000, 2147483647);
-		$querys['utmr'] = $referer;
-		$querys['utmp'] = str_replace('&', '%26', @ $_SERVER['REQUEST_URI']);
-		$querys['utmac'] = $id;
-		$querys['utmcc'] = $cookie;
-
-		$data = array();
-		foreach($querys as $key => $val) {
-			$data[] = $key . '=' . $val;
-		}
-
-		return $parsedUrl['scheme'] . '://www.google-analytics.com/__utm.gif?' . join('&', $data);
+		return $url;
 	}
+
+	function _crop_urlencode($str, $max, $enc='UTF-8') {
+		while (strlen(urlencode($str)) > $max) {
+			$str = mb_substr($str, 0, -1, $enc);
+		}
+		return urlencode($str);
+	}
+
+//	function googleAnalyticsGetImgSrc($id, $title = '-') {
+//
+//		$parsedUrl = parse_url($this->myRoot);
+//
+//		$host = $parsedUrl['host'];
+//		$hash = $this->_getUHash($host);
+//		$random = rand(1000000000, 2147483647);
+//		$now = time();
+//		if (isset($_COOKIE['___utma'])) {
+//			$utma = $_COOKIE['___utma'];
+//		} else if (isset($_SESSION['hypKtai_utma'])) {
+//			$utma = $_SESSION['hypKtai_utma'];
+//		} else {
+//			$utma = $hash.'.'.$random.'.'.$now.'.'.$now.'.'.$now.'.1';
+//			setcookie('___utma', $utma,  $now + 63072000, '/', $host);
+//		}
+//		if (isset($_COOKIE['___utmz'])) {
+//			$utmz = $_COOKIE['___utmz'];
+//		} else if (isset($_SESSION['hypKtai_utmz'])) {
+//			$utmz = $_SESSION['hypKtai_utmz'];
+//		} else {
+//			$utmz = $hash.'.'.$now.'.1.1';
+//			setcookie('___utmz', $utmz,  $now + 15768000, '/', $host);
+//		}
+//
+//		$utma_arr = explode('.', $utma);
+//		$utmz_arr = explode('.', $utmz);
+//
+//		if ($utma_arr[3] + 1800 < $now) {
+//			$utmz_arr[1] = $utma_arr[3] = $utma_arr[4] =$now;
+//			$utmz_arr[2] = ++$utma_arr[5];
+//			$utma = join('.', $utma_arr);
+//			$utmz = join('.', $utmz_arr);
+//			setcookie('___utma', $utma,  $now + 63072000, '/', $host);
+//			setcookie('___utmz', $utmz,  $now + 15768000, '/', $host);
+//		}
+//
+//		$_SESSION['hypKtai_utma'] = $utma;
+//		$_SESSION['hypKtai_utmz'] = $utmz;
+//
+//		$cookie = '__utma%3D'.$utma.'%3B%2B__utmz%3D'.$utmz.'.utmccn%3D(direct)%7Cutmcsr%3D(direct)%7Cutmcmd%3D(none)%3B%2B';
+//
+//		if (! $title) $title = '-';
+//		$title = rawurlencode(mb_convert_encoding($title, 'UTF-8', $this->inputEncode));
+//
+//		if (isset($_SERVER['HTTP_REFERER'])) {
+//			$ph = parse_url($_SERVER['HTTP_REFERER']);
+//			if (@ $_SERVER['SERVER_NAME'] == @ $ph['host']) {
+//				$referer = '0';
+//			} else {
+//				$referer = @ $ph['host'];
+//			}
+//		} else {
+//			$referer = '-';
+//		}
+//
+//		$querys = array();
+//
+//		$querys['utmwv'] = '1.3';
+//		$querys['qutmn'] = rand(1000000000, 9999999999);
+//		$querys['utmcs'] = $this->outputEncode;
+//		$querys['utmsr'] = '-'; //reso
+//		$querys['utmsc'] = '-'; //color
+//		$querys['utmul'] = preg_replace('/^([a-zA-Z0-9_-]+).*?$/', '$1', @ $_SERVER['HTTP_ACCEPT_LANGUAGE']); //lang
+//		$querys['utmje'] = '0'; // java
+//		$querys['utmfl'] = '-' ; // flash version
+//		$querys['utmdt'] = $title;
+//		$querys['utmhn'] = $host;
+//		$querys['utmhid'] = rand(1000000000, 2147483647);
+//		$querys['utmr'] = $referer;
+//		$querys['utmp'] = str_replace('&', '%26', @ $_SERVER['REQUEST_URI']);
+//		$querys['utmac'] = $id;
+//		$querys['utmcc'] = $cookie;
+//
+//		$data = array();
+//		foreach($querys as $key => $val) {
+//			$data[] = $key . '=' . $val;
+//		}
+//
+//		return $parsedUrl['scheme'] . '://www.google-analytics.com/__utm.gif?' . join('&', $data);
+//	}
 
 	function _getUHash($d) {
 	    if (empty($d)) {
@@ -1126,11 +1217,19 @@ class HypKTaiRender
 		if (isset($this->SERVER['HTTP_USER_AGENT'])) {
 			$this->vars['ua']['isBot'] = preg_match($this->Config_botReg, $this->SERVER['HTTP_USER_AGENT']);
 
-			if ( preg_match('#(?:^(?:KDDI-[^\s]+ |Mozilla/[0-9.]+\s*\()?|\b)([a-zA-Z.-]+)(?:/([0-9.]+))?#', $this->SERVER['HTTP_USER_AGENT'], $match) ) {
+//			if ( preg_match('#(?:^(?:KDDI-[^\s]+ |Mozilla/[0-9.]+\s*\()?|\b)([a-zA-Z.-]+)(?:/([0-9.]+))?#', $this->SERVER['HTTP_USER_AGENT'], $match) ) {
+//
+//				$this->vars['ua']['agent'] = $ua_agent = $this->SERVER['HTTP_USER_AGENT'];
+//				$this->vars['ua']['name'] = $ua_name = $match[1];
+//				$this->vars['ua']['ver'] = $ua_vers = isset($match[2])? $match[2] : '';
+
+			if ( preg_match('#(?:^(?:KDDI-([^\s]+) |Mozilla/[0-9.]+\s*\()?|\b)([a-zA-Z.-]+)(?:/([0-9.]+)(?:(?:/| )([a-zA-Z0-9.-]+))?)?#', $this->SERVER['HTTP_USER_AGENT'], $match) ) {
 
 				$this->vars['ua']['agent'] = $ua_agent = $this->SERVER['HTTP_USER_AGENT'];
-				$this->vars['ua']['name'] = $ua_name = $match[1];
-				$this->vars['ua']['ver'] = $ua_vers = isset($match[2])? $match[2] : '';
+				$this->vars['ua']['name'] = $ua_name = $match[2];
+				$this->vars['ua']['ver'] = $ua_vers = isset($match[3])? $match[3] : '';
+				$this->vars['ua']['model'] = ! empty($match[1])? $match[1] : (! empty($match[4])? $match[4] : '');
+
 				$max_size = 100;
 				$carrier = '';
 
@@ -1162,6 +1261,13 @@ class HypKTaiRender
 							$max_size = $this->SERVER['HTTP_X_UP_DEVCAP_MAX_PDU'] / 1024 / 2;
 						}
 						$max_size = min($_sizelimit, $max_size);
+						$ua_ini = dirname(__FILE__) . '/au_ua.ini';
+						if (is_file($ua_ini)) {
+							$ua_array = parse_ini_file($ua_ini);
+							if (isset($ua_array[$this->vars['ua']['model']])) {
+								$this->vars['ua']['model'] = $ua_array[$this->vars['ua']['model']];
+							}
+						}
 						break;
 
 					// Vodafone (ex. J-PHONE)
