@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.68 2010/01/09 12:46:25 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.69 2010/03/06 08:10:43 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1650,7 +1650,7 @@ EOD;
 		if ($useList) {
 			$i = 0;
 			foreach($emj_list as $emjcnt) {
-				$html .= '<a style="padding:1px;" href="#" onclick=\'hypEmojiPadSet("'.$id.'", "'.$emjcnt.'"); return false;\'>[emj:'.$emjcnt.']</a>';
+				$html .= '<a style="padding:1px;" href="#" onclick="hypEmojiPadSet(\''.$id.'\', \''.$emjcnt.'\'); return false;">[emj:'.$emjcnt.']</a>';
 				$i++;
 				if ($i % 16 === 0) {
 					$html .= '<br />';
@@ -1661,7 +1661,7 @@ EOD;
 				if ($emjline == 177) $emjline = 1001;
 				for ($emjcnt = $emjline; $emjcnt < $emjline + 16; $emjcnt++) {
 					if ($emjcnt > 1076) break;
-					$html .= '<a style="padding:1px;" href="#" onclick=\'hypEmojiPadSet("'.$id.'", "'.$emjcnt.'"); return false;\'>[emj:'.$emjcnt.']</a>';
+					$html .= '<a style="padding:1px;" href="#" onclick="hypEmojiPadSet(\''.$id.'\', \''.$emjcnt.'\'); return false;">[emj:'.$emjcnt.']</a>';
 				}
 				$html .= '<br />';
 			}
@@ -1675,7 +1675,7 @@ EOD;
 		$mpc->setString($html, FALSE);
 		$html = $mpc->autoConvertModKtai();
 
-		$jshtml = $writeJS? str_replace(array('"', "\r\n", "\r", "\n"), array('\\"', ''), $html) : '';
+		$jshtml = $writeJS? str_replace(array("'", "\r\n", "\r", "\n"), array('\\\'', ''), $html) : '';
 		$ret = $writeJS? '' : $html;
 
 		$ret .= <<<EOD
@@ -1692,7 +1692,7 @@ if (typeof hypEmojiPadSet != 'function') {
 (function(){
 	var clearDisplayId = "$clearDisplayId";
 	if (clearDisplayId && xoopsGetElementById(clearDisplayId)) xoopsGetElementById(clearDisplayId).style.display = '';
-	var html = "$jshtml";
+	var html = '{$jshtml}';
 	if (html) document.write(html);
 	if (!!XpWiki && Prototype.Browser.IE) {
 		$('emoji_buttons_pre_$id').observe('mousedown', function(){wikihwlper_caretPos();});
