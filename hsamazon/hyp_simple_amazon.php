@@ -335,7 +335,7 @@ class HypSimpleAmazon
 
 		$this->Operation = 'ItemSearch';
 		$options['SearchIndex'] = $this->SearchIndex;
-		$this->searchKey = mb_convert_encoding($key, 'UTF-8', $this->encoding);
+		$this->searchKey = $this->searchQueryOptimize(mb_convert_encoding($key, 'UTF-8', $this->encoding));
 		if (!empty($this->searchTarget)) {
 			$options[$this->searchTarget] = $this->searchKey;
 		} else {
@@ -384,6 +384,7 @@ class HypSimpleAmazon
 		} else {
 			$e_key = $key;
 		}
+		$e_key = $this->searchQueryOptimize($e_key);
 
 		$url = 'http://' . $this->searchHost . $this->searchQuery . ($this->AssociateTag ? '&amp;tag=' . rawurlencode($this->AssociateTag) : '') . '&amp;keywords=' . rawurlencode($e_key);
 		//if ($category) $url .= '&amp;url=search-alias%3D'.strtolower($category);
@@ -781,6 +782,12 @@ class HypSimpleAmazon
 		} else {
 			return '';
 		}
+	}
+
+	function searchQueryOptimize($str) {
+		$str = str_replace('-', ' ', $str);
+		$str = preg_replace('/\s+/', ' ', $str);
+		return $str;
 	}
 }
 
