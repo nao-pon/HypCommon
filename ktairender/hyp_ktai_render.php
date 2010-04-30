@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.45 2010/03/06 08:08:01 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.46 2010/04/30 02:09:48 nao-pon Exp $
  */
 
 if (! function_exists('XC_CLASS_EXISTS')) {
@@ -55,7 +55,7 @@ class HypKTaiRender
 	var $Config_googleAdSenseConfig = '';
 	var $Config_googleAdSenseBelow = '';
 	var $Config_style = array();
-	var $Config_botReg = '/Googlebot-Mobile|Y!J-(?:SRD|MBS)|froute\.jp|ichiro\/mobile|LD_mobile_bot/i';
+	var $Config_botReg = '/Googlebot-Mobile|Y!J-(?:SRD|MBS)|froute\.jp|ichiro\/mobile|LD_mobile_bot|spider/i';
 	var $Config_docomoGuidTTL = 300;
 	var $Config_imageTwiceDisplayWidth = 0;
 
@@ -495,17 +495,22 @@ class HypKTaiRender
 				$body);
 		}
 
+
+		//// Replace to special tag
+		// <img> _ktai_direct
+		$body = preg_replace('#(<img[^>]+)(class=[^>]*?ktai_direct[^>]*?>)#iS', '$1_ktai_direct $2', $body);
+
 		//// Remove etc.
 		// <a> with JavaScript
-		$body = preg_replace('#<a[^>]+?href=(?:"|\')?javascript:[^>]+?>(.+?)</a>#is', '$1', $body);
+		$body = preg_replace('#<a[^>]+?href=["\']?javascript:[^>]+?>(.+?)</a>#is', '$1', $body);
 
 		// go back button
-		$body = preg_replace('#<input[^>]+?onclick=(?:"|\')?(?:javascript:)?history\.[^>]*?>#is', '', $body);
+		$body = preg_replace('#<input[^>]+?onclick=["\']?(?:javascript:)?history\.[^>]*?>#is', '', $body);
 
 		//// tag attribute
 		$body = str_replace(array("\\'", '\\"'), array("\x07", "\x08"), $body);
 		// Any
-		$reg = '#(<[^>]+?)\s+(?:class|clear|target|nowrap|title|on[^=]+)=(?:\'[^\']*\'|"[^"]*")([^>]*>)#iS';
+		$reg = '#(<[^>]+?)\s+(?:class|clear|target|nowrap|title|on[^=]+?|cell[^=]+?)=(?:\'[^\']*\'|"[^"]*")([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
@@ -540,7 +545,7 @@ class HypKTaiRender
 		}
 
 		// css property
-		$reg = '#(<[^>]+?style=[\'"][^\'"]*?)\s*(?<!-)(?:display:\s*non|width|height|margin|padding|float|position|left|top|right|bottom|overflow)[^;\'"]+(?:[ ;]+)?([^>]*>)#iS';
+		$reg = '#(<[^>]+?style=[\'"][^\'"]*?)\s*(?<!-)(?:display:\s*non|width|height|margin|padding|float|position|left|top|right|bottom|overflow|cursor)[^;\'"]+(?:[ ;]+)?([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
@@ -1468,6 +1473,7 @@ class HypKTaiRender
 						$this->vars['ua']['allowPNG'] = TRUE;
 						$this->vars['ua']['allowInputImage'] = TRUE;
 						$this->vars['ua']['allowCookie'] = TRUE;
+						list($this->vars['ua']['width'], $this->vars['ua']['height']) = array('320', '480');
 						$this->vars['ua']['meta'] = '<meta name="viewport" content="width=device-width; initial-scale=1.0;" />';
 						$this->vars['ua']['contentType'] = 'text/html';
 						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
@@ -1475,6 +1481,10 @@ class HypKTaiRender
 				}
 			}
 			$this->vars['ua']['inIPRange'] = $this->checkIp($_SERVER['REMOTE_ADDR'], $this->vars['ua']['carrier']);
+			// define
+			foreach($this->vars['ua'] as $_key => $_val) {
+				define('K_TAI_INFO_' . strtoupper($_key), $_val);
+			}
 		}
 		setlocale( LC_CTYPE, $locale);
 		return;
@@ -1601,6 +1611,12 @@ class HypKTaiRender
 			return str_replace('image', 'submit', $match[1] . $match[5]) . (isset($match[6])? $match[6] : '');
 		}
 
+		// Doesn't process. ("_ktai_direct" found)
+		if (strpos($match[1], ' _ktai_direct') !== false) {
+			$match[0] = preg_replace('/ _ktai_direct[^ \/>]*/', '', $match[0]);
+			return $match[0];
+		}
+
 		$url = $match[4];
 
 		// Url rewrite
@@ -1608,6 +1624,9 @@ class HypKTaiRender
 		if (! empty($this->Config_urlImgRewrites['regex']) && ! empty($this->Config_urlImgRewrites['tostr'])) {
 			$rewiteUrl = $url = preg_replace($this->Config_urlImgRewrites['regex'], $this->Config_urlImgRewrites['tostr'], $url);
 		}
+
+		// Save original URL
+		$src = $url;
 
 		$parsed_url = parse_url($url);
 
@@ -1635,7 +1654,7 @@ class HypKTaiRender
 
 			$_size = '';
 			$url = str_replace('&amp;', '&', $url);
-			$twice = (isset($this->vars['ua']['width']) && $this->Config_imageTwiceDisplayWidth && $this->vars['ua']['width'] >= $this->Config_imageTwiceDisplayWidth);
+			$twice = (! defined('K_TAI_RENDER_IMG_NO_TWICE') && isset($this->vars['ua']['width']) && $this->Config_imageTwiceDisplayWidth && $this->vars['ua']['width'] >= $this->Config_imageTwiceDisplayWidth);
 
 			if ($width && $height) {
 				$zoom = min($this->Config_pictSizeMax/$width, $this->Config_pictSizeMax/$height);
@@ -1677,7 +1696,11 @@ class HypKTaiRender
 				}
 			}
 
-			$ret = $match[1]  . $_size . ' src="' . $this->Config_hypCommonURL . '/gate.php?way=imgconv&amp;m=i4k&amp;s=' . $this->Config_pictSizeMax . $png . '&amp;u=' . rawurlencode($url) . '"' . $match[5];
+			if (HypCommonFunc::get_imagefilesize4ktai($url, $this->Config_pictSizeMax, $this->vars['ua']['allowPNG']) !== 0) {
+				$src = $this->Config_hypCommonURL . '/gate.php?way=imgconv&amp;m=i4k&amp;s=' . $this->Config_pictSizeMax . $png . '&amp;u=' . rawurlencode($url);
+			}
+
+			$ret = $match[1]  . $_size . ' src="' . $src . '"' . $match[5];
 			if (isset($reps['from'])) {
 				$ret = str_replace($reps['from'], $reps['to'], $ret);
 			}
