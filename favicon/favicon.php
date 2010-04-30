@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/02/11 by nao-pon http://hypweb.net/
- * $Id: favicon.php,v 1.10 2009/11/17 04:42:20 nao-pon Exp $
+ * $Id: favicon.php,v 1.11 2010/04/30 02:23:52 nao-pon Exp $
  */
 
 /**
@@ -145,7 +145,7 @@ function output_image($icon, $time = 0)
 function update_cache($url)
 {
     // Garbage Collection
-    $garbage = FAVICON_CACHE_DIR . 'garbage.time';
+    $garbage = FAVICON_CACHE_DIR . '.garbage.time';
     if (! is_file($garbage) || filemtime($garbage) + 86400 < UNIX_TIME) {
     	touch($garbage);
     	clear_cache();
@@ -221,8 +221,8 @@ function http_get_contents(& $url, $size = 0)
 	$ht->url = $url;
 	if ($size) $ht->getSize = $size;
 	$ht->ua = 'Mozilla/5.0';
-	$ht->connect_timeout = 2;
-	$ht->read_timeout = 5;
+	$ht->connect_timeout = 5;
+	$ht->read_timeout = 3;
 	$ht->get();
 	if ($size) $url = $ht->url;
 	return ($ht->rc == 404 || $ht->rc == 410 || $ht->rc > 600 || $ht->rc < 100)? null : $ht->data;
@@ -328,7 +328,7 @@ function get_hosts() {
 
 	if ($hosts) return $hosts;
 
-	$cache = FAVICON_CACHE_DIR . 'group.hosts';
+	$cache = FAVICON_CACHE_DIR . '.group.hosts';
 	if (is_file($cache)) {
 		 $mtime = filemtime($cache);
 		 $checktime = filemtime(FAVICON_TRUST_PATH . '/group.def.hosts');
