@@ -455,13 +455,17 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				foreach($datfiles as $datfile) {
 					if (is_file($datfile)) {
 						$mtime = max(filemtime($datfile), $mtime);
-						$checks = array_merge($checks, file($datfile));
+						$checks[] = $datfile;
 					}
 				}
 				if ($checks) {
 					$cachefile = XOOPS_TRUST_PATH . '/cache/hyp_spamsites.dat';
 					if ($mtime > @ filemtime($cachefile)) {
-						$regs = HypCommonFunc::get_matcher_regex_safe($checks, "\x08");
+						$words = array();
+						foreach($checks as $datfile) {
+							$words = array_merge($words, file($datfile));
+						}
+						$regs = HypCommonFunc::get_matcher_regex_safe($words, "\x08");
 						HypCommonFunc::flock_put_contents($cachefile, $regs);
 					} else {
 						$regs = join('', file($cachefile));
@@ -480,13 +484,23 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				foreach($datfiles as $datfile) {
 					if (is_file($datfile)) {
 						$mtime = max(filemtime($datfile), $mtime);
-						$checks = array_merge($checks, file($datfile));
+						$checks[] = $datfile;
 					}
 				}
 				if ($checks) {
-					$cachefile = XOOPS_TRUST_PATH . '/cache/hyp_spamwords.dat';
+					$cachefile = XOOPS_TRUST_PATH . '/cache/hyp_spamwords_'.$this->encode.'.dat';
 					if ($mtime > @ filemtime($cachefile)) {
-						$regs = HypCommonFunc::get_matcher_regex_safe($checks, "\x08");
+						$words = array();
+						foreach($checks as $datfile) {
+							$_lines = file($datfile);
+							if ($_lines[0][0] === '@') {
+								$_enc = trim(substr(rtrim($_lines[0]), 1));
+								array_shift($_lines);
+								mb_convert_variables($this->encode, $_enc, $_lines);
+							}
+							$words = array_merge($words, $_lines);
+						}
+						$regs = HypCommonFunc::get_matcher_regex_safe($words, "\x08");
 						HypCommonFunc::flock_put_contents($cachefile, $regs);
 					} else {
 						$regs = join('', file($cachefile));
@@ -703,8 +717,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! empty($this->k_tai_conf['easyLogin'])) {
 
 			if (isset($_GET['_EASYLOGIN']) || ($this->HypKTaiRender->vars['ua']['xoopsUid'] && (isset($_GET['_EASYLOGINSET']) || isset($_GET['_EASYLOGINUNSET'])))) {
+				if ((isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')) {
+					exit('Can not use "Easy Login" on SSL connection.');
+				}
+
 				if (empty($this->HypKTaiRender->vars['ua']['uid'])) {
-						exit('Could not got your device ID.');
+					exit('Could not got your device ID.');
 				}
 
 				if (empty($this->k_tai_conf['noCheckIpRange']) && ! $this->HypKTaiRender->vars['ua']['inIPRange']) {
@@ -1252,7 +1270,17 @@ EOD;
 				return '';
 			}
 
-			// Check RSS
+			// <head>
+			$_head = '<head>';
+			if (preg_match('#<title[^>]*>(.*)</title>#isUS', $head, $match)) {
+				$pagetitle = $match[1];
+				$_head .= mb_convert_encoding($match[0], 'SJIS-win', $encode);
+			}
+			if (isset($r->vars['ua']['meta'])) {
+				$_head .= $r->vars['ua']['meta'];
+			}
+
+			// Check RSS & CSS
 			$rss = array();
 			if (preg_match_all('#<link([^>]+?)>#iS', $head, $match)) {
 				foreach($match[1] as $attrs) {
@@ -1265,6 +1293,10 @@ EOD;
 							}
 							$rss[] = '<a href="'.$url.'">'.$title.'</a>';
 						}
+					} else if (preg_match('#rel=("|\')stylesheet\\1#iS', $attrs)) {
+						if (preg_match('# media=("|\')[a-z, ]*\b(?:handheld|'.$r->vars['ua']['carrier'].')\b[a-z, ]*\\1#iS', $attrs)) {
+							$_head .= '<link' . preg_replace('# media=("|\')[^"\']*?\\1#iS', '', $attrs) . '>';
+						}
 					}
 				}
 			}
@@ -1272,14 +1304,6 @@ EOD;
 				$body = '<div style="font-size:0.9em">' . $r->Config_icons['RSS'] . join('<br />' . $r->Config_icons['RSS'], $rss) . '</div>' . $body;
 			}
 
-			$_head = '<head>';
-			if (preg_match('#<title[^>]*>(.*)</title>#isUS', $head, $match)) {
-				$pagetitle = $match[1];
-				$_head .= mb_convert_encoding($match[0], 'SJIS-win', $encode);
-			}
-			if (isset($r->vars['ua']['meta'])) {
-				$_head .= $r->vars['ua']['meta'];
-			}
 			$_head .= '</head>';
 			$head = $_head;
 		}
