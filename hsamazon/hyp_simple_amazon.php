@@ -8,7 +8,7 @@ class HypSimpleAmazon
 	var $SecretAccessKey = '';
 	var $ResponseGroup = 'ItemAttributes,Images,Offers,Variations';
 	var $SearchIndex = 'Blended';
-	var $Version = '2009-10-01';
+	var $Version = '2009-11-01';
 	var $batchMax = 2;
 	var $AssociateTag = '';
 	var $Operation = '';
@@ -73,7 +73,8 @@ class HypSimpleAmazon
 
 	function _sendQuery ($params) {
 
-		foreach($params as $key => $val){
+		$_params = $params;
+		foreach($_params as $key => $val){
 			$this->_setBatchQuery($params, $key, $val);
 		}
 
@@ -189,7 +190,7 @@ class HypSimpleAmazon
 			}
 			$this->batchCount = max($this->batchCount, (count($ret) - 1));
 		} else {
-			$options[$key] = $vals;
+			//$options[$key] = $vals;
 		}
 		return $ret;
 	}
@@ -455,7 +456,7 @@ class HypSimpleAmazon
 				$_item['URL'] = $item['DetailPageURL'];
 				$_item['ASIN'] = $item['ASIN'];
 				$_item['ADDCARTURL'] = $this->getAddCartURL($item['ASIN']);
-				$_item['TITLE'] = htmlspecialchars($item['ItemAttributes']['Title']);
+				$_item['TITLE'] = htmlspecialchars(@ $item['ItemAttributes']['Title']);
 				$_item['BINDING'] = @ $item['ItemAttributes']['Binding'];
 				$_item['PRODUCTGROUP'] = @ $item['ItemAttributes']['ProductGroup'];
 				$_item['MANUFACTURER'] = $this->get_manufacturer($item);
