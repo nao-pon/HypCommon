@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.69 2010/03/06 08:10:43 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.70 2010/04/30 01:26:23 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -405,16 +405,31 @@ class HypCommonFunc
 		return TRUE;
 	}
 
-	// 携帯用にリサイズした画像の元のサイズを得る
+	// 携帯用にリサイズした画像のサイズを得る
 	function get_imagesize4ktai($url, $maxsize, $allowpng) {
 		$cachepath = XOOPS_ROOT_PATH . '/class/hyp_common/cache';
 		$png = ($allowpng)? 1 : 0;
 		$basename = md5(join("\t", array($url, $maxsize, $png))) . '.i4ks';
 		$size_file = $cachepath . '/' .  $basename;
 		if (is_file($size_file)) {
-			return file_get_contents($size_file);
+			list($ret) = file($size_file);
+			$ret = trim($ret);
+			return $ret;
 		}
 		return '';
+	}
+
+	// 携帯用にリサイズした画像のファイルサイズを得る
+	function get_imagefilesize4ktai($url, $maxsize, $allowpng) {
+		$cachepath = XOOPS_ROOT_PATH . '/class/hyp_common/cache';
+		$png = ($allowpng)? 1 : 0;
+		$basename = md5(join("\t", array($url, $maxsize, $png))) . '.i4k';
+		$size_file = $cachepath . '/' .  $basename;
+		if (is_file($size_file)) {
+			return filesize($size_file);
+		} else {
+			return false;
+		}
 	}
 
 	// サムネイル画像を作成。
@@ -1611,6 +1626,11 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 			if (preg_match('/[^A-Za-z0-9.-]/', $ret['host'])) {
 				$ret['host'] = HypCommonFunc::convertIDN($ret['host'], 'encode');
 			}
+			if (isset($ret['scheme']) && strtolower($ret['scheme']) === 'https') {
+				$ret['https'] = 'ssl://';
+			} else {
+				$ret['https'] = '';
+			}
 			return $ret;
 		} else {
 			return FALSE;
@@ -1882,7 +1902,7 @@ class Hyp_HTTP_Request
 		// query
 		$arr['query'] = isset($arr['query']) ? '?'.$arr['query'] : '';
 		// port
-		$arr['port'] = isset($arr['port']) ? $arr['port'] : 80;
+		$arr['port'] = isset($arr['port']) ? $arr['port'] : ($arr['https']? 443 : 80);
 
 		$url_base = $arr['scheme'].'://'.$arr['host'].':'.$arr['port'];
 		$url_path = isset($arr['path']) ? $arr['path'] : '/';
@@ -1962,7 +1982,7 @@ class Hyp_HTTP_Request
 			$errno = 0;
 			$errstr = "";
 			$fp = @ fsockopen(
-				$via_proxy ? $this->proxy_host : $arr['host'],
+				$via_proxy ? $this->proxy_host : $arr['https'].$arr['host'],
 				$via_proxy ? $this->proxy_port : $arr['port'],
 				$errno,$errstr,$this->connect_timeout);
 			if ($fp) break;
@@ -1984,7 +2004,6 @@ class Hyp_HTTP_Request
 			socket_set_blocking($fp, 0);
 		}
 
-//		fputs($fp, $query);
 		$fwrite = 0;
 		for ($written = 0; $written < strlen($query); $written += $fwrite) {
 			$fwrite = fwrite($fp, substr($query, $written));
@@ -2005,25 +2024,26 @@ class Hyp_HTTP_Request
 		}
 
 		$response = '';
-		while (!feof($fp)
-			&& ($this->method != 'HEAD' || strpos($response,"\r\n\r\n") === FALSE)
+
+		if ($this->read_timeout) {
+			socket_set_timeout($fp, $this->read_timeout);
+		}
+
+		$_response = true;
+		while ($_response
+			&& ($this->method !== 'HEAD' || strpos($response,"\r\n\r\n") === FALSE)
 			&& (is_null($this->getSize) || strlen($response) < $this->getSize)
 		)
 		{
 			if (connection_aborted()) exit();
-			if ($this->read_timeout)
-			{
-				@set_time_limit($this->read_timeout + $max_execution_time);
-				socket_set_timeout($fp, $this->read_timeout);
-			}
-			$_response = fread($fp, $readsize);
-			$_status = socket_get_status($fp);
-			if ($_status['timed_out'] === false)
-			{
+			if ($_response = fread($fp, $readsize)) {
 				$response .= $_response;
 			}
-			else
-			{
+		}
+
+		if ($this->read_timeout) {
+			$_status = socket_get_status($fp);
+			if ($_status['timed_out']) {
 				fclose($fp);
 				$this->query  = $query;
 				$this->rc     = 408;
@@ -2032,6 +2052,7 @@ class Hyp_HTTP_Request
 				return;
 			}
 		}
+
 		fclose($fp);
 		$resp = array_pad(explode("\r\n\r\n",$response,2), 2, '');
 		$rccd = array_pad(explode(' ',$resp[0],3), 3, ''); // array('HTTP/1.1','200','OK\r\n...')
