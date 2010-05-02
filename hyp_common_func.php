@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.70 2010/04/30 01:26:23 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.71 2010/05/02 23:46:24 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -56,6 +56,9 @@ class HypCommonFunc
 			case 'TwitterOAuth':
 				include_once $dir . '/twitteroauth/twitteroauth.php';
 				include_once $dir . '/twitteroauth/OAuth.php';
+				break;
+			case 'MySQLDump':
+				include_once $dir . '/lib_dump/lib_dump.php';
 				break;
 			default:
 				$ret = FALSE;
