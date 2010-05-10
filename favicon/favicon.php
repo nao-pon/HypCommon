@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/02/11 by nao-pon http://hypweb.net/
- * $Id: favicon.php,v 1.11 2010/04/30 02:23:52 nao-pon Exp $
+ * $Id: favicon.php,v 1.12 2010/05/10 02:24:28 nao-pon Exp $
  */
 
 /**
@@ -221,8 +221,8 @@ function http_get_contents(& $url, $size = 0)
 	$ht->url = $url;
 	if ($size) $ht->getSize = $size;
 	$ht->ua = 'Mozilla/5.0';
-	$ht->connect_timeout = 5;
-	$ht->read_timeout = 3;
+	$ht->connect_timeout = 2;
+	$ht->read_timeout = 5;
 	$ht->get();
 	if ($size) $url = $ht->url;
 	return ($ht->rc == 404 || $ht->rc == 410 || $ht->rc > 600 || $ht->rc < 100)? null : $ht->data;

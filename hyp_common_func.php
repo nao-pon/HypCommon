@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.71 2010/05/02 23:46:24 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.72 2010/05/10 02:24:28 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1798,7 +1798,7 @@ class Hyp_HTTP_Request
 	// 接続試行回数
 	var $connect_try=1;
 	// 接続時タイムアウト
-	var $connect_timeout=30;
+	var $connect_timeout=3;
 	// 通信時タイムアウト
 	var $read_timeout=10;
 	// POST文字エンコード
@@ -1976,11 +1976,11 @@ class Hyp_HTTP_Request
 		$fp = $connect_try_count = 0;
 		while( !$fp && $connect_try_count < $this->connect_try )
 		{
-			@set_time_limit($this->connect_timeout + $max_execution_time);
+			//@set_time_limit($this->connect_timeout + $max_execution_time);
 
-			if ($now_execution_time = ini_get('max_execution_time')) {
-				$this->connect_timeout = min($this->connect_timeout, max(5, $now_execution_time - 10));
-			}
+			//if ($now_execution_time = ini_get('max_execution_time')) {
+			//	$this->connect_timeout = min($this->connect_timeout, max(5, $now_execution_time - 10));
+			//}
 
 			$errno = 0;
 			$errstr = "";

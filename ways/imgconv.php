@@ -2,7 +2,7 @@
 /*
  * Created on 2008/07/24 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: imgconv.php,v 1.7 2010/04/30 01:26:10 nao-pon Exp $
+ * $Id: imgconv.php,v 1.8 2010/05/10 02:24:28 nao-pon Exp $
  */
 
 // clear output buffer
@@ -69,7 +69,7 @@ switch($mode) {
 			$h = new Hyp_HTTP_Request();
 
 			$h->url = $url;
-			$h->connect_timeout = 15;
+			$h->connect_timeout = 3;
 			$h->read_timeout = 5;
 			$h->get();
 			if ($h->rc === 200) {
