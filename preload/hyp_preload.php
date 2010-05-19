@@ -376,6 +376,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 
 		global $xoopsUser, $xoopsUserIsAdmin;
+
 		if (! empty($_POST)) {
 			// Input フィルター (remove "\0")
 			$_POST = HypCommonFunc::input_filter($_POST);
@@ -448,8 +449,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 				// Default スパムサイト定義読み込み
 				$datfiles = array();
-				$datfiles[] = dirname(dirname(__FILE__)) . '/spamsites.dat';
-				$datfiles[] = dirname(__FILE__) . '/spamsites.conf.dat';
+				$datfiles[] = HYP_COMMON_ROOT_PATH . '/dat/spamsites.dat';
+				$datfiles[] = HYP_COMMON_ROOT_PATH . '/config/spamsites.conf.dat';
 				$checks = array();
 				$mtime = 0;
 				foreach($datfiles as $datfile) {
@@ -477,8 +478,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 				// Default スパムワード定義読み込み
 				$datfiles = array();
-				$datfiles[] = dirname(dirname(__FILE__)) . '/spamwords.dat';
-				$datfiles[] = dirname(__FILE__) . '/spamwords.conf.dat';
+				$datfiles[] = HYP_COMMON_ROOT_PATH . '/dat/spamwords.dat';
+				$datfiles[] = HYP_COMMON_ROOT_PATH . '/config/spamwords.conf.dat';
 				$checks = array();
 				$mtime = 0;
 				foreach($datfiles as $datfile) {
@@ -937,6 +938,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$part = substr($s, 0, 4096);
 		if ($s === '' || strpos($part, '<html') === FALSE) return $s;
 		if (strpos($part, 'http-equiv') !== FALSE && preg_match('#<meta[^>]+http-equiv=("|\')Refresh\\1[^>]+content=("|\')([\d]+);\s*url=(.+)\\2[^>]*>#iUS', $part, $match)) {
+			if (headers_sent()) return $s;
 			$wait = $match[3];
 			$s_url = $match[4];
 			$url = strtr(str_replace('&amp;', '&', $s_url), "\r\n\0", "   ");
