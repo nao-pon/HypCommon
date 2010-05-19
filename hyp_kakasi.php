@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_kakasi.php,v 1.4 2009/03/01 23:42:25 nao-pon Exp $
+// $Id: hyp_kakasi.php,v 1.5 2010/05/19 11:08:18 nao-pon Exp $
 // Hyp_KAKASI Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -13,17 +13,17 @@ class Hyp_KAKASHI
 {
 	// 基本設定
 	var $kakasi_path = "/usr/bin/kakasi";    // KAKASI のパス
-	
+
 	var $encoding;       // 文字コード
-	
+
 	var $tmp_dir = "";        // 分かち書き用キャッシュ保存用ディレクトリ
 	var $gc_probability = 1;  // gc処理する確率 x  x/1000の確率で処理
 	var $cache_expire = 24;   // キャッシュの有効期限(h)
-	
+
 	// 内部変数
 	var $dicts = array();
 	var $cmd = "";
-	
+
 	function Hyp_KAKASHI()
 	{
 		if (defined('HYP_POST_ENCODING')) {
@@ -36,8 +36,9 @@ class Hyp_KAKASHI
 		if (defined('HYP_KAKASI_PATH') && HYP_KAKASI_PATH) {
 			$this->kakasi_path = HYP_KAKASI_PATH . 'kakasi';
 		}
+		$this->add_dict(dirname(__FILE__). '/config/kakasi_dic.txt');
 	}
-	
+
 	function add_dict($dict)
 	{
 		if (is_file($dict))
@@ -45,11 +46,11 @@ class Hyp_KAKASHI
 			array_push($this->dicts,$dict);
 		}
 	}
-	
+
 	function get_wakatigaki(&$str)
 	{
 		if (!$this->kakasi_path) return false;
-		
+
 		if ($this->tmp_dir)
 		{
 			// gc(ガベージコレクト)
@@ -65,12 +66,12 @@ class Hyp_KAKASHI
 							unlink($this->tmp_dir.$file);
 						}
 					}
-					closedir($handle); 
+					closedir($handle);
 				}
 			}
-			
+
 			$tmpfile = $this->tmp_dir.md5($str).".tmp";
-			
+
 			// キャッシュ
 			if (file_exists($tmpfile))
 			{
@@ -79,7 +80,7 @@ class Hyp_KAKASHI
 				return true;
 			}
 		}
-		
+
 		$put = $str;
 		$nwa = "";
 		$match = array();
@@ -90,15 +91,15 @@ class Hyp_KAKASHI
 			{
 				$put = str_replace($rep," ",$put);
 			}
-			
+
 			$put = preg_replace("/ +/"," ",$put);
 			$nwa = join(" ",$match[1])." ";
 		}
-		
+
 		if (!$this->execute($put, "-w -c")) return false;
-		
+
 		$str = $nwa.$put;
-		
+
 		if ($this->tmp_dir)
 		{
 			if ($fp = fopen($tmpfile, "wb"))
@@ -107,16 +108,16 @@ class Hyp_KAKASHI
 				fclose($fp);
 			}
 		}
-		
+
 		return true;
 	}
-	
+
 	function get_keyword(&$str, $limit=10, $minlen=3, $minpoint=2)
 	{
 		$str = preg_replace("/[ \t]+/"," ",$str);
 		$keys = array();
 		$_dat = "";
-		
+
 		foreach (preg_split("/[\r\n]+/",$str) as $_str)
 		{
 			if ((strlen($_dat)+strlen($_str)) > 10000)
@@ -142,10 +143,10 @@ class Hyp_KAKASHI
 				$str = "";
 				return false;
 			}
-			$keys = array_merge($keys,explode(" ", $_dat));			
+			$keys = array_merge($keys,explode(" ", $_dat));
 		}
 		rsort($keys);
-		
+
 		$arr = array();
 		foreach ($keys as $key)
 		{
@@ -177,7 +178,7 @@ class Hyp_KAKASHI
 		}
 		return true;
 	}
-	
+
 	function get_katakana(&$str)
 	{
 		return $this->execute($str, "-kK -HK -JK");
@@ -187,12 +188,12 @@ class Hyp_KAKASHI
 	{
 		return $this->execute($str, "-kH -KH -JH");
 	}
-	
+
 	function get_roma(&$str)
 	{
 		return $this->execute($str, "-Ha -Ka -Ja -Ea -ka");
 	}
-	
+
 	function get_expert(&$str,&$cmd)
 	{
 		$cmd = trim($cmd);

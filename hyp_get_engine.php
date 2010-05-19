@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_get_engine.php,v 1.11 2010/03/06 08:15:03 nao-pon Exp $
+// $Id: hyp_get_engine.php,v 1.12 2010/05/19 11:08:18 nao-pon Exp $
 // HypGetQueryWord Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -42,7 +42,7 @@ class HypGetQueryWord
 			{
 				$reffer = rtrim($reffer, '/');
 
-				$se=file(dirname(__FILE__).'/hyp_search_engines.dat');
+				$se=file(dirname(__FILE__).'/dat/hyp_search_engines.dat');
 				$found=0;
 
 				foreach($se as $linea)
