@@ -2,7 +2,7 @@
 /*
  * Created on 2008/07/24 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: imgconv.php,v 1.8 2010/05/10 02:24:28 nao-pon Exp $
+ * $Id: imgconv.php,v 1.9 2010/05/19 11:20:56 nao-pon Exp $
  */
 
 // clear output buffer
@@ -44,11 +44,14 @@ switch($mode) {
 							save_i4ks($size_file, $size, $mime);
 						}
 					}
+
+					include_once $trustpath . '/class/hyp_common/hyp_common_func.php';
+
 					header('Content-Type: ' . $mime);
 					header('Content-Length: ' . filesize($file));
 					header('Cache-Control:max-age=' . $maxage);
 					header('Expires: ' . gmdate( "D, d M Y H:i:s", UNIX_TIME + $maxage ) . ' GMT');
-					readfile($file);
+					HypCommonFunc::readfile($file);
 					exit();
 				} else {
 					header('HTTP/1.1 301 Moved Permanently');
@@ -64,7 +67,7 @@ switch($mode) {
 				GC_i4k($cachepath, $TTL);
 			}
 
-			include_once($trustpath . '/class/hyp_common/hyp_common_func.php');
+			include_once $trustpath . '/class/hyp_common/hyp_common_func.php';
 
 			$h = new Hyp_HTTP_Request();
 
@@ -102,7 +105,7 @@ switch($mode) {
 					header('Content-Length: ' . filesize($file));
 					header('Cache-Control:max-age=' . $maxage);
 					header('Expires: ' . gmdate( "D, d M Y H:i:s", UNIX_TIME + $maxage ) . ' GMT');
-					readfile($file);
+					HypCommonFunc::readfile($file);
 					exit();
 				}
 				HypCommonFunc::flock_put_contents($file, '');

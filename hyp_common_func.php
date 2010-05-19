@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.72 2010/05/10 02:24:28 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.73 2010/05/19 11:20:56 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -9,12 +9,19 @@ if (! function_exists('XC_CLASS_EXISTS')) {
 
 if( ! XC_CLASS_EXISTS( 'HypCommonFunc' ) )
 {
+
+define('HYP_COMMON_ROOT_PATH', dirname(__FILE__));
+
+if (is_file(HYP_COMMON_ROOT_PATH . '/config/hyp_common.conf.php')) {
+	include_once HYP_COMMON_ROOT_PATH . '/config/hyp_common.conf.php';
+}
+
 class HypCommonFunc
 {
 	function get_version() {
 		static $version = FALSE;
 		if (! $version) {
-			include (dirname(__FILE__) . '/version.php');
+			include (HYP_COMMON_ROOT_PATH . '/version.php');
 		}
 		return $version;
 	}
@@ -23,42 +30,41 @@ class HypCommonFunc
 		if (XC_CLASS_EXISTS($name)) return TRUE;
 
 		$ret = TRUE;
-		$dir = dirname(__FILE__);
 		switch($name) {
 			case 'HypSimpleAmazon':
-				include_once $dir . '/hsamazon/hyp_simple_amazon.php';
+				include_once HYP_COMMON_ROOT_PATH . '/hsamazon/hyp_simple_amazon.php';
 				break;
 			case 'HypPinger':
-				include_once $dir . '/hyppinger/hyppinger.php';
+				include_once HYP_COMMON_ROOT_PATH . '/hyppinger/hyppinger.php';
 				break;
 			case 'HypGetQueryWord':
-				include_once $dir . '/hyp_get_engine.php';
+				include_once HYP_COMMON_ROOT_PATH . '/hyp_get_engine.php';
 				break;
 			case 'Hyp_KAKASHI':
-				include_once $dir . '/hyp_kakasi.php';
+				include_once HYP_COMMON_ROOT_PATH . '/hyp_kakasi.php';
 				break;
 			case 'HypSimpleXML':
-				include_once $dir . '/hyp_simplexml.php';
+				include_once HYP_COMMON_ROOT_PATH . '/hyp_simplexml.php';
 				break;
 			case 'HypKTaiRender':
-				include_once $dir . '/ktairender/hyp_ktai_render.php';
+				include_once HYP_COMMON_ROOT_PATH . '/ktairender/hyp_ktai_render.php';
 				break;
 			case 'HypRss2Html':
-				include_once $dir . '/rss2html/hyp_rss2html.php';
+				include_once HYP_COMMON_ROOT_PATH . '/rss2html/hyp_rss2html.php';
 				break;
 			case 'MobilePictogramConverter':
-				include_once $dir . '/mpc/MobilePictogramConverter.php';
+				include_once HYP_COMMON_ROOT_PATH . '/mpc/MobilePictogramConverter.php';
 				break;
 			case 'IXR_Client':
 			case 'IXR_Server':
-				include_once $dir . '/IXR_Library/IXR_Library.inc.php';
+				include_once HYP_COMMON_ROOT_PATH . '/IXR_Library/IXR_Library.inc.php';
 				break;
 			case 'TwitterOAuth':
-				include_once $dir . '/twitteroauth/twitteroauth.php';
-				include_once $dir . '/twitteroauth/OAuth.php';
+				include_once HYP_COMMON_ROOT_PATH . '/twitteroauth/twitteroauth.php';
+				include_once HYP_COMMON_ROOT_PATH . '/twitteroauth/OAuth.php';
 				break;
 			case 'MySQLDump':
-				include_once $dir . '/lib_dump/lib_dump.php';
+				include_once HYP_COMMON_ROOT_PATH . '/lib_dump/lib_dump.php';
 				break;
 			default:
 				$ret = FALSE;
@@ -1270,7 +1276,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 		if (is_null($bef)) {
 			$enc = (HYP_POST_ENCODING === 'UTF-8')? '_utf8' : '';
 
-			$datfile = ($mac === FALSE)? dirname(__FILE__).'/win_ext'.$enc.'.dat' : dirname(__FILE__).'/mac_ext'.$enc.'.dat';
+			$datfile = ($mac === FALSE)? dirname(__FILE__).'/dat/win_ext'.$enc.'.dat' : dirname(__FILE__).'/dat/mac_ext'.$enc.'.dat';
 
 			if (file_exists($datfile)) {
 				$bef = $aft = array();
@@ -1764,6 +1770,22 @@ EOD;
 			}
 		}
 		return $return;
+	}
+
+	function readfile($file, $use_content_encoding = FALSE) {
+		if (defined('HYP_X_SENDFILE_MODE')) {
+			if (HYP_X_SENDFILE_MODE === 3 || (! $use_content_encoding && HYP_X_SENDFILE_MODE === 2)) {
+				if ( $use_content_encoding && HYP_X_SENDFILE_MODE === 3) {
+					header('X-Sendfile-Use-CE: Yes');
+				}
+				header('X-Sendfile: ' . $file);
+				return;
+			} else if (HYP_X_SENDFILE_MODE === 1) {
+				header('X-LIGHTTPD-send-file: ' . $file);
+				return;
+			}
+		}
+		readfile($file);
 	}
 }
 

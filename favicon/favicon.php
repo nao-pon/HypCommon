@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/02/11 by nao-pon http://hypweb.net/
- * $Id: favicon.php,v 1.12 2010/05/10 02:24:28 nao-pon Exp $
+ * $Id: favicon.php,v 1.13 2010/05/19 11:20:56 nao-pon Exp $
  */
 
 /**
@@ -37,9 +37,10 @@ ignore_user_abort(FALSE);
 error_reporting(0);
 
 define('FAVICON_TRUST_PATH' , dirname(__FILE__));
+define('FAVICON_HYP_COMMON_PATH', dirname(FAVICON_TRUST_PATH));
 
-if (is_file(FAVICON_TRUST_PATH . '/conf.php')) {
-	include FAVICON_TRUST_PATH . '/conf.php';
+if (is_file(FAVICON_HYP_COMMON_PATH . '/config/favicon.conf.php')) {
+	include FAVICON_HYP_COMMON_PATH . '/config/favicon.conf.php';
 } else {
 	define('FAVICON_DEFAULT_IMAGE', FAVICON_TRUST_PATH . '/images/world_go.png');
 	define('FAVICON_ERROR_IMAGE',   FAVICON_TRUST_PATH . '/images/link_break.png');
@@ -49,6 +50,7 @@ if (is_file(FAVICON_TRUST_PATH . '/conf.php')) {
 define('UNIX_TIME', (isset($_SERVER['REQUEST_TIME'])? $_SERVER['REQUEST_TIME'] : time()));
 
 if (! defined('FAVICON_ADMIN_MODE')) define('FAVICON_ADMIN_MODE', FALSE);
+if (! defined('HYP_X_SENDFILE_MODE')) define('HYP_X_SENDFILE_MODE', 0);
 
 function get_favicon($url)
 {
@@ -137,7 +139,13 @@ function output_image($icon, $time = 0)
     header('Etag: '. $time);
     header('Content-Length: ' . filesize($filename));
     header('Content-Type: ' . $mime);
-    readfile($filename);
+    if ( HYP_X_SENDFILE_MODE >= 2 ) {
+		header('X-Sendfile: ' . $filename);
+    } else if ( HYP_X_SENDFILE_MODE === 1 ) {
+    	header('X-LIGHTTPD-send-file: ' . $filename);
+    } else {
+    	readfile($filename);
+    }
     exit();
 }
 
@@ -331,18 +339,18 @@ function get_hosts() {
 	$cache = FAVICON_CACHE_DIR . '.group.hosts';
 	if (is_file($cache)) {
 		 $mtime = filemtime($cache);
-		 $checktime = filemtime(FAVICON_TRUST_PATH . '/group.def.hosts');
-		 if (is_file(FAVICON_TRUST_PATH . '/group.hosts')) {
-		 	$checktime = max($checktime, filemtime(FAVICON_TRUST_PATH . '/group.hosts'));
+		 $checktime = filemtime(FAVICON_HYP_COMMON_PATH . '/dat/favicon_hostsgroup.dat');
+		 if (is_file(FAVICON_HYP_COMMON_PATH . '/group.hosts')) {
+		 	$checktime = max($checktime, filemtime(FAVICON_HYP_COMMON_PATH . '/group.hosts'));
 		 }
 		 if ($mtime > $checktime) {
 		 	return unserialize(file_get_contents($cache));
 		 }
 	}
 
-	$_hosts = file(FAVICON_TRUST_PATH . '/group.def.hosts');
-	if (is_file(FAVICON_TRUST_PATH . '/group.hosts')) {
-		$_hosts = array_merge($_hosts, file(FAVICON_TRUST_PATH . '/group.hosts'));
+	$_hosts = file(FAVICON_HYP_COMMON_PATH . '/dat/favicon_hostsgroup.dat');
+	if (is_file(FAVICON_HYP_COMMON_PATH . '/config/favicon_hostsgroup.dat')) {
+		$_hosts = array_merge($_hosts, file(FAVICON_HYP_COMMON_PATH . '/config/favicon_hostsgroup.dat'));
 	}
 	if ($_hosts) {
 		foreach($_hosts as $host) {
