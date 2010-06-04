@@ -352,7 +352,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		// For WizMobile
 		if (XC_CLASS_EXISTS('Wizin_User')) {
 			$wizinUser = & Wizin_User::getSingleton();
-			$this->wizMobileUse = $wizinUser->bIsMobile;
+			if ($this->wizMobileUse = $wizinUser->bIsMobile) {
+				define('HYP_WIZMOBILE_USE', true);
+			}
 		}
 
 		// XOOPS の表示文字エンコーディング
@@ -363,13 +365,13 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			$this->encodehint_word = '';
 		}
 
-		if (! empty($_GET)) {
+		if (! $this->wizMobileUse && ! empty($_GET)) {
 			// 文字コードを正規化
 			$enchint = (isset($_GET[$this->encodehint_name]))? $_GET[$this->encodehint_name] : ((isset($_GET['encode_hint']))? $_GET['encode_hint'] : '');
 			if ($enchint && function_exists('mb_detect_encoding')) {
-				$encode = strtoupper(mb_detect_encoding($enchint));
-				if ($encode !== $this->encode) {
-					mb_convert_variables($this->encode, $encode, $_GET);
+				define ('HYP_GET_ENCODING', strtoupper(mb_detect_encoding($enchint)));
+				if (HYP_GET_ENCODING !== $this->encode) {
+					mb_convert_variables($this->encode, HYP_GET_ENCODING, $_GET);
 					if (isset($_GET['charset'])) $_GET['charset'] = $this->encode;
 				}
 			}
@@ -412,7 +414,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 
 			// 文字コードを正規化
-			if (defined('HYP_POST_ENCODING') && $this->encode !== HYP_POST_ENCODING) {
+			if (! $this->wizMobileUse && defined('HYP_POST_ENCODING') && $this->encode !== HYP_POST_ENCODING) {
 				mb_convert_variables($this->encode, HYP_POST_ENCODING, $_POST);
 				if (isset($_POST['charset'])) $_POST['charset'] = $this->encode;
 			}
@@ -599,6 +601,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			// Set theme set
 			if (isset($this->k_tai_conf['themeSet']) && is_file(XOOPS_THEME_PATH . '/' . $this->k_tai_conf['themeSet'] . '/theme.html')) {
 				$GLOBALS['xoopsConfig']['theme_set'] = $this->k_tai_conf['themeSet'];
+				// For ImpressCMS 1.2
+				if (isset($GLOBALS['icmsConfig'])) {
+					$GLOBALS['icmsConfig']['theme_set'] = $this->k_tai_conf['themeSet'];
+				}
 				if (defined('XOOPS_CUBE_LEGACY')) {
 					// Over write user setting
 					$this->mRoot->mContext->setThemeName($this->k_tai_conf['themeSet']);
@@ -607,6 +613,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			// Set template set
 			if (! empty($this->k_tai_conf['templateSet'])) {
 				$GLOBALS['xoopsConfig']['template_set'] = $this->k_tai_conf['templateSet'];
+				// For ImpressCMS 1.2
+				if (isset($GLOBALS['icmsConfig'])) {
+					$GLOBALS['icmsConfig']['template_set'] = $this->k_tai_conf['templateSet'];
+				}
 			}
 			// Hint character for encoding judgment
 			if (! empty($this->encodehint_word)) {
