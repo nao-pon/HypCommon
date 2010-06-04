@@ -610,7 +610,14 @@ class HypSimpleAmazon
 			$asin .= $des;
 			return $asin;
 		} else {
-			return $isbn;
+			$this->setSearchIndex('Blended');
+			$this->itemSearch($isbn);
+			$xml = $this->xml;
+			if (isset($xml['Items']) && isset($xml['Items']['Item']) && isset($xml['Items']['Item']['ASIN'])) {
+				return $xml['Items']['Item']['ASIN'];
+			} else {
+				return $isbn;
+			}
 		}
 	}
 
