@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/02/11 by nao-pon http://hypweb.net/
- * $Id: favicon.php,v 1.13 2010/05/19 11:20:56 nao-pon Exp $
+ * $Id: favicon.php,v 1.14 2010/06/04 06:54:09 nao-pon Exp $
  */
 
 /**
@@ -79,9 +79,11 @@ function get_url_filename($url)
     static $filename;
 
     if (empty($filename)) {
-        $url = rtrim($url, '/');
+        list($url) = explode('?', $url);
+        if (preg_match('#^https?://[^/]+?/#i', $url)) {
+        	$url = preg_replace('#/[^/]*$#', '', $url);
+        }
         $filename = FAVICON_CACHE_DIR . md5($url) . '.url';
-        //exit($url);
     }
     return $filename;
 }
@@ -161,11 +163,11 @@ function update_cache($url)
 
 	$url_org = $url;
     $html = http_get_contents($url, 4096);
-    $_url = $url;
-    check_group($url);
-	if ($url !== $_url) {
-		$html = http_get_contents($url, 4096);
-	}
+    //$_url = $url;
+    //check_group($url);
+	//if ($url !== $_url) {
+	//	$html = http_get_contents($url, 4096);
+	//}
     if ($html === false) {        // connection failed or timed out
         $favicon = 'DefaultIcon';
     } else if ($html === null) {  // 404 status code or unsupported scheme
@@ -323,6 +325,14 @@ function check_group(& $url) {
 		while ($_parts) {
 			$_host = join('.', $_parts);
 			if (isset($hosts[$_host])) {
+				if (defined('XOOPS_URL') && $url !== $hosts[$_host]) {
+					//header('Etag: '. md5($url));
+					//header('Cache-Control: public, max-age=' . FAVICON_CACHE_TTL );
+					//header('Expires: ' . gmdate( "D, d M Y H:i:s", UNIX_TIME + FAVICON_CACHE_TTL ) . ' GMT');
+					header('HTTP/1.1 301 Moved Permanently');
+					header('Location:' . XOOPS_URL . '/class/hyp_common/favicon.php?url='.rawurlencode($hosts[$_host]));
+					exit();
+				}
 				$url = $hosts[$_host];
 				break;
 			}
