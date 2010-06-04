@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.46 2010/04/30 02:09:48 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.47 2010/06/04 06:59:08 nao-pon Exp $
  */
 
 if (! function_exists('XC_CLASS_EXISTS')) {
@@ -1482,8 +1482,10 @@ class HypKTaiRender
 			}
 			$this->vars['ua']['inIPRange'] = $this->checkIp($_SERVER['REMOTE_ADDR'], $this->vars['ua']['carrier']);
 			// define
-			foreach($this->vars['ua'] as $_key => $_val) {
-				define('K_TAI_INFO_' . strtoupper($_key), $_val);
+			if (! defined('K_TAI_INFO_ISBOT')) { // 設定済みチェック
+				foreach($this->vars['ua'] as $_key => $_val) {
+					define('K_TAI_INFO_' . strtoupper($_key), $_val);
+				}
 			}
 		}
 		setlocale( LC_CTYPE, $locale);
