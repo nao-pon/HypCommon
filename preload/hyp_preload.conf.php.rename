@@ -101,6 +101,9 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// スマートリダイレクトのポップアップ最短秒数
 		$this->smart_redirect_min_sec = 5;
 
+		// 定数 "HYP_IS_BOT_UA" をセットする UserAgant PCRE 正規表現
+		$this->bot_ua_reg = '/bot|Slurp|Crawler|Sidewinder|spider|Y!J|Ask/i';
+
 		/////////////////////////
 		// 携帯対応レンダー設定
 

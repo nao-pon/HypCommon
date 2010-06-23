@@ -124,7 +124,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->kakasi_cache_dir)) $this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
 
 		if (! isset($this->smart_redirect_min_sec)) $this->smart_redirect_min_sec = 5;
-
+		
+		if (! isset($this->bot_ua_reg)) $this->bot_ua_reg = '/bot|Slurp|Crawler|Sidewinder|spider|Y!J|Ask/i';
+		
 		if (! isset($this->k_tai_conf['ua_regex'])) $this->k_tai_conf['ua_regex'] = '#(?:SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser|DDIPOCKET|WILLCOM)#';
 		if (! isset($this->k_tai_conf['rebuilds'])) $this->k_tai_conf['rebuilds'] = array(
 			'headerlogo'     => array( 'above' => '<center>',
@@ -205,6 +207,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 
 	function preFilter() {
+		// Set const "HYP_IS_BOT_UA" 
+		if (preg_match($this->bot_ua_reg, $_SERVER['HTTP_USER_AGENT'])) {
+			define('HYP_IS_BOT_UA', true);
+		}
+		
 		// Use K_TAI Render
 		if (! empty($this->use_k_tai_render)) {
 			if (isset($_SERVER['HTTP_USER_AGENT']) &&
@@ -350,11 +357,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 
 		// For WizMobile
-		if (XC_CLASS_EXISTS('Wizin_User')) {
-			$wizinUser = & Wizin_User::getSingleton();
-			if ($this->wizMobileUse = $wizinUser->bIsMobile) {
-				define('HYP_WIZMOBILE_USE', true);
-			}
+		if (XC_CLASS_EXISTS('WizMobile')) {
+			define('HYP_WIZMOBILE_USE', true);
 		}
 
 		// XOOPS の表示文字エンコーディング
@@ -1593,6 +1597,9 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// スマートリダイレクトのポップアップ最短秒数
 		$this->smart_redirect_min_sec = 5;
 
+		// 定数 "HYP_IS_BOT_UA" をセットする UserAgant PCRE 正規表現
+		$this->bot_ua_reg = '/bot|Slurp|Crawler|Sidewinder|spider|Y!J|Ask/i';
+		
 		/////////////////////////
 		// 携帯対応レンダー設定
 
