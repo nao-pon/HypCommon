@@ -125,6 +125,24 @@ class MPC_Common
     var $emj2s_table = array();
 
     /**
+    * ((i:xxxx)) => [emj:xxx] 変換マップ
+    * @var array
+    */
+    var $modKtai2i_icon = array();
+
+    /**
+    * ((e:xxxx)) => [emj:xxx:ez] 変換マップ
+    * @var array
+    */
+    var $modKtai2e_icon = array();
+
+    /**
+    * ((s:xxxx)) => [emj:xxx:sb] 変換マップ
+    * @var array
+    */
+    var $modKtai2s_icon = array();
+
+    /**
     * 変換先の絵文字が存在しなかった場合の代替文字列
     * @var string
     */
@@ -302,7 +320,6 @@ class MPC_Common
     *
     * @return string
     */
-
     function autoConvertModKtai()
     {
         $useragent = (is_null($this->userAgent))? $_SERVER['HTTP_USER_AGENT'] : $this->userAgent;
@@ -490,6 +507,84 @@ class MPC_Common
 
         return $ret;
     }
+
+   /**
+    * mod_ktai コードから対応する Text Pictgram Mobile コードへ変換 by nao-pon
+    * mod_ktai: http://labs.yumemi.co.jp/labs/mod/man_contents.html
+    * Text Pictgram Mobile: http://openpear.org/package/Text_Pictogram_Mobile
+    *
+    * @return string
+    */
+	function modKtai2textPictMobile()
+	{
+        $str = $this->getString();
+        $str = preg_replace_callback('/(<head.+?\/head>|<script.+?\/script>|<style.+?\/style>|<textarea.+?\/textarea>|<[^<>]+?>)|\(\(([eisv]):([0-9a-f]{4})\)\)/isS', array(& $this, '_convertTextPictMobile'), $str);
+		return $str;
+	}
+
+    /**
+    * mod_ktai から対応する Text Pictgram Mobile へ変換 (サブ関数) by nao-pon
+    *
+    * @param string $match
+    * @return string
+    */
+	function _convertTextPictMobile($match)
+	{
+        if ($match[1]) {
+            return $match[0];
+        }
+        $mode = strtolower($match[2]);
+        if ($mode === 'v') {
+        	$mode = 's';
+        }
+
+        //exists check
+        $table = 'modKtai2'. $mode . '_icon';
+
+        if (empty($this->$table)) {
+            $cache = dirname(dirname(dirname(dirname(dirname(__FILE__))))) . '/cache/mpc_' . $table . '.dat';
+            if (is_file($cache)) {
+            	$this->$table = unserialize(file_get_contents($cache));
+            } else {
+            	if ($mode === 'i') {
+            		if (empty($this->emj2i_table)) {
+            			require 'map/emj2i_table.php';
+            		}
+            		$_table = $this->emj2i_table;
+            		$_table = array_flip($_table);
+            	} else if ($mode === 's') {
+            		if (empty($this->emj2s_table)) {
+            			require 'map/emj2s_table.php';
+            		}
+            		$_table = $this->emj2s_table;
+            		$_table = array_flip($_table);
+            	} else if ($mode === 'e') {
+		            if (empty($this->e2icon_table)) {
+		                require 'map/e2icon_table.php';
+		            }
+		            $_table = $this->e2icon_table;
+            		$_table = array_map('dechex', $_table);
+            		$_table = array_map('strtolower', $_table);
+            		$_table = array_flip($_table);
+            	}
+            	$this->$table = $_table;
+            	@file_put_contents($cache, serialize($_table));
+            }
+        }
+        $table_array = $this->$table;
+        $key = strtolower($match[3]);
+        if (! isset($table_array[$key])) {
+            return $match[0];
+        } else {
+        	if ($mode === 'i') {
+        		return '[emj:'.$table_array[$key].']';
+        	} else if ($mode === 'e') {
+        		return '[emj:'.$table_array[$key].':ez]';
+        	} else {
+        		return '[emj:'.$table_array[$key].':sb]';
+        	}
+        }
+	}
 
     /**
     * ユーザーエージェントからキャリアを自動判別し
