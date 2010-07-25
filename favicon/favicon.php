@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/02/11 by nao-pon http://hypweb.net/
- * $Id: favicon.php,v 1.14 2010/06/04 06:54:09 nao-pon Exp $
+ * $Id: favicon.php,v 1.15 2010/07/25 05:55:38 nao-pon Exp $
  */
 
 /**
@@ -46,6 +46,7 @@ if (is_file(FAVICON_HYP_COMMON_PATH . '/config/favicon.conf.php')) {
 	define('FAVICON_ERROR_IMAGE',   FAVICON_TRUST_PATH . '/images/link_break.png');
 	define('FAVICON_CACHE_DIR',     FAVICON_TRUST_PATH . '/cache/');
 	define('FAVICON_CACHE_TTL',     2592000);  // 60 * 60 * 24 * 30 [sec.] (1 month)
+	define('FAVICON_SHORTEN_URLS', 'http://bit.ly http://tinyurl.com');
 }
 define('UNIX_TIME', (isset($_SERVER['REQUEST_TIME'])? $_SERVER['REQUEST_TIME'] : time()));
 
@@ -81,7 +82,10 @@ function get_url_filename($url)
     if (empty($filename)) {
         list($url) = explode('?', $url);
         if (preg_match('#^https?://[^/]+?/#i', $url)) {
-        	$url = preg_replace('#/[^/]*$#', '', $url);
+        	$_url = preg_replace('#/[^/]*$#', '', $url);
+        	if (defined('FAVICON_SHORTEN_URLS') && ! in_array($_url, explode(' ', FAVICON_SHORTEN_URLS))) {
+        		$url = $_url;
+        	}
         }
         $filename = FAVICON_CACHE_DIR . md5($url) . '.url';
     }
