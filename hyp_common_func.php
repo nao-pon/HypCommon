@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.73 2010/05/19 11:20:56 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.74 2010/07/25 05:33:44 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -15,6 +15,10 @@ define('HYP_COMMON_ROOT_PATH', dirname(__FILE__));
 if (is_file(HYP_COMMON_ROOT_PATH . '/config/hyp_common.conf.php')) {
 	include_once HYP_COMMON_ROOT_PATH . '/config/hyp_common.conf.php';
 }
+// define
+//if (! defined('HYP_IMAGEMAGICK_UNSHARP')) define('HYP_IMAGEMAGICK_UNSHARP', '1.5x1.2+1.0+0.10');
+if (! defined('HYP_IMAGEMAGICK_UNSHARP')) define('HYP_IMAGEMAGICK_UNSHARP', '100|0.5|3');
+
 
 class HypCommonFunc
 {
@@ -29,42 +33,45 @@ class HypCommonFunc
 	function loadClass($name) {
 		if (XC_CLASS_EXISTS($name)) return TRUE;
 
-		$ret = TRUE;
+		$ret = FALSE;
 		switch($name) {
 			case 'HypSimpleAmazon':
-				include_once HYP_COMMON_ROOT_PATH . '/hsamazon/hyp_simple_amazon.php';
+				$ret = include_once HYP_COMMON_ROOT_PATH . '/hsamazon/hyp_simple_amazon.php';
 				break;
 			case 'HypPinger':
-				include_once HYP_COMMON_ROOT_PATH . '/hyppinger/hyppinger.php';
+				$ret = include_once HYP_COMMON_ROOT_PATH . '/hyppinger/hyppinger.php';
 				break;
 			case 'HypGetQueryWord':
-				include_once HYP_COMMON_ROOT_PATH . '/hyp_get_engine.php';
+				$ret = include_once HYP_COMMON_ROOT_PATH . '/hyp_get_engine.php';
 				break;
 			case 'Hyp_KAKASHI':
-				include_once HYP_COMMON_ROOT_PATH . '/hyp_kakasi.php';
+				$ret = include_once HYP_COMMON_ROOT_PATH . '/hyp_kakasi.php';
 				break;
 			case 'HypSimpleXML':
-				include_once HYP_COMMON_ROOT_PATH . '/hyp_simplexml.php';
+				$ret = include_once HYP_COMMON_ROOT_PATH . '/hyp_simplexml.php';
 				break;
 			case 'HypKTaiRender':
-				include_once HYP_COMMON_ROOT_PATH . '/ktairender/hyp_ktai_render.php';
+				$ret = include_once HYP_COMMON_ROOT_PATH . '/ktairender/hyp_ktai_render.php';
 				break;
 			case 'HypRss2Html':
-				include_once HYP_COMMON_ROOT_PATH . '/rss2html/hyp_rss2html.php';
+				$ret = include_once HYP_COMMON_ROOT_PATH . '/rss2html/hyp_rss2html.php';
 				break;
 			case 'MobilePictogramConverter':
-				include_once HYP_COMMON_ROOT_PATH . '/mpc/MobilePictogramConverter.php';
+				$ret = include_once HYP_COMMON_ROOT_PATH . '/mpc/MobilePictogramConverter.php';
 				break;
 			case 'IXR_Client':
 			case 'IXR_Server':
-				include_once HYP_COMMON_ROOT_PATH . '/IXR_Library/IXR_Library.inc.php';
+				$ret = include_once HYP_COMMON_ROOT_PATH . '/IXR_Library/IXR_Library.inc.php';
 				break;
 			case 'TwitterOAuth':
-				include_once HYP_COMMON_ROOT_PATH . '/twitteroauth/twitteroauth.php';
-				include_once HYP_COMMON_ROOT_PATH . '/twitteroauth/OAuth.php';
+				$ret = include_once HYP_COMMON_ROOT_PATH . '/twitteroauth/twitteroauth.php';
+				if ($ret) $ret = include_once HYP_COMMON_ROOT_PATH . '/twitteroauth/OAuth.php';
 				break;
 			case 'MySQLDump':
-				include_once HYP_COMMON_ROOT_PATH . '/lib_dump/lib_dump.php';
+				$ret = include_once HYP_COMMON_ROOT_PATH . '/lib_dump/lib_dump.php';
+				break;
+			case 'getID3':
+				$ret = include_once HYP_COMMON_ROOT_PATH . '/getid3/getid3.php';
 				break;
 			default:
 				$ret = FALSE;
@@ -446,7 +453,13 @@ class HypCommonFunc
 	function make_thumb($o_file, $s_file, $max_width, $max_height, $zoom_limit="1,95", $refresh=FALSE, $quality=75)
 	{
 		// すでに作成済み
-		if (!$refresh && file_exists($s_file)) return $s_file;
+		if (! $refresh && file_exists($s_file)) {
+			// make_thumb.chk のタイムスタンプと比較
+			$make_thumb_chk = HYP_COMMON_ROOT_PATH . '/config/remake_thumb.chk';
+			if (! is_file($make_thumb_chk) || filemtime($make_thumb_chk) < filemtime($s_file)) {
+				 return $s_file;
+			}
+		}
 
 		$size = @getimagesize($o_file);
 		if (!$size) return $o_file;//画像ファイルではない
@@ -518,13 +531,13 @@ class HypCommonFunc
 							imagepalettecopy ($dst_im, $src_im);
 							imagefill($dst_im,0,0,$colortransparent);
 							imagecolortransparent($dst_im, $colortransparent);
-							imagecopyresized($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
+							HypCommonFunc::gd_resizer('imagecopyresized',$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h);
 						}
 						else
 						{
 							// 透過色なし
 							$dst_im = $imagecreate($width,$height);
-							$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
+							HypCommonFunc::gd_resizer($imageresize,$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h);
 							if (function_exists('imagetruecolortopalette')) imagetruecolortopalette ($dst_im, false, imagecolorstotal($src_im));
 						}
 						touch($s_file);
@@ -551,7 +564,7 @@ class HypCommonFunc
 				$src_im = @ imagecreatefromjpeg($o_file);
 				if ($src_im) {
 					$dst_im = $imagecreate($width,$height);
-					$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
+					HypCommonFunc::gd_resizer($imageresize,$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h);
 					touch($s_file);
 					imagejpeg($dst_im,$s_file,$quality);
 					$o_file = $s_file;
@@ -571,13 +584,13 @@ class HypCommonFunc
 							imagepalettecopy ($dst_im, $src_im);
 							imagefill($dst_im,0,0,$colortransparent);
 							imagecolortransparent($dst_im, $colortransparent);
-							imagecopyresized($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
+							HypCommonFunc::gd_resizer('imagecopyresized',$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h);
 						}
 						else
 						{
 							// 透過色なし
 							$dst_im = $imagecreate($width,$height);
-							$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
+							HypCommonFunc::gd_resizer($imageresize,$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h);
 							if (function_exists('imagetruecolortopalette')) imagetruecolortopalette ($dst_im, false, imagecolorstotal($src_im));
 						}
 					}
@@ -585,7 +598,7 @@ class HypCommonFunc
 					{
 						// TrueColor
 						$dst_im = $imagecreate($width,$height);
-						$imageresize ($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
+						HypCommonFunc::gd_resizer($imageresize,$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h);
 					}
 					touch($s_file);
 					if ($s_ext == "jpg")
@@ -608,6 +621,163 @@ class HypCommonFunc
 		return $o_file;
 	}
 
+	function gd_resizer($func, $gd_ver, $dst_im, $src_im, $width, $height, $org_w, $org_h) {
+		$func($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
+		if ($gd_ver >= 2) {
+			list($amount, $radius, $threshold) = HypCommonFunc::get_unsharp_mask_params();
+			HypCommonFunc::UnsharpMask($dst_im ,$amount ,$radius ,$threshold);
+		}
+	}
+
+	function get_unsharp_mask_params() {
+		list($amount, $radius, $threshold) = array_pad(explode('|', HYP_IMAGEMAGICK_UNSHARP), 3, '');
+		$amount    = ($amount            ? $amount    : 80);
+		$radius    = ($radius            ? $radius    : 0.5);
+		$threshold = (strlen($threshold) ? $threshold : 3);
+		return array($amount, $radius, $threshold);
+	}
+
+	function UnsharpMask ( $img , $amount , $radius , $threshold )    {
+
+		////////////////////////////////////////////////////////////////////////////////////////////////
+		////
+		////                  Unsharp Mask for PHP - version 2.1.1
+		////
+		////    Unsharp mask algorithm by Torstein Hønsi 2003-07.
+		////             thoensi_at_netcom_dot_no.
+		////               Please leave this notice.
+		////
+		///////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+		// $img is an image that is already created within php using
+		// imgcreatetruecolor. No url! $img must be a truecolor image.
+
+		// Attempt to calibrate the parameters to Photoshop:
+		if ( $amount > 500 ) $amount = 500 ;
+		$amount = $amount * 0.016 ;
+		if ( $radius > 50 ) $radius = 50 ;
+		$radius = $radius * 2 ;
+		if ( $threshold > 255 ) $threshold = 255 ;
+
+		$radius = abs ( round ( $radius )); // Only integers make sense.
+		if ( $radius == 0 ) {
+			return $img ;
+			imagedestroy ( $img );
+			break;
+		}
+		$w = imagesx ( $img ); $h = imagesy ( $img );
+		$imgCanvas = imagecreatetruecolor ( $w , $h );
+		$imgBlur = imagecreatetruecolor ( $w , $h );
+
+
+		// Gaussian blur matrix:
+		//
+		//    1    2    1
+		//    2    4    2
+		//    1    2    1
+		//
+		//////////////////////////////////////////////////
+
+
+		if ( function_exists ( 'imageconvolution' )) { // PHP >= 5.1
+			$matrix = array(
+				array( 1 , 2 , 1 ),
+				array( 2 , 4 , 2 ),
+				array( 1 , 2 , 1 )
+			);
+			imagecopy ( $imgBlur , $img , 0 , 0 , 0 , 0 , $w , $h );
+			imageconvolution ( $imgBlur , $matrix , 16 , 0 );
+		}
+		else {
+
+			// Move copies of the image around one pixel at the time and merge them with weight
+			// according to the matrix. The same matrix is simply repeated for higher radii.
+			for ( $i = 0 ; $i < $radius ; $i ++)    {
+				imagecopy ( $imgBlur , $img , 0 , 0 , 1 , 0 , $w - 1 , $h ); // left
+				imagecopymerge ( $imgBlur , $img , 1 , 0 , 0 , 0 , $w , $h , 50 ); // right
+				imagecopymerge ( $imgBlur , $img , 0 , 0 , 0 , 0 , $w , $h , 50 ); // center
+				imagecopy ( $imgCanvas , $imgBlur , 0 , 0 , 0 , 0 , $w , $h );
+
+				imagecopymerge ( $imgBlur , $imgCanvas , 0 , 0 , 0 , 1 , $w , $h - 1 , 33.33333 ); // up
+				imagecopymerge ( $imgBlur , $imgCanvas , 0 , 1 , 0 , 0 , $w , $h , 25 ); // down
+			}
+		}
+
+		if( $threshold > 0 ){
+			// Calculate the difference between the blurred pixels and the original
+			// and set the pixels
+			for ( $x = 0 ; $x < $w - 1 ; $x ++)    { // each row
+				for ( $y = 0 ; $y < $h ; $y ++)    { // each pixel
+
+					$rgbOrig = ImageColorAt ( $img , $x , $y );
+					$rOrig = (( $rgbOrig >> 16 ) & 0xFF );
+					$gOrig = (( $rgbOrig >> 8 ) & 0xFF );
+					$bOrig = ( $rgbOrig & 0xFF );
+
+					$rgbBlur = ImageColorAt ( $imgBlur , $x , $y );
+
+					$rBlur = (( $rgbBlur >> 16 ) & 0xFF );
+					$gBlur = (( $rgbBlur >> 8 ) & 0xFF );
+					$bBlur = ( $rgbBlur & 0xFF );
+
+					// When the masked pixels differ less from the original
+					// than the threshold specifies, they are set to their original value.
+					$rNew = ( abs ( $rOrig - $rBlur ) >= $threshold )
+					? max ( 0 , min ( 255 , ( $amount * ( $rOrig - $rBlur )) + $rOrig ))
+					: $rOrig ;
+					$gNew = ( abs ( $gOrig - $gBlur ) >= $threshold )
+					? max ( 0 , min ( 255 , ( $amount * ( $gOrig - $gBlur )) + $gOrig ))
+					: $gOrig ;
+					$bNew = ( abs ( $bOrig - $bBlur ) >= $threshold )
+					? max ( 0 , min ( 255 , ( $amount * ( $bOrig - $bBlur )) + $bOrig ))
+					: $bOrig ;
+
+
+
+					if (( $rOrig != $rNew ) || ( $gOrig != $gNew ) || ( $bOrig != $bNew )) {
+						$pixCol = ImageColorAllocate ( $img , $rNew , $gNew , $bNew );
+						ImageSetPixel ( $img , $x , $y , $pixCol );
+					}
+				}
+			}
+		}
+		else{
+			for ( $x = 0 ; $x < $w ; $x ++)    { // each row
+				for ( $y = 0 ; $y < $h ; $y ++)    { // each pixel
+					$rgbOrig = ImageColorAt ( $img , $x , $y );
+					$rOrig = (( $rgbOrig >> 16 ) & 0xFF );
+					$gOrig = (( $rgbOrig >> 8 ) & 0xFF );
+					$bOrig = ( $rgbOrig & 0xFF );
+
+					$rgbBlur = ImageColorAt ( $imgBlur , $x , $y );
+
+					$rBlur = (( $rgbBlur >> 16 ) & 0xFF );
+					$gBlur = (( $rgbBlur >> 8 ) & 0xFF );
+					$bBlur = ( $rgbBlur & 0xFF );
+
+					$rNew = ( $amount * ( $rOrig - $rBlur )) + $rOrig ;
+					if( $rNew > 255 ){ $rNew = 255 ;}
+					elseif( $rNew < 0 ){ $rNew = 0 ;}
+					$gNew = ( $amount * ( $gOrig - $gBlur )) + $gOrig ;
+					if( $gNew > 255 ){ $gNew = 255 ;}
+					elseif( $gNew < 0 ){ $gNew = 0 ;}
+					$bNew = ( $amount * ( $bOrig - $bBlur )) + $bOrig ;
+					if( $bNew > 255 ){ $bNew = 255 ;}
+					elseif( $bNew < 0 ){ $bNew = 0 ;}
+					$rgbNew = ( $rNew << 16 ) + ( $gNew << 8 ) + $bNew ;
+					ImageSetPixel ( $img , $x , $y , $rgbNew );
+				}
+			}
+		}
+		imagedestroy ( $imgCanvas );
+		imagedestroy ( $imgBlur );
+
+		return $img ;
+
+	}
+
 	function make_thumb_imagemagick($o_file, $s_file, $zoom, $quality, $type ,$org_w, $org_h)
 	{
 		$zoom = intval($zoom * 100);
@@ -621,7 +791,9 @@ class HypCommonFunc
 		// Make Thumb and check success
 		if ( ini_get('safe_mode') != "1" )
 		{
-			exec( HYP_IMAGEMAGICK_PATH."convert -size {$org_w}x{$org_h} -geometry {$zoom}% -quality {$quality} +profile \"*\" {$ro_file} {$rs_file}" ) ;
+//			exec( HYP_IMAGEMAGICK_PATH."convert -size {$org_w}x{$org_h} -geometry {$zoom}% -quality {$quality} +profile \"*\" -unsharp 1.5x1.2+1.0+0.10 {$ro_file} {$rs_file}" ) ;
+			list($amount, $radius, $threshold) = HypCommonFunc::get_unsharp_mask_params();
+			exec( HYP_IMAGEMAGICK_PATH."convert -thumbnail {$zoom}% -quality {$quality} -unsharp ".number_format(($radius * 2) - 1, 2).'x1+'.number_format($amount / 100, 2).'+'.number_format($threshold / 100, 2)." {$ro_file} {$rs_file}" ) ;
 			//@chmod($s_file, 0666);
 		}
 		else
@@ -632,6 +804,7 @@ class HypCommonFunc
 					"&p=".rawurlencode(HYP_IMAGEMAGICK_PATH).
 					"&z=".$zoom.
 					"&q=".$quality.
+					"&u=".rawurlencode(HYP_IMAGEMAGICK_UNSHARP).
 					"&o=".rawurlencode($ro_file).
 					"&s=".rawurlencode($rs_file);
 
@@ -1785,7 +1958,61 @@ EOD;
 				return;
 			}
 		}
+		// Range: bytes=xxx-xxx
+		if (isset($_SERVER['HTTP_RANGE'])) {
+			$range = $_SERVER['HTTP_RANGE'];
+			$fsize = filesize($file);
+			if (preg_match('/^bytes=(\d+)\-(\d+)$/i', $range, $arr)) {
+				$offset = $arr[1];
+				$end = $arr[2];
+				$len = $end - $offset + 1;
+				header('HTTP/1.1 206 Partial Content');
+				header('Accept-Ranges: bytes');
+				header(sprintf('Content-Range: bytes %d-%d/%d',$offset, $end, $fsize));
+				header('Content-Length: ' . $len);
+				echo HypCommonFunc::file_get_contents($file, false, null, $offset, $len);
+				return;
+			}
+		}
 		readfile($file);
+	}
+
+	function file_get_contents($filename, $incpath = false, $resource_context = null, $offset = -1, $maxlen = -1) {
+		if (version_compare(PHP_VERSION, '5.1.0', '<')) {
+			if (false === $fh = fopen($filename, 'rb', $incpath)) {
+				trigger_error('file_get_contents() failed to open stream: No such file or directory', E_USER_WARNING);
+				return false;
+			}
+
+			if ($offset > -1 && $maxlen > -1) {
+				$readsize = $offset + $maxlen;
+			} else {
+				$readsize = -1;
+			}
+
+			clearstatcache();
+			$fsize = @filesize($filename);
+			if ($readsize > -1 && $fsize > $readsize) {
+				$data = fread($fh, $readsize);
+				if ($offset > 0) {
+					$data = substr($data, $offset);
+				}
+			} else {
+				if ($fsize) {
+					$data = fread($fh, $fsize);
+				} else {
+					$data = '';
+					while (!feof($fh)) {
+						$data .= fread($fh, 8192);
+					}
+				}
+			}
+
+			fclose($fh);
+			return $data;
+		} else {
+			return file_get_contents($filename, $incpath, $resource_context, $offset, $maxlen);
+		}
 	}
 }
 
