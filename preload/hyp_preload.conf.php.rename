@@ -177,7 +177,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->k_tai_conf['directImgHosts'] = array('google-analytics.com', 'maps.google.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
 
 		// リダイレクトスクリプトを経由しないホスト名(後方一致)
-		$this->k_tai_conf['directLinkHosts'] = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com', 'afl.rakuten.co.jp', 'maps.google.com');
+		$this->k_tai_conf['directLinkHosts'] = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com', 'afl.rakuten.co.jp', 'maps.google.com', 'google.co.jp');
 
 		// 外部リンク用リダイレクトスクリプト
 		$this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/gate.php?way=redirect&amp;_d=0&amp;_u=0&amp;_x=0&amp;l=';

@@ -124,9 +124,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->kakasi_cache_dir)) $this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
 
 		if (! isset($this->smart_redirect_min_sec)) $this->smart_redirect_min_sec = 5;
-		
+
 		if (! isset($this->bot_ua_reg)) $this->bot_ua_reg = '/bot|Slurp|Crawler|Sidewinder|spider|Y!J|Ask/i';
-		
+
 		if (! isset($this->k_tai_conf['ua_regex'])) $this->k_tai_conf['ua_regex'] = '#(?:SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser|DDIPOCKET|WILLCOM)#';
 		if (! isset($this->k_tai_conf['rebuilds'])) $this->k_tai_conf['rebuilds'] = array(
 			'headerlogo'     => array( 'above' => '<center>',
@@ -172,7 +172,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->k_tai_conf['pictSizeMax'])) $this->k_tai_conf['pictSizeMax'] = '200';
 		if (! isset($this->k_tai_conf['showImgHosts'])) $this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com', 'google.com');
 		if (! isset($this->k_tai_conf['directImgHosts'])) $this->k_tai_conf['directImgHosts'] = array('google-analytics.com', 'maps.google.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
-		if (! isset($this->k_tai_conf['directLinkHosts'])) $this->k_tai_conf['directLinkHosts'] = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com', 'afl.rakuten.co.jp', 'maps.google.com');
+		if (! isset($this->k_tai_conf['directLinkHosts'])) $this->k_tai_conf['directLinkHosts'] = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com', 'afl.rakuten.co.jp', 'maps.google.com', 'google.co.jp');
 		if (! isset($this->k_tai_conf['redirect'])) $this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/gate.php?way=redirect&amp;_d=0&amp;_u=0&amp;_x=0&amp;l=';
 		if (! isset($this->k_tai_conf['easyLogin'])) $this->k_tai_conf['easyLogin'] = 1;
 		if (! isset($this->k_tai_conf['noCheckIpRange'])) $this->k_tai_conf['noCheckIpRange'] = 0;
@@ -207,11 +207,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 
 	function preFilter() {
-		// Set const "HYP_IS_BOT_UA" 
+		// Set const "HYP_IS_BOT_UA"
 		if (preg_match($this->bot_ua_reg, $_SERVER['HTTP_USER_AGENT'])) {
 			define('HYP_IS_BOT_UA', true);
 		}
-		
+
 		// Use K_TAI Render
 		if (! empty($this->use_k_tai_render)) {
 			if (isset($_SERVER['HTTP_USER_AGENT']) &&
@@ -1599,7 +1599,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 
 		// 定数 "HYP_IS_BOT_UA" をセットする UserAgant PCRE 正規表現
 		$this->bot_ua_reg = '/bot|Slurp|Crawler|Sidewinder|spider|Y!J|Ask/i';
-		
+
 		/////////////////////////
 		// 携帯対応レンダー設定
 
