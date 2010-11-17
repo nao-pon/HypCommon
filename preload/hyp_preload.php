@@ -1098,6 +1098,10 @@ EOD;
 		if (! $encode) $encode = $this->encode;
 
 		if ($body) {
+			// 携帯のみ有効にする部分
+			$body = str_replace('<!--HypKTaiOnly', '', $body);
+			$body = str_replace('HypKTaiOnly-->', '', $body);
+
 			// 無視する部分(<!--HypKTaiIgnore-->...<!--/HypKTaiIgnore-->)を削除
 			while(strpos($body, '<!--HypKTaiIgnore-->') !== FALSE) {
 				$arr1 = explode('<!--HypKTaiIgnore-->', $body, 2);
@@ -1494,6 +1498,10 @@ EOD;
 			}
 		}
 		return $str;
+	}
+
+	function & getKtaiRenderObject() {
+		return $this->HypKTaiRender;
 	}
 }
 
