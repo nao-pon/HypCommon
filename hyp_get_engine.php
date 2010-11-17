@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_get_engine.php,v 1.12 2010/05/19 11:08:18 nao-pon Exp $
+// $Id: hyp_get_engine.php,v 1.13 2010/11/17 06:31:10 nao-pon Exp $
 // HypGetQueryWord Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -230,7 +230,8 @@ class HypGetQueryWord
 		// Perlメモ - 正しくパターンマッチさせる
 		// http://www.din.or.jp/~ohzaki/perl.htm#JP_Match
 		$eucpre = $eucpost = '';
-		if (strtoupper($enc) === 'EUC-JP')
+		$enc = strtoupper($enc);
+		if ($enc === 'EUC-JP' || $enc === 'EUCJP-WIN')
 		{
 			$eucpre = '(?<!\x8F)';
 			// # JIS X 0208 が 0文字以上続いて # ASCII, SS2, SS3 または終端
