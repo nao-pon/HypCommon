@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.47 2010/06/04 06:59:08 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.48 2010/11/17 06:44:43 nao-pon Exp $
  */
 
 if (! function_exists('XC_CLASS_EXISTS')) {
@@ -103,14 +103,17 @@ class HypKTaiRender
 		$this->_uaSetup();
 
 		// Amazon ECS DetailPageURL Rewrite
-		$this->Config_urlRewrites['regex'][] = '#^(http://(?:www\.)?amazon\.[^/]+?)/(?:[^/]+?/)?dp/([a-z0-9]+).+?tag%3D([a-z0-9-]+).*$#iS';
+		//$this->Config_urlRewrites['regex'][] = '#^(http://(?:www\.)?amazon\.[^/]+?)/(?:[^/]+?/)?dp/([a-z0-9]+).+?tag%3D([a-z0-9-]+).*$#iS';
+		$this->Config_urlRewrites['regex'][] = '#^(http://(?:www\.)?amazon\.[^/]+?)/(?:(?:[^/]+?/)?dp|gp/offer-listing)/([a-z0-9]+).+?tag%3D([a-z0-9-]+).*$#iS';
 		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?ie=UTF8&amp;dl=1&amp;uid=NULLGWDOCOMO&amp;lc=msn&amp;a=$2&amp;at=$3&amp;url=%2Fgp%2Faw%2Fd.html';
 
 		// Amazon Search results link Rewrite
-		$this->Config_urlRewrites['regex'][] = '#^(http://(?:www\.)?amazon.[^/]+?)/gp/search\?.+?tag=([a-z0-9]+).+?keywords=([^& \'"]+).*$#iS';
-		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?ie=UTF8&amp;k=$3&amp;uid=NULLGWDOCOMO&amp;at=$2&amp;m=&amp;url=%2Fgp%2Faw%2Fs.html&amp;lc=mqs';
-		$this->Config_urlRewrites['regex'][] = '#^(http://(?:www\.)?amazon.[^/]+?)/gp/search\?.+?keywords=([^& \'"]+).+?tag=([a-z0-9]+).*$#iS';
-		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?ie=UTF8&amp;k=$2&amp;uid=NULLGWDOCOMO&amp;at=$3&amp;m=&amp;url=%2Fgp%2Faw%2Fs.html&amp;lc=mqs';
+		$this->Config_urlRewrites['regex'][] = '#^(http://(?:www\.)?amazon.[^/]+?)/gp/search\?.+?tag=([a-z0-9-]+).+?keywords=([^& \'"]+).*$#iS';
+		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?ie=UTF8&amp;m=&amp;uid=NULLGWDOCOMO&amp;__mk_ja_JP=%25E3%2582%25AB%25E3%2582%25BF%25E3%2582%25AB%25E3%2583%258A&amp;lc=mqr&amp;at=$2&amp;k=$3&amp;url=%2Fgp%2Faw%2Fs.html';
+		$this->Config_urlRewrites['regex'][] = '#^(http://(?:www\.)?amazon.[^/]+?)/gp/search\?.+?keywords=([^& \'"]+).+?tag=([a-z0-9-]+).*$#iS';
+		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?ie=UTF8&amp;m=&amp;uid=NULLGWDOCOMO&amp;__mk_ja_JP=%25E3%2582%25AB%25E3%2582%25BF%25E3%2582%25AB%25E3%2583%258A&amp;lc=mqr&amp;at=$3&amp;k=$2&amp;url=%2Fgp%2Faw%2Fs.html';
+		$this->Config_urlRewrites['regex'][] = '#^(http://(?:www\.)?amazon.[^/]+?)/gp/redirect.html.+?tag=([a-z0-9-]+).*$#iS';
+		$this->Config_urlRewrites['tostr'][] = '$1/gp/aw/rd.html?uid=NULLGWDOCOMO&amp;url=%2Fgp%2Faw%2Fhelp%2Fid%3D13439711&amp;at=hyp02-22&amp;lc=mbn';
 
 		// Rakuten
 		$this->Config_urlRewrites['regex'][] = '#^(http://hb\.afl\.rakuten\.co\.jp/hgc/[^/]+?/\?)pc=.+?&amp;m=#';
@@ -127,8 +130,8 @@ class HypKTaiRender
 
 	function & getSingleton () {
 		static $my = NULL;
-		if (! $my) {
-			$my =& new HypKTaiRender();
+		if (is_null($my)) {
+			$my = new HypKTaiRender();
 		}
 		return $my;
 	}
@@ -458,12 +461,17 @@ class HypKTaiRender
 	// HTML を携帯端末用にシェイプアップする
 	function html_diet_for_hp ($body) {
 
+		// 携帯のみ有効にする部分
+		$body = str_replace('<!--HypKTaiOnly', '', $body);
+		$body = str_replace('HypKTaiOnly-->', '', $body);
+
 		// 無視する部分(<!--HypKTaiIgnore-->...<!--/HypKTaiIgnore-->)を削除
 		while(strpos($body, '<!--HypKTaiIgnore-->') !== FALSE) {
 			$arr1 = explode('<!--HypKTaiIgnore-->', $body, 2);
 			$arr2 = array_pad(explode('<!--/HypKTaiIgnore-->', $arr1[1], 2), 2, '');
 			$body = $arr1[0] . $arr2[1];
 		}
+
 
 		// タグを小文字に統一
 		$body = preg_replace('#</?[a-zA-Z]+#eS', 'strtolower("$0")', $body);
@@ -1542,6 +1550,7 @@ class HypKTaiRender
 
 		$url = $match[3];
 		$ext_icon = '';
+		$add_tag = '';
 
 		// Decode numericentity (only ASCII)
 		$url = preg_replace('/&#([0-9]{2,3});/e', '($1 > 31 && $1 < 128)? chr($1) : "$0"', $url);
@@ -1587,7 +1596,7 @@ class HypKTaiRender
 			}
 			$ext_icon = $this->Config_icons['extLink'];
 		}
-		return $ext_icon . $match[1] . $url . (isset($match[4])? $match[4] : '');
+		return $ext_icon . $add_tag . $match[1] . $url . (isset($match[4])? $match[4] : '');
 	}
 
 	function _html_check_img_src ($match) {
