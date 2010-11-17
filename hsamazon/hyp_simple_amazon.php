@@ -7,15 +7,17 @@ class HypSimpleAmazon
 	var $AccessKeyId = '0F1572ZQ7P3BTFJ28RR2';
 	var $SecretAccessKey = '';
 	var $ResponseGroup = 'ItemAttributes,Images,Offers,Variations';
-	var $SearchIndex = 'Blended';
-	var $Version = '2009-11-01';
+	var $SearchIndex = 'All';
+	var $Version = '2010-10-01';
 	var $batchMax = 2;
 	var $AssociateTag = '';
 	var $Operation = '';
 	var $restHost = 'ecs.amazonaws.jp';
 	var $restPath = '/onca/xml';
 	var $searchHost = 'www.amazon.co.jp';
-	var $searchQuery = '/gp/search?ie=UTF8&amp;index=blended&amp;linkCode=ur2&amp;camp=247&amp;creative=1211';
+	var $searchQuery = '/gp/search?ie=UTF8&amp;keywords=<keyword>&amp;tag=<tag>&amp;index=blended&amp;linkCode=ur2&amp;camp=247&amp;creative=1211';
+	var $redirectQuery = '/gp/redirect.html?ie=UTF8&amp;location=<url>&amp;tag=<tag>&amp;linkCode=ur2&amp;camp=247&amp;creative=1211';
+	var $beaconHost = 'www.assoc-amazon.jp';
 	var $encoding = 'EUC-JP';
 	var $SearchIndexes = array();
 	var $templateSet = 'default';
@@ -33,46 +35,56 @@ class HypSimpleAmazon
 	var $configs = array(
 		'makeLinkSearch' => array(
 			'Attributes'  => array(
+			//	'rel'      => 'nofollow',
 				'target'   => '_blank',
-				'class'    => 'searchAmazon',
+				'class'    => 'searchService',
 				'title'    => 'Lookup: %s',
 			),
 		),
 	);
+	var $marketplace_listup = FALSE;
+	var $ServiceName = 'amazon';
 
-	function HypSimpleAmazon ($AssociateTag = '') {
+	function HypSimpleAmazon ($AssociateTag = '', $AccessKeyId = null, $SecretAccessKey = null) {
 
 		$this->myDirectory = dirname(__FILE__);
 
 		include_once dirname($this->myDirectory) . '/hyp_common_func.php';
 		include_once dirname($this->myDirectory) . '/hyp_simplexml.php';
 
-		$configFile = $this->myDirectory . '/hyp_simple_amazon.ini.rename';
-		if (is_file($this->myDirectory . '/hyp_simple_amazon.ini')) {
-			$configFile = $this->myDirectory . '/hyp_simple_amazon.ini';
-		}
-		$ini = parse_ini_file($configFile);
-		if (! $AssociateTag && isset($ini['AssociateTag'])) {
-			$AssociateTag = $ini['AssociateTag'];
-		}
-		if (isset($ini['AccessKeyId'])) {
-			$this->AccessKeyId = $ini['AccessKeyId'];
-		}
-		if (isset($ini['SecretAccessKey'])) {
-			$this->SecretAccessKey = $ini['SecretAccessKey'];
+		if (is_null($AccessKeyId) && is_null($SecretAccessKey)) {
+			$configFile = $this->myDirectory . '/hyp_simple_amazon.ini.rename';
+			if (is_file($this->myDirectory . '/hyp_simple_amazon.ini')) {
+				$configFile = $this->myDirectory . '/hyp_simple_amazon.ini';
+			}
+			$ini = parse_ini_file($configFile);
+			if (! $AssociateTag && isset($ini['AssociateTag'])) {
+				$AssociateTag = $ini['AssociateTag'];
+			}
+			if (isset($ini['AccessKeyId'])) {
+				$this->AccessKeyId = $ini['AccessKeyId'];
+			}
+			if (isset($ini['SecretAccessKey'])) {
+				$this->SecretAccessKey = $ini['SecretAccessKey'];
+			}
+		} else {
+			$this->AccessKeyId = $AccessKeyId;
+			$this->SecretAccessKey = $SecretAccessKey;
 		}
 
-		if (! $this->AccessKeyId) $this->AccessKeyId = '0F1572ZQ7P3BTFJ28RR2';
-		$this->AssociateTag = $AssociateTag? $AssociateTag : 'hypweb-22';
+		if (! $this->AccessKeyId) $this->AccessKeyId = '';
+		$this->AssociateTag = $AssociateTag? $AssociateTag : '';
 
+		$this->beaconImg = '<img src="http://'.$this->beaconHost.'/e/ir?t='.$this->AssociateTag.'&l=ur2&o=9" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />';
+		$this->mobileBeaconImg = '<!--HypKTaiOnly<img src="http://'.$this->beaconHost.'/e/ir?t='.$this->AssociateTag.'&l=msn&o=9&a=ASIN" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />HypKTaiOnly-->';
+		// <img src="http://www.assoc-amazon.jp/e/ir?t=amahyp-22&l=msn&o=9&a=6131057214" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />
 		$this->loadSearchIndexes();
 
 		// Set Default template
 		$this->loadTemplate('default');
 	}
 
-	function _sendQuery ($params) {
-
+	function _getUrl ($params) {
 		$_params = $params;
 		foreach($_params as $key => $val){
 			$this->_setBatchQuery($params, $key, $val);
@@ -88,8 +100,10 @@ class HypSimpleAmazon
 
 		$params['ResponseGroup'] = $this->ResponseGroup;
 
+		$params['MerchantId'] = 'All';
+
 		if (isset($params['SearchIndex']) && ($params['SearchIndex'] === 'Blended' || $params['SearchIndex'] === 'All')) {
-			unset($params['Sort'], $params['MerchantId']);
+			unset($params['Sort'], $params['MerchantId'], $params['MinimumPrice'], $params['MaximumPrice']);
 		}
 
 		if (! $this->batchCount && $this->getPages > 1) {
@@ -123,6 +137,13 @@ class HypSimpleAmazon
 		}
 
 		$url = 'http://' . $this->restHost . $this->restPath . '?' . $query . $signature;
+
+		return $url;
+	}
+
+	function _sendQuery ($params) {
+
+		$url = $this->_getUrl($params);
 
 		$timer = $this->cacheDir . 'hyp_hsa_' . $this->AccessKeyId . '.timer';
 		$loop = 0;
@@ -329,6 +350,25 @@ class HypSimpleAmazon
 
 	}
 
+	function getItemSearchUrl($key, $options = array()) {
+		// Init
+		$this->init();
+
+		$this->Operation = 'ItemSearch';
+		$options['SearchIndex'] = $this->SearchIndex;
+		$this->searchKey = $this->searchQueryOptimize(mb_convert_encoding($key, 'UTF-8', $this->encoding));
+		if (!empty($this->searchTarget)) {
+			$options[$this->searchTarget] = $this->searchKey;
+		} else {
+			$options['Keywords'] = $this->searchKey;
+		}
+		return $this->_getUrl($options);
+	}
+
+	function getResultType() {
+		return 'xml';
+	}
+
 	function itemSearch($key, $options = array()) {
 
 		// Init
@@ -387,7 +427,7 @@ class HypSimpleAmazon
 		}
 		$e_key = $this->searchQueryOptimize($e_key);
 
-		$url = 'http://' . $this->searchHost . $this->searchQuery . ($this->AssociateTag ? '&amp;tag=' . rawurlencode($this->AssociateTag) : '') . '&amp;keywords=' . rawurlencode($e_key);
+		$url = 'http://' . $this->searchHost . str_replace(array('<keyword>', '<tag>'), array(rawurlencode($e_key), $this->AssociateTag), $this->searchQuery);
 		//if ($category) $url .= '&amp;url=search-alias%3D'.strtolower($category);
 		//if ($category) $url .= '&amp;rs=&amp;rh=i%3Aaps%2Ck%3A'.rawurlencode($e_key).'%2Ci%3A'.strtolower($category);
 
@@ -404,7 +444,9 @@ class HypSimpleAmazon
 			$attrs = ' ' . join(' ', $attrs);
 		}
 
-		return '<a href="' . $url . '"' . $attrs . '>' . $alias . '</a>';
+		//$beacon = '<img src="http://'.$this->beaconHost.'/e/ir?t='.$this->AssociateTag.'&l=ur2&o=9" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />';
+
+		return '<a href="' . $url . '"' . $attrs . '>' . $alias . '</a>' . $this->beaconImg;
 	}
 
 	function toCompactArray() {
@@ -427,12 +469,15 @@ class HypSimpleAmazon
 		$sortkeys = array();
 		$items = array();
 		while(! empty($items_top[$i]['Item'])) {
+			$_item = $items_top[$i]['Item'];
+			$this->check_array($_item);
 			$sortkey = array();
-			for($i2=0; $i2<count($items_top[$i]['Item']); $i2++) {
+			for($i2=0; $i2<count($_item); $i2++) {
 				$sortkey[] = $i2;
 			}
-			$items = array_merge($items, $items_top[$i++]['Item']);
+			$items = array_merge($items, $_item);
 			$sortkeys = array_merge($sortkeys, $sortkey);
+			$i++;
 		}
 		if ($items) {
 			if ($this->getPages < 2) {
@@ -444,6 +489,12 @@ class HypSimpleAmazon
 
 		if ($items) {
 			$this->check_array($items);
+
+//if (isset($_GET['debug'])) {
+//	var_dump($items);
+//	exit();
+//}
+
 			foreach ($items as $item) {
 
 				if ($this->CompactArrayRemoveAdult && isset($item['ItemAttributes']['IsAdultProduct'])) {
@@ -452,17 +503,29 @@ class HypSimpleAmazon
 
 				$_item = array();
 
+				$item['MobileBeaconImg'] = str_replace('ASIN', $item['ASIN'], $this->mobileBeaconImg);
+
 				// For template values
+				$_item['_SERVICE'] = $_item['SERVICE'] = $this->ServiceName;
 				$_item['URL'] = $item['DetailPageURL'];
 				$_item['ASIN'] = $item['ASIN'];
+				$_item['JAN'] = @ $item['ItemAttributes']['EAN'];
 				$_item['ADDCARTURL'] = $this->getAddCartURL($item['ASIN']);
-				$_item['TITLE'] = htmlspecialchars(@ $item['ItemAttributes']['Title']);
+				$_item['TITLE'] = trim(htmlspecialchars(@ $item['ItemAttributes']['Title'] . '/' . $this->get_artist($item, 1)), '/');
+				if (isset($item["EditorialReviews"]["EditorialReview"])) {
+					$this->check_array($item["EditorialReviews"]["EditorialReview"]);
+					$_item['DISCRIPTION'] = $this->toPlainText(@ $item["EditorialReviews"]["EditorialReview"][0]["Content"]);
+				}
 				$_item['BINDING'] = @ $item['ItemAttributes']['Binding'];
 				$_item['PRODUCTGROUP'] = @ $item['ItemAttributes']['ProductGroup'];
 				$_item['MANUFACTURER'] = $this->get_manufacturer($item);
 				$_item['RELEASEDATE'] = $this->get_releasedate($item);
 				$_item['RELEASEUTIME'] = @ $item['ReleaseUTIME'];
-				$_item['AVAILABILITY'] = @ $item['Offers']['Offer']['OfferListing']['Availability'];
+				$_item['AVAILABILITY'] = '';
+				if (isset($item['Offers']['Offer'])) {
+					$this->check_array($item['Offers']['Offer']);
+					$_item['AVAILABILITY'] = $item['Offers']['Offer'][0]['OfferListing']['Availability'];
+				}
 				$_item['SIMG'] = @$item['SmallImage']['URL'];
 				$_item['MIMG'] = @$item['MediumImage']['URL'];
 				$_item['LIMG'] = @$item['LargeImage']['URL'];
@@ -477,6 +540,16 @@ class HypSimpleAmazon
 				$_item['LISTPRICE_FORMATTED'] = $_price[1];
 				$_price = $this->get_price($item);
 				$_item['PRICE']= $_price[0];
+				$_item['MERCHANTID'] = $this->get_merchantid($item);
+				if ($_item['MERCHANTID']) {
+					$_item['GUIDEURL'] = 'http://' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode('http://www.amazon.co.jp/gp/help/seller/shipping.html?ie=UTF8&asin='.$_item['ASIN'].'&seller='.$_item['MERCHANTID']), $this->AssociateTag), $this->redirectQuery);
+				} else if (! $_item['AVAILABILITY']) {
+					$_item['GUIDEURL'] = 'http://' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode('http://www.amazon.co.jp/gp/help/customer/display.html?nodeId=1104814'), $this->AssociateTag), $this->redirectQuery);
+				} else if ($_item['PRICE'] < 1500) {
+					$_item['GUIDEURL'] = 'http://' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode('http://www.amazon.co.jp/gp/help/customer/display.html?nodeId=642982'), $this->AssociateTag), $this->redirectQuery);
+				} else {
+					$_item['GUIDEURL'] = 'free';
+				}
 				$_item['PRICE_FORMATTED'] = $_price[1];
 				$_price = $this->get_usedprice($item);
 				$_item['USEDPRICE']= $_price[0];
@@ -488,8 +561,29 @@ class HypSimpleAmazon
 					$_item['CREATORS'][$key] = $val;
 				}
 				//$_item['RAW'] = $item;
+				$_item['BEACON_IMG_TAG'] = $this->beaconImg;
+				$_item['MOBILE_BEACON_IMG_TAG'] = $item['MobileBeaconImg'];
+
+				$_item['IS_ADULT'] = (isset($item['ItemAttributes']['IsAdultProduct']))? 1 : 0;
 
 				$compact['Items'][] = $_item;
+
+				if ($this->marketplace_listup && $_item['USEDPRICE'] && $_item['USEDPRICE'] < $_item['PRICE']) {
+					$item['DetailPageURL'] = $item['ItemLinks']['ItemLink'][3]['URL'];
+					$_item['SERVICE'] = 'amazon_m';
+					$_item['TITLE'] .= ' (Market Place)';
+					$_item['URL'] = $item['DetailPageURL'];
+					$_item['LINKED_SIMG'] = $this->get_image($item, 's');
+					$_item['LINKED_MIMG'] = $this->get_image($item, 'm');
+					$_item['LINKED_LIMG'] = $this->get_image($item, 'l');
+					$_item['PRICE'] = $_item['USEDPRICE'];
+					$_item['PRICE_FORMATTED'] = $_item['USEDPRICE_FORMATTED'];
+					$_item['AVAILABILITY'] = '';
+					$_item['GUIDEURL'] = 'http://' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode('http://www.amazon.co.jp/gp/help/customer/display.html?nodeId=1104814'), $this->AssociateTag), $this->redirectQuery);
+
+					$compact['Items'][] = $_item;
+					$compact['totalresults']++;
+				}
 			}
 		}
 		mb_convert_variables($this->encoding , 'UTF-8', $compact);
@@ -539,6 +633,7 @@ class HypSimpleAmazon
 		}
 
 		$this->toCompactArray();
+
 		$template = $this->templates[$this->templateSet];
 		if (!$this->error) {
 			$each = '';
@@ -666,9 +761,24 @@ class HypSimpleAmazon
 			$to['imgsrc'] = $img['URL'];
 			$to['imgsize'] = 'height="' . $height . '" width="' . $width . '"';
 
-			$img = str_replace($from, $to, $this->templates[$this->templateSet]['img']);
+			$img = str_replace($from, $to, $this->templates[$this->templateSet]['img']) . $item['MobileBeaconImg'];
 		}
 		return $img;
+	}
+
+	function get_artist($item, $max = null) {
+		$artist = '';
+		if (@ $item['ItemAttributes']['Artist']) {
+			$artist = $item['ItemAttributes']['Artist'];
+		}
+		if ($artist) {
+			$this->check_array($artist);
+			if ($max) {
+				$artist = array_slice($artist, 0, $max);
+			}
+			$artist = join(', ', $artist);
+		}
+		return $artist;
 	}
 
 	function get_presenter($item, $retArray = FALSE) {
@@ -777,6 +887,14 @@ class HypSimpleAmazon
 		return $timeString;
 	}
 
+	function get_merchantid($item) {
+		$merchantid = '';
+		if (isset($item['ImageSets']) && isset($item['ImageSets']['MerchantId'])) {
+			$merchantid = $item['ImageSets']['MerchantId'];
+		}
+		return $merchantid;
+	}
+
 	function urlencode_rfc3986($str) {
 		return str_replace('%7E', '~', rawurlencode($str));
 	}
@@ -795,6 +913,18 @@ class HypSimpleAmazon
 	function searchQueryOptimize($str) {
 		$str = str_replace('-', ' ', $str);
 		$str = preg_replace('/\s+/', ' ', $str);
+		return $str;
+	}
+
+	function toPlainText($str, $len = 1000) {
+		$str = preg_replace('#<(style|script).+?/$1>#is', '', $str);
+		$str = preg_replace('#</?(?:br|p|td|tr)[^>]*?>#i', ' ', $str);
+		$str = htmlspecialchars(strip_tags(str_replace('&nbsp;', ' ', $str)));
+		$str = preg_replace('#\s+#', ' ', $str);
+		$str = str_replace('&amp;amp;', '&amp;', $str);
+		if (mb_strlen($str) > $len + 4) {
+			$str = mb_substr($str, 0, $len) . '...';
+		}
 		return $str;
 	}
 }
