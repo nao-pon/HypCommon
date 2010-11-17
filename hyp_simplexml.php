@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_simplexml.php,v 1.4 2009/03/01 23:42:25 nao-pon Exp $
+// $Id: hyp_simplexml.php,v 1.5 2010/11/17 06:32:08 nao-pon Exp $
 // HypSimpleXML Class by nao-pon http://hypweb.net
 // Based on SimpleXML
 // added function 'XMLstr_in()'
@@ -36,45 +36,45 @@ if( ! XC_CLASS_EXISTS( 'HypSimpleXML' ) )
  * phpSimpeXML - A easy to use php class for reading and writing XML.
  *
  * Options only for XMLin():
- * 
+ *
  *	   $opt["forcecontent"] = 1; (default 0)
- * 
+ *
  *		   <i>This option allows you to force text content to always parse to
  *		   a associative array even when there are no attributes.</i>
- * 
- * 
- * 
+ *
+ *
+ *
  * Options only for XMLout():
- * 
+ *
  *	   $opt["filename"] = "example.xml"; (default "")
- * 
+ *
  *		   <i>The default behaviour of XMLout() is to return the XML as a string.  If you
  *		   wish to write the XML to a file, simply supply the filename using the
  *		   'filename' option.</i>
- * 
- * 
- * 
+ *
+ *
+ *
  * Options for XMLin() and XMLout():
- * 
+ *
  *	   $opt["contentkey"] = "keyname"; (default "content")
- * 
+ *
  *		   <i>When text content is parsed to a associative array, this option let's you specify a
  *		   name for the associative array key to override the default 'content'.</i>
- * 
+ *
  *	   $opt["keeproot"] = 1; (default 0)
- * 
+ *
  *		   <i>In its attempt to return a data structure free of superfluous detail and
  *		   unnecessary levels of indirection, XMLout() normally discards the root
  *		   element name.  Setting the 'keeproot' option to '1' will cause the root element
  *		   name to be retained.</i>
- * 
  *
- * 
+ *
+ *
  * Use this options like
  *	   $xml = XMLin("example.xml", $opt);
  * or
- *	   $output = XMLout($xml, $opt); 
- *	
+ *	   $output = XMLout($xml, $opt);
+ *
  * @package	phpSimpleXML
  * @access public
  * @version 0.01
@@ -105,7 +105,7 @@ class HypSimpleXML
 	 * @access private
 	 */
 	var $output = array();
-	
+
 	var $error = '';
 
 	/**
@@ -173,7 +173,7 @@ class HypSimpleXML
 		$this->error = $msg;
 		return $ret;
 	}
-	
+
 	/**
 	 * @access private
 	 * @param mixed $parser
@@ -189,7 +189,7 @@ class HypSimpleXML
 
 	/**
 	 * Slurping XML into a associative array.
-	 * 
+	 *
 	 * @access public
 	 * @param string $file filename
 	 * @param array $options options
@@ -225,7 +225,7 @@ class HypSimpleXML
 
 	/**
 	 * Slurping XML into a associative array.
-	 * 
+	 *
 	 * @access public
 	 * @param string $str XML
 	 * @param array $options options
@@ -233,14 +233,14 @@ class HypSimpleXML
 	 */
 	function XMLstr_in($str, $options = array())
 	{
-
+		$this->output = array();
 		$this->options = $options;
 		$this->xml_parser = xml_parser_create();
 		xml_set_object($this->xml_parser, $this);
 		xml_parser_set_option($this->xml_parser,XML_OPTION_CASE_FOLDING,0);
 		xml_set_element_handler($this->xml_parser, "startElement", "endElement");
 		xml_set_character_data_handler($this->xml_parser, "characterData");
-		
+
 		$str = str_replace(array("\r\n","\r"),"\n",$str);
 		foreach (explode("\n",$str) as $data)
 		{
@@ -254,7 +254,7 @@ class HypSimpleXML
 
 		return $this->output;
 	}
-	
+
 	/**
 	 * 'Unslurping' a associative array out to XML.
 	 * @access public
@@ -264,31 +264,31 @@ class HypSimpleXML
 	 */
 	function XMLout($xmlarray, $options = array())
 	{
-			
+
 			$this->options = $options;
-			
+
 			if (empty($this->options["contentkey"]))
 				$this->options["contentkey"] = "content";
-			
+
 			if ($this->options["keeproot"])
 				list($name, $xmlarray) = each($xmlarray);
 			else
 				$name = "root";
-				
-				
+
+
 			$xmlcode = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n\n";
 			$xmlcode .= $this->buildXML($xmlarray, $name, "");
-			
-			
+
+
 			if ($this->options["filename"])
 			{
 				if (!($fp = fopen($this->options["filename"], "w")))
 					$this->_die("could not open XML input", '');
-				
+
 				fwrite($fp, $xmlcode);
 				fclose($fp);
 			}
-			
+
 			return $xmlcode;
 	}
 
@@ -299,11 +299,11 @@ class HypSimpleXML
 	 * @param string $indent indent
 	 * @return string
 	 */
-	
+
 	function buildXML($xmlarray, $name, $indent)
 	{
 		$build = 0;
-		
+
 		foreach ($xmlarray as $key => $value) {
 			$key2 = (int) $key;
 			if ("$key" == "$key2")
@@ -319,7 +319,7 @@ class HypSimpleXML
 			else if ($key == $this->options["contentkey"])
 				$xmlcode.= htmlentities($value);
 			else
-				$attr .= " ".$key."=\"".htmlentities($value)."\"";	
+				$attr .= " ".$key."=\"".htmlentities($value)."\"";
 		}
 		if (!$build)
 			$xmlcode = $indent."<".$name.$attr.($xmlcode ? ">".$xmlcode."</".$name.">" : " />" );
@@ -488,17 +488,17 @@ class HypXMLData
 				{
 					if (@ $this->child[$name][$index][$contentkey])
 					{
-						
+
 						$temp = $this->child[$name][$index][$contentkey];
 						$this->child[$name][$index][$contentkey] = array();
 						$this->child[$name][$index][$contentkey][0] = $temp;
-						
-						$this->child[$name][$index][$contentkey][1] = $cdata;	
+
+						$this->child[$name][$index][$contentkey][1] = $cdata;
 					}
 					else
 						$this->child[$name][$index][$contentkey] = $cdata;
 				}
-					
+
 			}
 		}
 		else
@@ -521,17 +521,17 @@ class HypXMLData
 				{
 					if (@ $this->child[$name][$contentkey])
 					{
-						
+
 						$temp = $this->child[$name][$contentkey];
 						$this->child[$name][$contentkey] = array();
 						$this->child[$name][$contentkey][0] = $temp;
-						
+
 						$this->child[$name][$contentkey][1] = $cdata;
 					}
 					else
 						$this->child[$name][$contentkey] = $cdata;
 				}
-					
+
 			}
 		}
 	}
