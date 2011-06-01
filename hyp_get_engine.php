@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_get_engine.php,v 1.13 2010/11/17 06:31:10 nao-pon Exp $
+// $Id: hyp_get_engine.php,v 1.14 2011/06/01 04:09:45 nao-pon Exp $
 // HypGetQueryWord Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -166,8 +166,18 @@ class HypGetQueryWord
 		return $query;
 	}
 
-	function word_highlight($body, $q_word, $enc, $msg)
+	function word_highlight($body, $q_word, $enc = null, $msg = '')
 	{
+		if (is_null($enc)) {
+			if (function_exists('')) {
+				$enc = mb_internal_encoding();
+			} else if (defined('_CHARSET')) {
+				$enc = _CHARSET;
+			} else {
+				$enc = 'EUC-JP';
+			}
+		}
+
 		// 外部リンクの場合 class="ext" を付加
 		$body = preg_replace_callback(
 					'/(<script.*?<\/script>)|(<a[^>]+?href=(?:"|\')?(?!https?:\/\/'.$_SERVER['HTTP_HOST'].')http[^>]+)>/isS' ,
@@ -211,8 +221,8 @@ class HypGetQueryWord
 			$s_key = preg_replace('/&amp;#(\d+;)/', '&#$1', htmlspecialchars($key));
 			$search_word .= " <strong class=\"word$id\">$s_key</strong>";
 			$pattern = ($s_key{0} == '&') ?
-				"/(<head.*?<\/head>|<script.*?<\/script>|<style.*?<\/style>|<textarea.*?<\/textarea>|<[^>]*>)|($pattern)/isS" :
-				"/(<head.*?<\/head>|<script.*?<\/script>|<style.*?<\/style>|<textarea.*?<\/textarea>|<[^>]*>|&(?:#[0-9]+|#x[0-9a-f]+|[0-9a-zA-Z]+);)|($pattern)/isS";
+				"/(<head.*?<\/head>|<script.*?<\/script>|<style.*?<\/style>|<textarea.*?<\/textarea>|<strong class=\"word\d+\">.*?<\/strong>|<[^>]*>)|($pattern)/isS" :
+				"/(<head.*?<\/head>|<script.*?<\/script>|<style.*?<\/style>|<textarea.*?<\/textarea>|<strong class=\"word\d+\">.*?<\/strong>|<[^>]*>|&(?:#[0-9]+|#x[0-9a-f]+|[0-9a-zA-Z]+);)|($pattern)/isS";
 			$body = preg_replace_callback($pattern,
 				create_function('$arr',
 					'return $arr[1] ? $arr[1] : "<strong class=\"word'.$id.'\">{$arr[2]}</strong>";'),$body);
@@ -289,9 +299,9 @@ class HypGetQueryWord
 
 if (!function_exists('xoops_word_highlight'))
 {
-function xoops_word_highlight($body,$q_word)
+function xoops_word_highlight($body, $q_word, $enc = null)
 {
-	return HypGetQueryWord::word_highlight($body,$q_word);
+	return HypGetQueryWord::word_highlight($body,$q_word,$enc);
 }
 }
 ?>
