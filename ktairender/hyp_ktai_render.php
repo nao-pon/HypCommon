@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.48 2010/11/17 06:44:43 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.49 2011/06/01 04:11:28 nao-pon Exp $
  */
 
 if (! function_exists('XC_CLASS_EXISTS')) {
@@ -518,11 +518,11 @@ class HypKTaiRender
 		//// tag attribute
 		$body = str_replace(array("\\'", '\\"'), array("\x07", "\x08"), $body);
 		// Any
-		$reg = '#(<[^>]+?)\s+(?:class|clear|target|nowrap|title|on[^=]+?|cell[^=]+?)=(?:\'[^\']*\'|"[^"]*")([^>]*>)#iS';
+		$reg = '#(<[^>]+?)\s+(?:clear|target|nowrap|title|on[^=]+?|cell[^=]+?)=(?:\'[^\']*\'|"[^"]*")([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
-		$reg = '#(<[^>]+?)\s+(?:class|clear|target|nowrap|title|on[^=]+?|cell[^=]+?)=[^ >/]+([^>]*>)#iS';
+		$reg = '#(<[^>]+?)\s+(?:clear|target|nowrap|title|on[^=]+?|cell[^=]+?)=[^ >/]+([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
@@ -604,7 +604,6 @@ class HypKTaiRender
 			$rep[] = '$1/>';
 		}
 
-
 		$body = preg_replace($pat, $rep, $body);
 
 		if ($this->outputMode === 'xhtml') {
@@ -639,19 +638,24 @@ class HypKTaiRender
 		$body = str_replace('<table', "\x01", $body);
 		$args = preg_split('#(\x01[^>]*?'.'>[^\x01]+?</table>)#sS', $body, -1, PREG_SPLIT_DELIM_CAPTURE);
 		if (isset($args[1])) {
-			$reg = '#^(<table[^>]*?)\s+(?:align|width|border)=(?:\'[^\']*?\'|"[^"]*?")([^>]*?>)#S';
+			$reg = '#^(\x01[^>]*?)\s+(?:align|width|border)=(?:\'[^\']*?\'|"[^"]*?")([^>]*?>)#S';
 			$body = '';
+			$table_attrs = array('border' => '1', 'cellspacing' => '0', 'align' => 'center');
 			foreach($args as $val) {
-				$val = str_replace("\x01", '<table', $val);
-				if (substr($val, 0, 6) === '<table') {
+				if ($val[0] === "\x01") {
 					// remove tag attribute
 					$val = str_replace('\\"', "\x08", $val);
 					while(preg_match($reg, $val)) {
 						$val = preg_replace($reg, '$1$2', $val);
 					}
 					$val = str_replace("\x08", '\\"', $val);
-					$val = str_replace('<table', '<table border="1" cellspacing="0" align="center"', $val);
+					$_attr = '';
+					foreach($table_attrs as $_check => $_val) {
+						if (! preg_match('#^\x01[^>]*?\s+_ktai_'.$_check.'=#S', $val)) $_attr .= ' '.$_check.'="'.$_val.'"';
+					}
+					$val = str_replace("\x01", '<table' . $_attr, $val);
 				} else {
+					$val = str_replace("\x01", '<table', $val);
 					$val = preg_replace('#(</?)(?:t(?:able|r|h))[^>]*?>#S', '$1div>', $val);
 					$val = preg_replace('#</td>#S', ' ', $val);
 					$val = preg_replace('#</?(?:col|t(?:d|body|head|foot))[^>]*?>#S', '', $val);
@@ -663,6 +667,13 @@ class HypKTaiRender
 		// Remove empty elements
 		$body = preg_replace('#<([bipqsu]|(?!textarea|td)[a-z]{2,})(?: [^>]+)?></\\1>#', '', $body);
 
+		// Replace attrs "_ktai_*"
+		$reg = '#(<[^>]+?\s)_ktai_#S';
+		while(preg_match($reg, $body)) {
+			$body = preg_replace($reg, '$1', $body);
+		}
+
+		// Give session id
 		$body = $this->html_give_session_id($body);
 
 		// Host name
@@ -1236,7 +1247,9 @@ class HypKTaiRender
 //				$this->vars['ua']['name'] = $ua_name = $match[1];
 //				$this->vars['ua']['ver'] = $ua_vers = isset($match[2])? $match[2] : '';
 
-			if ( preg_match('#(?:^(?:KDDI-([^\s]+) |Mozilla/[0-9.]+\s*\()?|\b)([a-zA-Z.-]+)(?:/([0-9.]+)(?:(?:/| )([a-zA-Z0-9.-]+))?)?#', $this->SERVER['HTTP_USER_AGENT'], $match) ) {
+			if ( preg_match('#((Android))#', $this->SERVER['HTTP_USER_AGENT'], $match)
+			  || preg_match('#(?:^(?:KDDI-([^\s]+) |Mozilla/[0-9.]+\s*\()?|\b)([a-zA-Z.-]+)(?:/([0-9.]+)(?:(?:/| )([a-zA-Z0-9.-]+))?)?#', $this->SERVER['HTTP_USER_AGENT'], $match)
+			   ) {
 
 				$this->vars['ua']['agent'] = $ua_agent = $this->SERVER['HTTP_USER_AGENT'];
 				$this->vars['ua']['name'] = $ua_name = $match[2];
@@ -1324,6 +1337,7 @@ class HypKTaiRender
 
 					case 'iPhone':
 					case 'iPod':
+					case 'Android':
 						$max_size = 200;
 						$carrier = strtolower($ua_name);
 						break;
@@ -1456,6 +1470,7 @@ class HypKTaiRender
 
 					case 'iphone':
 					case 'ipod':
+					case 'android':
 						$this->keybutton = array(
 							'1'	=>	'',
 							'2'	=>	'',
@@ -1482,9 +1497,13 @@ class HypKTaiRender
 						$this->vars['ua']['allowInputImage'] = TRUE;
 						$this->vars['ua']['allowCookie'] = TRUE;
 						list($this->vars['ua']['width'], $this->vars['ua']['height']) = array('320', '480');
-						$this->vars['ua']['meta'] = '<meta name="viewport" content="width=device-width; initial-scale=1.0;" />';
 						$this->vars['ua']['contentType'] = 'text/html';
 						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
+						if ($carrier === 'android') {
+							$this->vars['ua']['meta'] = '<meta name="viewport" content="width=device-width; initial-scale=1.2; target-densitydpi=device-dpi" />';
+						} else {
+							$this->vars['ua']['meta'] = '<meta name="viewport" content="width=device-width; initial-scale=1.0;" />';
+						}
 						break;
 				}
 			}
