@@ -8,7 +8,7 @@ class HypSimpleAmazon
 	var $SecretAccessKey = '';
 	var $ResponseGroup = 'ItemAttributes,Images,Offers,Variations';
 	var $SearchIndex = 'All';
-	var $Version = '2010-10-01';
+	var $Version = '2010-11-01';
 	var $batchMax = 2;
 	var $AssociateTag = '';
 	var $Operation = '';
