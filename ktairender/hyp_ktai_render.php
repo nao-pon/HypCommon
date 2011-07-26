@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.49 2011/06/01 04:11:28 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.50 2011/07/26 04:26:26 nao-pon Exp $
  */
 
 if (! function_exists('XC_CLASS_EXISTS')) {
@@ -562,7 +562,9 @@ class HypKTaiRender
 		$body = preg_replace('#(<input[^>]*?\s+type=[\'"])password#iS', '$1text', $body);
 
 		// id to name
-		$body = preg_replace_callback('#<([a-zA-Z]+)([^>]+)>#sS', array(& $this, '_attr_idToname'), $body);
+		if ($this->vars['ua']['id2name']) {
+			$body = preg_replace_callback('#<([a-zA-Z]+)([^>]+)>#sS', array(& $this, '_attr_idToname'), $body);
+		}
 
 		$pat = $rep = array();
 
@@ -1237,6 +1239,7 @@ class HypKTaiRender
 		$this->vars['ua']['allowCookie'] = FALSE;
 		$this->vars['ua']['allowFormData'] = TRUE;
 		$this->vars['ua']['contentType'] = 'text/html';
+		$this->vars['ua']['id2name'] = FALSE;
 
 		if (isset($this->SERVER['HTTP_USER_AGENT'])) {
 			$this->vars['ua']['isBot'] = preg_match($this->Config_botReg, $this->SERVER['HTTP_USER_AGENT']);
@@ -1247,7 +1250,7 @@ class HypKTaiRender
 //				$this->vars['ua']['name'] = $ua_name = $match[1];
 //				$this->vars['ua']['ver'] = $ua_vers = isset($match[2])? $match[2] : '';
 
-			if ( preg_match('#((Android))#', $this->SERVER['HTTP_USER_AGENT'], $match)
+			if ( preg_match('#((Android|Windows Phone))#', $this->SERVER['HTTP_USER_AGENT'], $match)
 			  || preg_match('#(?:^(?:KDDI-([^\s]+) |Mozilla/[0-9.]+\s*\()?|\b)([a-zA-Z.-]+)(?:/([0-9.]+)(?:(?:/| )([a-zA-Z0-9.-]+))?)?#', $this->SERVER['HTTP_USER_AGENT'], $match)
 			   ) {
 
@@ -1338,7 +1341,8 @@ class HypKTaiRender
 					case 'iPhone':
 					case 'iPod':
 					case 'Android':
-						$max_size = 200;
+					case 'Windows Phone':
+						$max_size = 300;
 						$carrier = strtolower($ua_name);
 						break;
 
@@ -1370,6 +1374,7 @@ class HypKTaiRender
 						$this->vars['ua']['carrier'] = $carrier;
 						$this->vars['ua']['allowPNG'] = FALSE;
 						$this->vars['ua']['allowInputImage'] = FALSE;
+						$this->vars['ua']['id2name'] = TRUE;
 						if ((floatval($this->vars['ua']['ver']) < 2)) {
 							$this->vars['ua']['allowCookie'] = FALSE;
 						} else {
@@ -1402,6 +1407,7 @@ class HypKTaiRender
 						$this->vars['ua']['allowInputImage'] = FALSE;
 						$this->vars['ua']['allowCookie'] = TRUE;
 						$this->vars['ua']['allowFormData'] = FALSE;
+						$this->vars['ua']['id2name'] = TRUE;
 						$this->vars['ua']['meta'] = '<meta http-equiv="Cache-Control" content="no-cache" />';
 						if (isset($this->SERVER['HTTP_X_UP_DEVCAP_DEVICEPIXELS'])) list($this->vars['ua']['width'], $this->vars['ua']['height']) = explode(',', $this->SERVER['HTTP_X_UP_DEVCAP_DEVICEPIXELS']);
 						$this->vars['ua']['contentType'] = 'application/xhtml+xml';
@@ -1429,6 +1435,7 @@ class HypKTaiRender
 						$this->vars['ua']['allowPNG'] = TRUE;
 						$this->vars['ua']['allowInputImage'] = TRUE;
 						$this->vars['ua']['allowCookie'] = TRUE;
+						$this->vars['ua']['id2name'] = TRUE;
 						if (isset($this->SERVER['HTTP_X_S_DISPLAY_INFO'])) {
 							list($_size) = explode('/', $this->SERVER['HTTP_X_S_DISPLAY_INFO']);
 							list($this->vars['ua']['width'], $this->vars['ua']['height']) = explode('*', $_size);
@@ -1471,6 +1478,7 @@ class HypKTaiRender
 					case 'iphone':
 					case 'ipod':
 					case 'android':
+					case 'windows phone':
 						$this->keybutton = array(
 							'1'	=>	'',
 							'2'	=>	'',

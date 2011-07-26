@@ -57,10 +57,12 @@
 <{/if}>
 
 <!--content-->
-<{if $xoops_modulename}>
-<div style="text-align:center;font-size:x-large;background-color:#99CCFF"><{$xoops_modulename}></div>
-<{/if}>
+<{if $xoops_contents}>
+<h2 style="text-align:center;font-size:x-large;background-color:#99CCFF">
+<{if $xoops_modulename}><{$xoops_modulename}><{else}>Main<{/if}>
+</h2>
 <{$xoops_contents}>
+<{/if}>
 <!--/content-->
 
 <{if $xoops_clblocks}>

@@ -95,6 +95,11 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->q_word2 = 'XOOPS_QUERY_WORD2';        // 検索ワード分かち書き(分かち書き不使用なら空文字''で設定)
 		$this->se_name = 'XOOPS_SEARCH_ENGINE_NAME'; // 検索元名
 
+		// 外部リンクに付加する class属性値
+		// use_words_highlight = 1 の場合に有効
+		// 空値指定で class属性の付加なし
+		$this->extlink_class_name = 'ext';
+
 		// KAKASI での分かち書き結果のキャッシュ先
 		$this->kakasi_cache_dir = XOOPS_ROOT_PATH.'/cache2/kakasi/';
 
@@ -108,7 +113,13 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// 携帯対応レンダー設定
 
 		// 携帯端末判定用 UA 正規表現
-		$this->k_tai_conf['ua_regex'] = '#(?:SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser|DDIPOCKET|WILLCOM)#';
+		$this->k_tai_conf['ua_regex'] = '#(?:Android|Windows Phone|SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser|DDIPOCKET|WILLCOM|iPhone|iPod|mixi-mobile-converter|Googlebot-Mobile|Google Wireless Transcoder|Hatena-Mobile-Gateway)#';
+
+		// jQuery mobile を使用するプロファイル
+		$this->k_tai_conf['jquery_profiles'] = 'android,iphone,ipod,windows phone';
+
+		// jQuery mobile のテーマ
+		$this->k_tai_conf['jquery_theme'] = 'd';
 
 		// HTML再構築用タグ設定
 		$this->k_tai_conf['rebuilds'] = array(
