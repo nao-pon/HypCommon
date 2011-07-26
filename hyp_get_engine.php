@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_get_engine.php,v 1.14 2011/06/01 04:09:45 nao-pon Exp $
+// $Id: hyp_get_engine.php,v 1.15 2011/07/26 04:19:37 nao-pon Exp $
 // HypGetQueryWord Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -166,7 +166,7 @@ class HypGetQueryWord
 		return $query;
 	}
 
-	function word_highlight($body, $q_word, $enc = null, $msg = '')
+	function word_highlight($body, $q_word, $enc = null, $msg = '', $extlink_class_name = 'ext')
 	{
 		if (is_null($enc)) {
 			if (function_exists('')) {
@@ -179,11 +179,13 @@ class HypGetQueryWord
 		}
 
 		// 外部リンクの場合 class="ext" を付加
-		$body = preg_replace_callback(
-					'/(<script.*?<\/script>)|(<a[^>]+?href=(?:"|\')?(?!https?:\/\/'.$_SERVER['HTTP_HOST'].')http[^>]+)>/isS' ,
-					create_function('$arr', 'return $arr[1]? $arr[1] : ((strpos($arr[2], \'class=\') === FALSE)? "$arr[2] class=\"ext\">" : "$arr[0]");') ,
-					$body
-				);
+		if ($extlink_class_name) {
+			$body = preg_replace_callback(
+						'/(<script.*?<\/script>)|(<a[^>]+?href=(?:"|\')?(?!https?:\/\/'.$_SERVER['HTTP_HOST'].')http[^>]+)>/isS' ,
+						create_function('$arr', 'return $arr[1]? $arr[1] : ((strpos($arr[2], \'class=\') === FALSE)? "$arr[2] class=\"' . $extlink_class_name . '\">" : "$arr[0]");') ,
+						$body
+					);
+		}
 
 		if (!$q_word || !$body) return $body;
 
