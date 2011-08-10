@@ -132,6 +132,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->k_tai_conf['ua_regex'])) $this->k_tai_conf['ua_regex'] = '#(?:Android|Windows Phone|SoftBank|Vodafone|J-PHONE|DoCoMo|UP\.Browser|DDIPOCKET|WILLCOM|iPhone|iPod|mixi-mobile-converter|Googlebot-Mobile|Google Wireless Transcoder|Hatena-Mobile-Gateway)#';
 		if (! isset($this->k_tai_conf['jquery_profiles'])) $this->k_tai_conf['jquery_profiles'] = 'android,iphone,ipod,windows phone';
 		if (! isset($this->k_tai_conf['jquery_theme'])) $this->k_tai_conf['jquery_theme'] = 'd';
+		if (! isset($this->k_tai_conf['jquery_no_reduce'])) $this->k_tai_conf['jquery_no_reduce'] = true;
 		if (! isset($this->k_tai_conf['rebuilds'])) $this->k_tai_conf['rebuilds'] = array(
 			'headerlogo'     => array( 'above' => '<center>',
 			                          'below' => '</center>'),
@@ -168,6 +169,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			);
 		if (! isset($this->k_tai_conf['themeSet'])) $this->k_tai_conf['themeSet'] = 'ktai_default';
 		if (! isset($this->k_tai_conf['templateSet'])) $this->k_tai_conf['templateSet'] = 'ktai';
+		if (! isset($this->k_tai_conf['themeSets'])) $this->k_tai_conf['themeSets'] = array();
+		if (! isset($this->k_tai_conf['templateSets'])) $this->k_tai_conf['templateSets'] = array();
 		if (! isset($this->k_tai_conf['template'])) $this->k_tai_conf['template'] = 'default';
 		if (! isset($this->k_tai_conf['bodyAttribute'])) $this->k_tai_conf['bodyAttribute'] = '';
 		if (! isset($this->k_tai_conf['disabledBlockIds'])) $this->k_tai_conf['disabledBlockIds'] = array();
@@ -250,6 +253,14 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				$this->HypKTaiRender->Config_docomoGuidTTL = $this->k_tai_conf['docomoGuidTTL'];
 				$this->HypKTaiRender->marge_urlRewites('urlRewrites', $this->k_tai_conf['urlRewrites']);
 				$this->HypKTaiRender->marge_urlRewites('urlImgRewrites', $this->k_tai_conf['urlImgRewrites']);
+
+				// theme & template set
+				if (isset($this->k_tai_conf['themeSets'][$this->HypKTaiRender->vars['ua']['carrier']]) && $this->k_tai_conf['themeSets'][$this->HypKTaiRender->vars['ua']['carrier']]) {
+					$this->k_tai_conf['themeSet'] = $this->k_tai_conf['themeSets'][$this->HypKTaiRender->vars['ua']['carrier']];
+				}
+				if (isset($this->k_tai_conf['templateSets'][$this->HypKTaiRender->vars['ua']['carrier']]) && $this->k_tai_conf['templateSets'][$this->HypKTaiRender->vars['ua']['carrier']]) {
+					$this->k_tai_conf['templateSet'] = $this->k_tai_conf['templateSets'][$this->HypKTaiRender->vars['ua']['carrier']];
+				}
 
 				// Session setting
 				@ ini_set('session.use_trans_sid', 0);
@@ -1321,7 +1332,7 @@ EOD;
 			$_head = '<head>';
 			if (preg_match('#<title[^>]*>(.*)</title>#isUS', $head, $match)) {
 				$pagetitle = $match[1];
-				$_head .= mb_convert_encoding($match[0], 'SJIS-win', $encode);
+				$_head .= mb_convert_encoding($match[0], ($use_jquery? $encode : 'SJIS-win'), $encode);
 			}
 			if (isset($r->vars['ua']['meta'])) {
 				$_head .= $r->vars['ua']['meta'];
@@ -1341,7 +1352,7 @@ EOD;
 							$rss[] = '<a href="'.$url.'">'.$title.'</a>';
 						}
 					} else if (preg_match('#rel=("|\')stylesheet\\1#iS', $attrs)) {
-						if (preg_match('# media=("|\')[a-z, ]*\b(?:handheld|'.$r->vars['ua']['carrier'].')\b[a-z, ]*\\1#iS', $attrs)) {
+						if (preg_match('# media=("|\')[a-z, ]*\b(?:all|handheld|'.$r->vars['ua']['carrier'].')\b[a-z, ]*\\1#iS', $attrs)) {
 							$_head .= '<link' . preg_replace('# media=("|\')[^"\']*?\\1#iS', '', $attrs) . '>';
 						}
 					}
@@ -1355,6 +1366,10 @@ EOD;
 				$_head .= '<script src="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery-1.6.2.min.js"></script>';
 				$_head .= '<script src="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.mobile-config.js"></script>';
 				$_head .= '<script src="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.mobile-1.0b1.min.js"></script>';
+			}
+
+			if ($this->k_tai_conf['jquery_no_reduce']) {
+				$_head .= preg_replace('#<link([^>]+?)>|<title.+?/title>#iS', '', $head);
 			}
 
 			$_head .= '</head>';
@@ -1385,6 +1400,9 @@ EOD;
 			$header = '<div data-role="header">' . $header . '</div>';
 			$body = '<div data-role="content">' . $body . '</div>';
 			$footer = '<div data-role="footer">' . $footer . '</div>';
+			if ($this->k_tai_conf['jquery_no_reduce']) {
+				$r->Config_no_diet = true;
+			}
 		}
 
 		$r->contents['header'] = $header;
@@ -1392,13 +1410,14 @@ EOD;
 		$r->contents['footer'] = $footer;
 
 		$r->inputEncode = $encode;
-		$r->outputEncode = 'SJIS';
+		$r->outputEncode = $use_jquery? $encode : 'SJIS';
 		$r->outputMode = 'xhtml';
 		$r->langcode = _LANGCODE;
 
 		$r->doOptimize();
 
-		$charset = (strtoupper($r->outputEncode) === 'UTF-8')? 'UTF-8' : 'Shift_JIS';
+		//$charset = (strtoupper($r->outputEncode) === 'UTF-8')? 'UTF-8' : 'Shift_JIS';
+		$charset = (strtoupper($r->outputEncode) === 'SJIS')? 'Shift_JIS' : $encode;
 
 		// Set <body> attribute
 		$bodyAttr = ($this->k_tai_conf['bodyAttribute'])? ' ' . trim($this->k_tai_conf['bodyAttribute']) : '';
@@ -1670,6 +1689,8 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// jQuery mobile のテーマ
 		$this->k_tai_conf['jquery_theme'] = 'd';
 
+		// jQuery 使用時はHTMLの携帯用変換を行わない
+		$this->k_tai_conf['jquery_no_reduce'] = true;
 
 		// HTML再構築用タグ設定
 		$this->k_tai_conf['rebuilds'] = array(
@@ -1709,9 +1730,21 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 
 		// 携帯用XOOPSテーマセット
 		$this->k_tai_conf['themeSet'] = 'ktai_default';
+		// carrier 別の設定 (carrier をキーにして設定)
+		$this->k_tai_conf['themeSets'] = array();
+		//$this->k_tai_conf['themeSets']['android'] = '';
+		//$this->k_tai_conf['themeSets']['iphone'] = '';
+		//$this->k_tai_conf['themeSets']['ipod'] = '';
+		//$this->k_tai_conf['themeSets']['windows phone'] = '';
 
 		// 携帯用XOOPSテンプレートセット
 		$this->k_tai_conf['templateSet'] = '';
+		// carrier 別の設定 (carrier をキーにして設定)
+		$this->k_tai_conf['templateSets'] = array();
+		//$this->k_tai_conf['templateSets']['android'] = '';
+		//$this->k_tai_conf['templateSets']['iphone'] = '';
+		//$this->k_tai_conf['templateSets']['ipod'] = '';
+		//$this->k_tai_conf['templateSets']['windows phone'] = '';
 
 		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';

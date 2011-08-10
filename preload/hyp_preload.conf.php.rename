@@ -121,6 +121,9 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// jQuery mobile のテーマ
 		$this->k_tai_conf['jquery_theme'] = 'd';
 
+		// jQuery 使用時はHTMLの携帯用変換を行わない
+		$this->k_tai_conf['jquery_no_diet'] = true;
+
 		// HTML再構築用タグ設定
 		$this->k_tai_conf['rebuilds'] = array(
 			'headerlogo'     => array( 'above' => '<center>',
@@ -159,9 +162,21 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 
 		// 携帯用XOOPSテーマセット
 		$this->k_tai_conf['themeSet'] = 'ktai_default';
+		// carrier 別の設定 (carrier をキーにして設定)
+		$this->k_tai_conf['themeSets'] = array();
+		//$this->k_tai_conf['themeSets']['android'] = '';
+		//$this->k_tai_conf['themeSets']['iphone'] = '';
+		//$this->k_tai_conf['themeSets']['ipod'] = '';
+		//$this->k_tai_conf['themeSets']['windows phone'] = '';
 
 		// 携帯用XOOPSテンプレートセット
 		$this->k_tai_conf['templateSet'] = '';
+		// carrier 別の設定 (carrier をキーにして設定)
+		$this->k_tai_conf['templateSets'] = array();
+		//$this->k_tai_conf['templateSets']['android'] = '';
+		//$this->k_tai_conf['templateSets']['iphone'] = '';
+		//$this->k_tai_conf['templateSets']['ipod'] = '';
+		//$this->k_tai_conf['templateSets']['windows phone'] = '';
 
 		// 使用テンプレート
 		$this->k_tai_conf['template'] = 'default';
