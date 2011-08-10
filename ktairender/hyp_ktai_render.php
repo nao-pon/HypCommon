@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.50 2011/07/26 04:26:26 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.51 2011/08/10 01:16:35 nao-pon Exp $
  */
 
 if (! function_exists('XC_CLASS_EXISTS')) {
@@ -58,6 +58,7 @@ class HypKTaiRender
 	var $Config_botReg = '/Googlebot-Mobile|Y!J-(?:SRD|MBS)|froute\.jp|ichiro\/mobile|LD_mobile_bot|spider/i';
 	var $Config_docomoGuidTTL = 300;
 	var $Config_imageTwiceDisplayWidth = 0;
+	var $Config_no_diet = false;
 
 	function HypKTaiRender () {
 
@@ -303,9 +304,14 @@ class HypKTaiRender
 			}
 		}
 
-		$header = mb_convert_encoding($this->html_diet_for_hp($header), $this->outputEncode, $this->inputEncode);
-		$body = mb_convert_encoding($this->html_diet_for_hp($body), $this->outputEncode, $this->inputEncode);
-		$footer = mb_convert_encoding($this->html_diet_for_hp($footer), $this->outputEncode, $this->inputEncode);
+		$header = $this->html_diet_for_hp($header);
+		$body = $this->html_diet_for_hp($body);
+		$footer = $this->html_diet_for_hp($footer);
+		if ($this->inputEncode !== $this->outputEncode) {
+			$header = mb_convert_encoding($header, $this->outputEncode, $this->inputEncode);
+			$body = mb_convert_encoding($body, $this->outputEncode, $this->inputEncode);
+			$footer = mb_convert_encoding($footer, $this->outputEncode, $this->inputEncode);
+		}
 
 		$googleAdsenseHtml = '';
 		if ($this->Config_googleAdSenseConfig && is_file($this->Config_googleAdSenseConfig)) {
@@ -324,7 +330,7 @@ class HypKTaiRender
 				if (! isset($mpc)) {
 					$mpc =& $this->_getMobilePictogramConverter();
 				}
-				$mpc->setString($str);
+				$mpc->setString($str, ! $this->Config_no_diet);
 				$str = $mpc->autoConvertModKtai();
 			}
 		}
@@ -428,6 +434,7 @@ class HypKTaiRender
 
 		$body = str_replace(array('<ns>', '</ns>'), '', $body);
 
+		if (! $this->Config_no_diet) {
 		// Optimize query strings
 		$_func = create_function(
 			'$match',
@@ -441,6 +448,7 @@ class HypKTaiRender
 		$header = preg_replace_callback($_reg, $_func, $header);
 		$body   = preg_replace_callback($_reg, $_func, $body);
 		$footer = preg_replace_callback($_reg, $_func, $footer);
+		}
 
 		if ($googleAdsenseHtml) {
 			if (in_array($this->Config_googleAdSenseBelow, array('header', 'body', 'footer'))) {
@@ -460,6 +468,9 @@ class HypKTaiRender
 
 	// HTML を携帯端末用にシェイプアップする
 	function html_diet_for_hp ($body) {
+		if ($this->Config_no_diet) {
+			return $body;
+		}
 
 		// 携帯のみ有効にする部分
 		$body = str_replace('<!--HypKTaiOnly', '', $body);
@@ -805,7 +816,7 @@ class HypKTaiRender
 		}
 
 		$ret = FALSE;
-		$ip_file = dirname(__FILE__) . '/ipranges/' . strtolower($carrier) . '.ip';
+		$ip_file = dirname(__FILE__) . '/ipranges/' . str_replace(' ', '_', strtolower($carrier)) . '.ip';
 
 		if (file_exists($ip_file)) {
 			$iprange = file($ip_file);
@@ -1342,7 +1353,7 @@ class HypKTaiRender
 					case 'iPod':
 					case 'Android':
 					case 'Windows Phone':
-						$max_size = 300;
+						$max_size = 0;
 						$carrier = strtolower($ua_name);
 						break;
 
