@@ -1339,6 +1339,7 @@ EOD;
 			}
 
 			// Check RSS & CSS
+			$_css_type = ($use_jquery && $this->k_tai_conf['jquery_no_reduce'])? 'all|handheld' : 'handheld';
 			$rss = array();
 			if (preg_match_all('#<link([^>]+?)>#iS', $head, $match)) {
 				foreach($match[1] as $attrs) {
@@ -1352,7 +1353,7 @@ EOD;
 							$rss[] = '<a href="'.$url.'">'.$title.'</a>';
 						}
 					} else if (preg_match('#rel=("|\')stylesheet\\1#iS', $attrs)) {
-						if (preg_match('# media=("|\')[a-z, ]*\b(?:all|handheld|'.$r->vars['ua']['carrier'].')\b[a-z, ]*\\1#iS', $attrs)) {
+						if (preg_match('# media=("|\')[a-z, ]*\b(?:'.$_css_type.'|'.$r->vars['ua']['carrier'].')\b[a-z, ]*\\1#iS', $attrs)) {
 							$_head .= '<link' . preg_replace('# media=("|\')[^"\']*?\\1#iS', '', $attrs) . '>';
 						}
 					}
@@ -1363,13 +1364,13 @@ EOD;
 			}
 
 			if ($use_jquery) {
-				$_head .= '<script src="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery-1.6.2.min.js"></script>';
+				$_head .= '<link href="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.mobile.min.css" rel="stylesheet" type="text/css" />';
+				$_head .= '<script src="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.min.js"></script>';
 				$_head .= '<script src="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.mobile-config.js"></script>';
-				$_head .= '<script src="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.mobile-1.0b1.min.js"></script>';
-			}
-
-			if ($this->k_tai_conf['jquery_no_reduce']) {
-				$_head .= preg_replace('#<link([^>]+?)>|<title.+?/title>#iS', '', $head);
+				$_head .= '<script src="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.mobile.min.js"></script>';
+				if ($this->k_tai_conf['jquery_no_reduce']) {
+					$_head .= preg_replace('#<link([^>]+?)>|<title.+?/title>#iS', '', $head);
+				}
 			}
 
 			$_head .= '</head>';
