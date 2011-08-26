@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.74 2010/07/25 05:33:44 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.75 2011/08/26 04:55:15 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -19,6 +19,14 @@ if (is_file(HYP_COMMON_ROOT_PATH . '/config/hyp_common.conf.php')) {
 //if (! defined('HYP_IMAGEMAGICK_UNSHARP')) define('HYP_IMAGEMAGICK_UNSHARP', '1.5x1.2+1.0+0.10');
 if (! defined('HYP_IMAGEMAGICK_UNSHARP')) define('HYP_IMAGEMAGICK_UNSHARP', '100|0.5|3');
 
+// PATH_SEPARATOR
+if (! defined('PATH_SEPARATOR')) {
+	if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
+		define('PATH_SEPARATOR', ':');
+	} else {
+		define('PATH_SEPARATOR', ';');
+	}
+}
 
 class HypCommonFunc
 {
