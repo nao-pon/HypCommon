@@ -122,7 +122,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->k_tai_conf['jquery_theme'] = 'd';
 
 		// jQuery 使用時はHTMLの携帯用変換を行わない
-		$this->k_tai_conf['jquery_no_diet'] = true;
+		$this->k_tai_conf['jquery_no_reduce'] = true;
 
 		// HTML再構築用タグ設定
 		$this->k_tai_conf['rebuilds'] = array(
