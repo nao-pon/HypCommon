@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/02/11 by nao-pon http://hypweb.net/
- * $Id: favicon.php,v 1.15 2010/07/25 05:55:38 nao-pon Exp $
+ * $Id: favicon.php,v 1.16 2011/08/26 04:47:21 nao-pon Exp $
  */
 
 /**
@@ -158,6 +158,11 @@ function output_image($icon, $time = 0)
 
 function update_cache($url)
 {
+    if (! is_writable(FAVICON_CACHE_DIR)) {
+    	// cache dir was not writable
+    	return false;
+    }
+
     // Garbage Collection
     $garbage = FAVICON_CACHE_DIR . '.garbage.time';
     if (! is_file($garbage) || filemtime($garbage) + 86400 < UNIX_TIME) {
@@ -220,8 +225,11 @@ function update_cache($url)
     }
 
     $filename = get_url_filename($url_org);
-    file_put_contents($filename, $favicon);
-    return $favicon;
+    if (file_put_contents($filename, $favicon)) {
+    	return $favicon;
+    } else {
+    	return false;
+    }
 }
 
 function http_get_contents(& $url, $size = 0)
