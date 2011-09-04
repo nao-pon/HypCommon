@@ -234,8 +234,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					}
 				}
 
-				define('HYP_K_TAI_RENDER', TRUE);
-
 				// Set HypKTaiRender
 				HypCommonFunc::loadClass('HypKTaiRender');
 				$this->HypKTaiRender =& HypKTaiRender::getSingleton();
@@ -253,6 +251,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				$this->HypKTaiRender->Config_docomoGuidTTL = $this->k_tai_conf['docomoGuidTTL'];
 				$this->HypKTaiRender->marge_urlRewites('urlRewrites', $this->k_tai_conf['urlRewrites']);
 				$this->HypKTaiRender->marge_urlRewites('urlImgRewrites', $this->k_tai_conf['urlImgRewrites']);
+
+				// use jquery mobile?
+				$this->HypKTaiRender->Config_jquery = (in_array($this->HypKTaiRender->vars['ua']['carrier'], explode(',', $this->k_tai_conf['jquery_profiles'])));
+
+				// jQuery use: 2, Normal: 1
+				define('HYP_K_TAI_RENDER', ($this->HypKTaiRender->Config_jquery? 2 : 1));
 
 				// theme & template set
 				if (isset($this->k_tai_conf['themeSets'][$this->HypKTaiRender->vars['ua']['carrier']]) && $this->k_tai_conf['themeSets'][$this->HypKTaiRender->vars['ua']['carrier']]) {
@@ -1086,7 +1090,7 @@ EOD;
 		$r =& $this->HypKTaiRender;
 
 		// use jquery mobile?
-		$use_jquery = (in_array($r->vars['ua']['carrier'], explode(',', $this->k_tai_conf['jquery_profiles'])));
+		$use_jquery = $r->Config_jquery;
 
 		// Is RSS?
 		if (preg_match('/<(?:feed.+?<entry|(?:rss|rdf).+?<channel)/isS', substr($s, 0, 1000))) {
@@ -1365,12 +1369,12 @@ EOD;
 
 			if ($use_jquery) {
 				$_head .= '<link href="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.mobile.min.css" rel="stylesheet" type="text/css" />';
+				if ($this->k_tai_conf['jquery_no_reduce']) {
+					$_head .= preg_replace('#<link([^>]+?)>\r?\n?|<title.+?/title>\r?\n?#iS', '', $head);
+				}
 				$_head .= '<script src="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.min.js"></script>';
 				$_head .= '<script src="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.mobile-config.js"></script>';
 				$_head .= '<script src="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.mobile.min.js"></script>';
-				if ($this->k_tai_conf['jquery_no_reduce']) {
-					$_head .= preg_replace('#<link([^>]+?)>|<title.+?/title>#iS', '', $head);
-				}
 			}
 
 			$_head .= '</head>';
