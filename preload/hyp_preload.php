@@ -1402,9 +1402,8 @@ EOD;
 		}
 
 		if ($use_jquery) {
-			$header = '<div data-role="header">' . $header . '</div>';
-			$body = '<div data-role="content">' . $body . '</div>';
-			$footer = '<div data-role="footer">' . $footer . '</div>';
+			$header .= '<separator>';
+			$body .= '<separator>';
 			if ($this->k_tai_conf['jquery_no_reduce']) {
 				$r->Config_no_diet = true;
 			}
@@ -1432,7 +1431,11 @@ EOD;
 
 		$outBody = $r->outputBody;
 		if ($use_jquery) {
-			$outBody = '<div data-role="page" data-theme="'.$this->k_tai_conf['jquery_theme'].'">' . $outBody . '</div>';
+			$_array = explode('<separator>', $outBody);
+			$outBody  = '<div data-role="page" data-theme="'.$this->k_tai_conf['jquery_theme'].'">';
+			$outBody .= '<div data-role="header">' . $_array[0] . '</div>';
+			$outBody .= '<div data-role="content">' . $_array[1] . '</div>';
+			$outBody .= '<div data-role="footer">' . $_array[2] . '</div></div>';
 		}
 
 		$s = $r->getHtmlDeclaration() . $head . '<body' . $bodyAttr . '>' . $outBody . '</body></html>';
