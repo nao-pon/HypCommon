@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.52 2011/08/10 01:44:41 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.53 2011/09/09 07:02:34 nao-pon Exp $
  */
 
 if (! function_exists('XC_CLASS_EXISTS')) {
@@ -529,11 +529,11 @@ class HypKTaiRender
 		//// tag attribute
 		$body = str_replace(array("\\'", '\\"'), array("\x07", "\x08"), $body);
 		// Any
-		$reg = '#(<[^>]+?)\s+(?:clear|target|nowrap|title|on[^=]+?|cell[^=]+?)=(?:\'[^\']*\'|"[^"]*")([^>]*>)#iS';
+		$reg = '#(<[^>]+?)\s+(?:clear|target|nowrap|title|(?:(?:on|cell|data-)[^=]+?))=(?:\'[^\']*\'|"[^"]*")([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
-		$reg = '#(<[^>]+?)\s+(?:clear|target|nowrap|title|on[^=]+?|cell[^=]+?)=[^ >/]+([^>]*>)#iS';
+		$reg = '#(<[^>]+?)\s+(?:clear|target|nowrap|title|(?:(?:on|cell|data-)[^=]+?))=[^ >/]+([^>]*>)#iS';
 		while(preg_match($reg, $body)) {
 			$body = preg_replace($reg, '$1$2', $body);
 		}
@@ -1518,11 +1518,7 @@ class HypKTaiRender
 						list($this->vars['ua']['width'], $this->vars['ua']['height']) = array('320', '480');
 						$this->vars['ua']['contentType'] = 'text/html';
 						$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
-						if ($carrier === 'android') {
-							$this->vars['ua']['meta'] = '<meta name="viewport" content="width=device-width; initial-scale=1.2; target-densitydpi=device-dpi" />';
-						} else {
-							$this->vars['ua']['meta'] = '<meta name="viewport" content="width=device-width; initial-scale=1.0;" />';
-						}
+						$this->vars['ua']['meta'] = '<meta name="viewport" content="width=device-width; initial-scale=1.0;" />';
 						break;
 				}
 			}
