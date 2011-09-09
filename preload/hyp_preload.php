@@ -1244,7 +1244,7 @@ EOD;
 							$url = $r->myRoot . $r->removeQueryFromUrl($r->SERVER['REQUEST_URI'], array('guid', $r->session_name));
 							$url .= ((strpos($url, '?') === FALSE)? '?' : '&') . $add;
 							$url = str_replace('&', '&amp;', $url);
-							$easylogin = '<a href="' . $url . '">' . $this->k_tai_conf['msg']['easylogin'] . '</a>';
+							$easylogin = '<a href="' . $url . '" data-role="button" data-icon="check" data-inline="true">' . $this->k_tai_conf['msg']['easylogin'] . '</a>';
 						} else {
 							$uname = '';
 							if (empty($_SESSION['hyp_redirect_uname'])) {
@@ -1258,9 +1258,9 @@ EOD;
 							if ($uname) {
 								$uname = htmlspecialchars($uname);
 								$guid = ($r->vars['ua']['carrier'] === 'docomo')? '&amp;guid=on' : '';
-								$uname = '<a href="' . XOOPS_URL . '/userinfo.php?uid=' . $this->HypKTaiRender->vars['ua']['xoopsUid'] . $guid . '">' . $uname . '</a>';
+								$uname = '<a href="' . XOOPS_URL . '/userinfo.php?uid=' . $this->HypKTaiRender->vars['ua']['xoopsUid'] . $guid . '" data-role="button" data-icon="info" data-inline="true">' . $uname . '</a>';
 							}
-							$easylogin = $uname . ' <a href="' . XOOPS_URL . '/user.php?op=logout">' . $this->k_tai_conf['msg']['logout'] . '</a>';
+							$easylogin = $uname . ' <a href="' . XOOPS_URL . '/user.php?op=logout" data-role="button" data-icon="minus" data-inline="true">' . $this->k_tai_conf['msg']['logout'] . '</a>';
 
 							// 簡単ログイン:設定 or 解除
 							if (isset($this->k_tai_conf['easyLoginConfPath']) && isset($this->k_tai_conf['easyLoginConfuid'])) {
