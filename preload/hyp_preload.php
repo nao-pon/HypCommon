@@ -1150,7 +1150,7 @@ EOD;
 				if ($use_jquery) {
 					$bcontent = preg_replace('#<h[1-6].*?<!--KTaiTitle-->(.+?)<!--/KTaiTitle-->.*?/h[1-6]>#s', '', $bcontent);
 					if (in_array($id, $this->k_tai_conf['showBlockIds'])) {
-						$body = $arr1[0] . '<div id="ktaiblock'.$id.'" data-role="collapsible"><h3>'.$title.'</h3>' . $bcontent. '</div>' . $arr2[1];
+						$body = $arr1[0] . '<div id="ktaiblock'.$id.'" data-role="collapsible" data-collapsed="false"><h3>'.$title.'</h3>' . $bcontent. '</div>' . $arr2[1];
 						//$showblocks['ktaiblock'.$id] = $title;
 					} else {
 						$body = $arr1[0] . '<div id="ktaiblock'.$id.'" data-role="collapsible" data-collapsed="true"><h3>'.$title.'</h3>' . $bcontent. '</div>' . $arr2[1];
@@ -1212,7 +1212,9 @@ EOD;
 					$arr1 = explode('<!--' . $id . '-->', $body, 2);
 					if (isset($arr1[1]) && strpos($arr1[1], '<!--/' . $id . '-->') !== FALSE) {
 						$arr2 = explode('<!--/' . $id . '-->', $arr1[1], 2);
-						$target = trim(preg_replace('/<!--.+?-->/sS', '', $arr2[0]));
+						$target = $arr2[0];
+						//$target = trim(preg_replace('/<!--.+?-->/sS', '', $target));
+						if (! $use_jquery) $target = trim(preg_replace('/<!--.+?-->/sS', '', $target));
 						if (trim(preg_replace('/<\/?(?:div|span|ns|p)[^>]*?>/S', '', $target))) {
 							$parts[$id] = $var['above'] . $target . $var['below'];
 							$found = TRUE;
@@ -1230,7 +1232,7 @@ EOD;
 					}
 
 					if ($use_jquery && !empty($parts['content'])) {
-						$parts['content'] = '<div data-role="collapsible">' . $parts['content'] . '</div>';
+						$parts['content'] = '<div data-role="collapsible" data-collapsed="false">' . $parts['content'] . '</div>';
 					}
 
 					// Easy login
@@ -1343,7 +1345,7 @@ EOD;
 			}
 
 			// Check RSS & CSS
-			$_css_type = ($use_jquery && $this->k_tai_conf['jquery_no_reduce'])? 'all|handheld' : 'handheld';
+			$_css_type = ($use_jquery && $this->k_tai_conf['jquery_no_reduce'])? 'all|screen|handheld' : 'handheld';
 			$rss = array();
 			if (preg_match_all('#<link([^>]+?)>#iS', $head, $match)) {
 				foreach($match[1] as $attrs) {
@@ -1364,7 +1366,11 @@ EOD;
 				}
 			}
 			if ($rss) {
-				$body = '<div style="font-size:0.9em">' . $r->Config_icons['RSS'] . join('<br />' . $r->Config_icons['RSS'], $rss) . '</div>' . $body;
+				if ($use_jquery && count($rss) > 1) {
+					$body = '<div data-role="collapsible" data-collapsed="true"><h4>RSS Links</h4>' . $r->Config_icons['RSS'] . join('<br />' . $r->Config_icons['RSS'], $rss) . '</div>' . $body;
+				} else {
+					$body = '<div style="font-size:0.9em">' . $r->Config_icons['RSS'] . join('<br />' . $r->Config_icons['RSS'], $rss) . '</div>' . $body;
+				}
 			}
 
 			if ($use_jquery) {
