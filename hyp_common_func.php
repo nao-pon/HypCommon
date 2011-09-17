@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.75 2011/08/26 04:55:15 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.76 2011/09/17 01:32:28 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1855,15 +1855,15 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 		$html = <<<EOD
 <div class="norich">
 <input type="checkbox" id="emoji_onoff_$id" onclick="if(this.checked){xoopsGetElementById('emoji_buttons_pre_$id').style.display='block';xoopsGetElementById('$id').focus();}else{xoopsGetElementById('emoji_buttons_pre_$id').style.display='none'};" /><label for="emoji_onoff_$id">$checkmsg</label>
-<div id="emoji_buttons_pre_$id" style="display:none;">
+<div id="emoji_buttons_pre_$id" class="image_button_base" style="display:none;width:256px;" onclick="return false;">
 EOD;
 		if ($useList) {
 			$i = 0;
 			foreach($emj_list as $emjcnt) {
-				$html .= '<a style="padding:1px;" href="#" onclick="hypEmojiPadSet(\''.$id.'\', \''.$emjcnt.'\'); return false;">[emj:'.$emjcnt.']</a>';
+				$html .= '<span style="padding:1px;cursor:pointer;" onclick="hypEmojiPadSet(\''.$id.'\', \''.$emjcnt.'\'); return false;">[emj:'.$emjcnt.']</span>';
 				$i++;
 				if ($i % 16 === 0) {
-					$html .= '<br />';
+					//$html .= '<br />';
 				}
 			}
 		} else {
@@ -1871,9 +1871,9 @@ EOD;
 				if ($emjline == 177) $emjline = 1001;
 				for ($emjcnt = $emjline; $emjcnt < $emjline + 16; $emjcnt++) {
 					if ($emjcnt > 1076) break;
-					$html .= '<a style="padding:1px;" href="#" onclick="hypEmojiPadSet(\''.$id.'\', \''.$emjcnt.'\'); return false;">[emj:'.$emjcnt.']</a>';
+					$html .= '<span style="padding:1px;cursor:pointer;" onclick="hypEmojiPadSet(\''.$id.'\', \''.$emjcnt.'\'); return false;">[emj:'.$emjcnt.']</span>';
 				}
-				$html .= '<br />';
+				//$html .= '<br />';
 			}
 		}
 		$html .= '</div></div>';
@@ -1903,13 +1903,22 @@ if (typeof hypEmojiPadSet != 'function') {
 	var clearDisplayId = "$clearDisplayId";
 	if (clearDisplayId && xoopsGetElementById(clearDisplayId)) xoopsGetElementById(clearDisplayId).style.display = '';
 	var html = '{$jshtml}';
-	if (html) document.write(html);
+	if (html) {
+		if (!!Prototype) {
+			document.observe("dom:loaded", function(){
+				$('emoji_button_pics_{$id}').innerHTML = html;
+			});
+		} else {
+			document.write(html);
+		}
+	}
 	if (!!XpWiki && Prototype.Browser.IE) {
 		$('emoji_buttons_pre_$id').observe('mousedown', function(){wikihwlper_caretPos();});
 	}
 })();
 // -->
 </script>
+<div id="emoji_button_pics_{$id}"></div>
 EOD;
 		return $ret;
 	}
@@ -2478,4 +2487,35 @@ if (! function_exists('file_get_contents')) {
 		fclose($fh);
 		return $data;
 	}
+}
+
+// htmlspecialchars_decode (PHP 5 >= 5.1.0)
+if (! function_exists('htmlspecialchars_decode')) {
+function htmlspecialchars_decode($string, $quote_style = null)
+{
+    // Sanity check
+    if (!is_scalar($string)) {
+        user_error('htmlspecialchars_decode() expects parameter 1 to be string, ' .
+            gettype($string) . ' given', E_USER_WARNING);
+        return;
+    }
+
+    if (!is_int($quote_style) && $quote_style !== null) {
+        user_error('htmlspecialchars_decode() expects parameter 2 to be integer, ' .
+            gettype($quote_style) . ' given', E_USER_WARNING);
+        return;
+    }
+
+    // The function does not behave as documented
+    // This matches the actual behaviour of the function
+    if ($quote_style & ENT_COMPAT || $quote_style & ENT_QUOTES) {
+        $from = array('&quot;', '&#039;', '&lt;', '&gt;', '&amp;');
+        $to   = array('"', "'", '<', '>', '&');
+    } else {
+        $from = array('&lt;', '&gt;', '&amp;');
+        $to   = array('<', '>', '&');
+    }
+
+    return str_replace($from, $to, $string);
+}
 }
