@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.76 2011/09/17 01:32:28 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.77 2011/09/17 01:41:39 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1862,9 +1862,6 @@ EOD;
 			foreach($emj_list as $emjcnt) {
 				$html .= '<span style="padding:1px;cursor:pointer;" onclick="hypEmojiPadSet(\''.$id.'\', \''.$emjcnt.'\'); return false;">[emj:'.$emjcnt.']</span>';
 				$i++;
-				if ($i % 16 === 0) {
-					//$html .= '<br />';
-				}
 			}
 		} else {
 			for ($emjline = 1; $emjline < 1077; $emjline += 16) {
@@ -1873,7 +1870,6 @@ EOD;
 					if ($emjcnt > 1076) break;
 					$html .= '<span style="padding:1px;cursor:pointer;" onclick="hypEmojiPadSet(\''.$id.'\', \''.$emjcnt.'\'); return false;">[emj:'.$emjcnt.']</span>';
 				}
-				//$html .= '<br />';
 			}
 		}
 		$html .= '</div></div>';
