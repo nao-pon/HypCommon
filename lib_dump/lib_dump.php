@@ -60,6 +60,13 @@ class MySQLDump {
 
 	var $removePrefix = '';
 
+	var $fileSize = 0;
+	var $maxFileSize = 0;
+
+	var $sqlFiles = array();
+	var $baseName = '';
+	var $extName = '';
+
 	/**
 	* Class constructor
 	* @param string $db The database name
@@ -121,8 +128,16 @@ class MySQLDump {
 	function setOutputFile($filepath){
 		if ( $this->isWritten )
 			return false;
-		$this->filename = $filepath;
+		$this->baseName = $this->filename = $filepath;
 		$this->file = $this->openFile($this->filename);
+
+		if (preg_match('#^(.+?)(\.[^.]+)$#', $this->filename, $match)) {
+			$this->baseName = $match[1];
+			$this->extName = $match[2];
+		}
+		if ($this->file) {
+			$this->sqlFiles[] = $this->filename;
+		}
 		return $this->file;
   }
 
@@ -226,33 +241,85 @@ class MySQLDump {
 		}
 		$insertStatement = @substr($insertStatement,0,-2).') VALUES';
 		$selectStatement = @substr($selectStatement,0,-2).' FROM `'.$table.'`';
+		$closeStatement = "\n-- --------------------------------------------------------\n\n";
+		$closeStatement .= "SET FOREIGN_KEY_CHECKS = 1;\n\n";
 
 		$records = @mysql_query($selectStatement);
 		$num_rows = @mysql_num_rows($records);
 		$num_fields = @mysql_num_fields($records);
+
+		$_i = 0;
+		$dataLen = 0;
+		$statementLen = strlen($insertStatement);
+		if (function_exists('mysql_real_escape_string')) {
+			$func_mysql_escape = create_function('$str', 'return mysql_real_escape_string($str);');
+		} else {
+			$func_mysql_escape = create_function('$str', 'return mysql_escape_string($str);');
+		}
 		// Dump data
 		if ( $num_rows > 0 ) {
 			$data .= $insertStatement;
+			$buf = '';
 			for ($i = 0; $i < $num_rows; $i++) {
 				$record = @mysql_fetch_assoc($records);
-				$data .= ' (';
+				$statementLen += strlen($buf);
+				$next = ' (';
 				for ($j = 0; $j < $num_fields; $j++) {
 					$field_name = @mysql_field_name($records, $j);
-					if ( $hexField[$j] && (@strlen($record[$field_name]) > 0) )
-						$data .= "0x".$record[$field_name];
-					else
-						$data .= "'".@str_replace('\"','"',@mysql_escape_string($record[$field_name]))."'";
-					$data .= ',';
+					if ( isset($hexField[$j]) && (@strlen($record[$field_name]) > 0) ) {
+						$next .= "0x".$record[$field_name];
+					} else {
+						$next .= "'".@str_replace('\"', '"', $func_mysql_escape($record[$field_name]))."'";
+					}
+					$next .= ',';
 				}
-				$data = @substr($data,0,-1).")";
-				$data .= ( $i < ($num_rows-1) ) ? ',' : ';';
-				$data .= "\n";
+				$next = rtrim($next, ',').')';
+				$next .= ( $i < ($num_rows-1) ) ? ',' : ';';
+				$next .= "\n";
+
+				$chkSize = strlen($buf.$next.$closeStatement);
+				$fileFull = ($this->maxFileSize && $this->maxFileSize < ($this->fileSize + $dataLen + $chkSize));
+				$statementFull = (1048576 < $statementLen + strlen($next));
+
+				if ($fileFull || $statementFull) {
+
+					if ($buf) {
+						$buf = substr($buf, 0, -2) . ";\n";
+					}
+
+					if ($fileFull) {
+						$this->saveToFile($this->file, ($data . $buf . $closeStatement));
+						$this->closeFile($this->file);
+						$name = $this->baseName . (++$_i) . $this->extName;
+						$this->setOutputFile($name);
+					} else {
+						$data .= $buf;
+					}
+
+					$buf = '';
+
+					if ($fileFull) {
+						$data = "SET FOREIGN_KEY_CHECKS = 1;\n\n";
+						$data .= "-- \n";
+						$data .= "-- Dumping data for table `$table_name` \n";
+						$data .= "-- \n\n";
+					}
+					$data .= $insertStatement;
+					$statementLen = strlen($insertStatement);
+				}
+
+				$data .= $buf;
+				$buf = $next;
+
 				//if data in greather than 1MB save
-				if (strlen($data) > 1048576) {
+				$dataLen = strlen($data);
+				if ($dataLen > 1048576) {
 					$this->saveToFile($this->file,$data);
 					$data = '';
+					$dataLen = 0;
 				}
 			}
+			$data .= $buf;
 			$data .= "\n-- --------------------------------------------------------\n\n";
 			$this->saveToFile($this->file,$data);
 		}
@@ -429,10 +496,13 @@ class MySQLDump {
 	* @access private
 	*/
 	function saveToFile($file, $data) {
-		if ( $this->compress )
+		$this->fileSize += strlen($data);
+		if ( $this->compress ) {
 			@gzwrite($file, $data);
-		else
+		} else {
 			@fwrite($file, $data);
+		}
+		fflush($file);
 		$this->isWritten = true;
 	}
 
@@ -440,10 +510,12 @@ class MySQLDump {
 	* @access private
 	*/
 	function closeFile($file) {
+		$this->fileSize = 0;
 		if ( $this->compress )
 			@gzclose($file);
 		else
 			@fclose($file);
+		$this->isWritten = false;
 	}
 }
 ?>
