@@ -1,5 +1,5 @@
 <?php
-// $Id: hyp_common_func.php,v 1.77 2011/09/17 01:41:39 nao-pon Exp $
+// $Id: hyp_common_func.php,v 1.78 2011/09/26 11:44:52 nao-pon Exp $
 // HypCommonFunc Class by nao-pon http://hypweb.net
 ////////////////////////////////////////////////
 
@@ -1987,7 +1987,7 @@ EOD;
 				return;
 			}
 		}
-		readfile($file);
+		@readfile($file);
 	}
 
 	function file_get_contents($filename, $incpath = false, $resource_context = null, $offset = -1, $maxlen = -1) {

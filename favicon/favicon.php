@@ -1,7 +1,7 @@
 <?php
 /*
  * Created on 2008/02/11 by nao-pon http://hypweb.net/
- * $Id: favicon.php,v 1.16 2011/08/26 04:47:21 nao-pon Exp $
+ * $Id: favicon.php,v 1.17 2011/09/26 11:44:52 nao-pon Exp $
  */
 
 /**
@@ -150,7 +150,7 @@ function output_image($icon, $time = 0)
     } else if ( HYP_X_SENDFILE_MODE === 1 ) {
     	header('X-LIGHTTPD-send-file: ' . $filename);
     } else {
-    	readfile($filename);
+    	@readfile($filename);
     }
     exit();
 }
