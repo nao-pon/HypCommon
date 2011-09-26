@@ -2,7 +2,7 @@
 /*
  * Created on 2008/06/17 by nao-pon http://hypweb.net/
  * License: GPL v2 or (at your option) any later version
- * $Id: hyp_ktai_render.php,v 1.54 2011/09/17 01:23:52 nao-pon Exp $
+ * $Id: hyp_ktai_render.php,v 1.55 2011/09/26 11:43:15 nao-pon Exp $
  */
 
 if (! function_exists('XC_CLASS_EXISTS')) {
@@ -1358,6 +1358,7 @@ class HypKTaiRender
 
 					case 'iPhone':
 					case 'iPod':
+					case 'iPad':
 					case 'Android':
 					case 'Windows Phone':
 						$max_size = 0;
@@ -1495,6 +1496,7 @@ class HypKTaiRender
 
 					case 'iphone':
 					case 'ipod':
+					case 'ipad':
 					case 'android':
 					case 'windows phone':
 						$this->keybutton = array(
