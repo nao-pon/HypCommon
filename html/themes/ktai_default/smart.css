@@ -18,10 +18,11 @@ textarea {
 	/*height: auto !important;*/
 	min-width: 60% !important;
 	max-width: 100% !important;
+	max-height: none !important;
 }
-textarea:focus, textarea:hover {
+/*textarea:focus, textarea:hover {
 	min-height: 15em !important;
-}
+}*/
 img {
 	max-width: 100% !important;
 	height: auto !important;
@@ -30,12 +31,21 @@ div,ul,li {
 	margin-left:0 !important;
 }
 .image_button_base {
-	width: 100% !important;
+	width: 90% !important;
 }
 .image_button_base img {
 	zoom: 2; !important;
-	padding: 5px !important;
+	padding: 3px !important;
 }
+.image_button_base img.img_zoom4 {
+	zoom: 4; !important;
+}
+.image_button_base span.button {
+	font-size: 14pt !important;
+	display: inline-block !important;
+}
+
+
 .video {
 	display: block;
 	position: relative;
