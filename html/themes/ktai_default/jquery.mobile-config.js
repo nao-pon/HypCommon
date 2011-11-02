@@ -1,7 +1,11 @@
-jQuery.noConflict();
-jQuery(document).bind("mobileinit", function(){
-	jQuery.mobile.ajaxEnabled = false;
-	jQuery.mobile.ajaxLinksEnabled = false;
-	jQuery.mobile.ajaxFormsEnabled = false;
-	jQuery.mobile.hashListeningEnabled = false;
+(function($){
+
+$.noConflict();
+
+$(document).bind("mobileinit", function(){
+//	$.mobile.ajaxEnabled = false;
+	$.mobile.hashListeningEnabled = false;
+	$.mobile.fixedToolbars.setTouchToggleEnabled(false);
 });
+
+}(jQuery));
