@@ -1913,8 +1913,6 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			                          'below' => '</div>'),
 			'footer'         => array( 'above' => '<div data-role="footer" data-theme="'.$this->k_tai_conf['jquery_theme'].'">',
 			                          'below' => '</div>'),
-			'headerlogo'     => array( 'above' => '<h1>',
-			                          'below' => '</h1><a href="#" style="margin-top:5px;" class="ui-btn-right" onclick="return jQuery.keitaiSwitchToPc();" data-role="button" data-inline="true">PC</a>'),
 			'easylogin'      => array( 'above' => '',
 			                          'below' => ''),
 			'blockMenu'      => array( 'above' => '<div data-role="header" style="line-height:1">',
