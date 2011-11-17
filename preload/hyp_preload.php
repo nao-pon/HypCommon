@@ -1063,6 +1063,13 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	function addHeadTag( $s ) {
 		if ($s === '' || strpos($s, '<html') === FALSE) return false;
 
+		if ($this->xpwiki_render_dirname && $this->xpwiki_render_use_wikihelper) {
+			$js = '<script type="text/javascript" src="'.XOOPS_URL.'/modules/'.$this->xpwiki_render_dirname.'/skin/loader.php?src=wikihelper_loader.js"></script>';
+			if (empty($GLOBALS['hyp_preload_head_tag']) || strpos($GLOBALS['hyp_preload_head_tag'], $js) === false) {
+				$GLOBALS['hyp_preload_head_tag'] .= "\n" . $js;
+			}
+		}
+
 		if (! empty($GLOBALS['hyp_preload_head_tag'])) {
 			$s = str_replace('</head>', $GLOBALS['hyp_preload_head_tag'] . '</head>', $s);
 		}
