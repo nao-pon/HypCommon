@@ -61,6 +61,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 	var $wizMobileUse = FALSE;
 	var $detect_order_org = array();
+	var $changeContentLength = false;
 
 	// コンストラクタ
 	function HypCommonPreLoadBase (& $controller) {
@@ -1134,7 +1135,18 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			list($head, $body) = array_pad(explode('</head>', $s, 2), 2, '');
 			if (! $body) return false;
 			$s = $head . $GLOBALS['hyp_preload_head_tag'] . '</head>' . $body;
+			$this->changeContentLength = true;
 		}
+
+		if ($this->changeContentLength && function_exists('headers_list')) {
+			foreach (headers_list() as $header) {
+				if (preg_match('/^Content-Length:/i', $header)) {
+					header('Content-Length: ' . strlen($s));
+					break;
+				}
+			}
+ 		}
+ 		
 		return $s;
 	}
 
@@ -1145,7 +1157,14 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (function_exists('mb_convert_encoding') && $this->configEncoding && $this->encode !== $this->configEncoding) {
 			$this->msg_words_highlight = mb_convert_encoding($this->msg_words_highlight, $this->encode, $this->configEncoding);
 		}
-		return HypGetQueryWord::word_highlight($s, (defined($this->q_word2)? constant($this->q_word) . ' ' . constant($this->q_word2) : constant($this->q_word)), $this->encode, $this->msg_words_highlight, $this->extlink_class_name);
+		
+		$ret = HypGetQueryWord::word_highlight($s, (defined($this->q_word2)? constant($this->q_word) . ' ' . constant($this->q_word2) : constant($this->q_word)), $this->encode, $this->msg_words_highlight, $this->extlink_class_name);
+		
+		if (strlen($s) === $ret) return false;
+		
+		$this->changeContentLength = true;
+		
+		return $ret;
 	}
 
 	function smartRedirect( $s ) {
@@ -1217,6 +1236,7 @@ EOD;
 				$s = preg_replace('#</body>#i', $js_foot . '$0', $s);
 			}
 			unset($_SESSION['hyp_redirect_message'], $_SESSION['hyp_redirect_wait']);
+			$this->changeContentLength = true;
 			return $s;
 		}
 	}
@@ -1245,6 +1265,7 @@ EOD;
 			return preg_replace('/<form[^>]+?>/isS' ,
 				"$0".$insert, $s);
 		}
+		$this->changeContentLength = true;
 		return $s;
 	}
 
@@ -1724,7 +1745,9 @@ EOD;
 		header('Content-Type: ' . $ctype . '; charset=' . $charset);
 		header('Content-Length: ' . strlen($s));
 		header('Cache-Control: no-cache');
-
+		
+		$this->changeContentLength = true;
+		
 		return $s;
 	}
 
@@ -1741,7 +1764,9 @@ EOD;
 			$mpc->setString($str, FALSE);
 			$str = $mpc->autoConvertModKtai();
 		}
-
+		
+		$this->changeContentLength = true;
+		
 		return $str;
 	}
 
@@ -1752,6 +1777,9 @@ EOD;
 
 			$str = mb_convert_encoding($str, 'UTF-8', $this->encode);
 			header('Content-Type: text/html; charset=UTF-8');
+			
+			$this->changeContentLength = true;
+			
 			return $str;
 		} else {
 			return false;
