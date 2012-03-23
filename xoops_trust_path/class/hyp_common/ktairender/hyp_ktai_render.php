@@ -438,19 +438,19 @@ class HypKTaiRender
 		$body = str_replace(array('<ns>', '</ns>'), '', $body);
 
 		if (! $this->Config_no_diet) {
-		// Optimize query strings
-		$_func = create_function(
-			'$match',
-			'if ($match[3][0] === \'?\') $match[3] = preg_replace(\'/^.*?'.$h_reg.'(#[^#]+)?$/\', \'?' . str_replace("'", "\\'", $this->SERVER['QUERY_STRING']) . '$1\', $match[3]);' .
-			'$match[3] = preg_replace(\'/(?:&(?:amp;)?)+/\', \'&amp;\', $match[3]);' .
-			'$match[3] = str_replace(\'?&amp;\', \'?\', $match[3]);' .
-			'$match[3] = str_replace(array(\'?#\', \'&amp;#\'), \'#\', $match[3]);' .
-			'return $match[1] . $match[3] . (isset($match[4])? $match[4] : \'\');'
-		);
-		$_reg = '#(<a[^>]*? href=([\'"])?)([^\s"\'>]+)(\\2)?#isS';
-		$header = preg_replace_callback($_reg, $_func, $header);
-		$body   = preg_replace_callback($_reg, $_func, $body);
-		$footer = preg_replace_callback($_reg, $_func, $footer);
+			// Optimize query strings
+			$_func = create_function(
+				'$match',
+				'if ($match[3][0] === \'?\') $match[3] = preg_replace(\'/^.*?'.$h_reg.'(#[^#]+)?$/\', \'?' . str_replace("'", "\\'", $this->SERVER['QUERY_STRING']) . '$1\', $match[3]);' .
+				'$match[3] = preg_replace(\'/(?:&(?:amp;)?)+/\', \'&amp;\', $match[3]);' .
+				'$match[3] = str_replace(\'?&amp;\', \'?\', $match[3]);' .
+				'$match[3] = str_replace(array(\'?#\', \'&amp;#\'), \'#\', $match[3]);' .
+				'return $match[1] . $match[3] . (isset($match[4])? $match[4] : \'\');'
+			);
+			$_reg = '#(<a[^>]*? href=([\'"])?)([^\s"\'>]+)(\\2)?#isS';
+			$header = preg_replace_callback($_reg, $_func, $header);
+			$body   = preg_replace_callback($_reg, $_func, $body);
+			$footer = preg_replace_callback($_reg, $_func, $footer);
 		}
 
 		if ($googleAdsenseHtml) {
