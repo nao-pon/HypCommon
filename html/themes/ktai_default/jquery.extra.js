@@ -6,27 +6,32 @@ $(document).ready(function (){
 	});
 
 
-	$("#keitaiblockmenu a, #keitaifixedbar_main").bind('click', function(){
-		return $.keitaiShowBlock( $.mobile.path.stripHash($(this).attr('href')) );
+	$("#keitaiblockmenu a, #keitaifixedbar_main").bind('tap', function(e){
+		e.stopPropagation();
+		e.preventDefault();
+		$.keitaiShowBlock( $.mobile.path.stripHash($(this).attr('href')) );
+		//return $.keitaiShowBlock( $.mobile.path.stripHash($(this).attr('href')) );
 	});
 
-	$("#keitaifixedbar_block").bind('tap', function(){
+	$("#keitaifixedbar_block").bind('tap', function(e){
+		e.stopPropagation();
+		e.preventDefault();
 		$('#keitaiblockmenu').toggle();
-		//$.mobile.fixedToolbars.show(true);
-		return false;
+		//return false;
 	});
 });
 
 $.extend({
 	keitaiShowBlock: function(id) {
-		var target = $('#'+id);
 		$('#keitaiblockmenu').hide();
+		var target = $('#'+id);
 		if (target) {
 			var offset = target.offset();
 			if (offset == null) {
 				$.mobile.silentScroll(2);
 			} else {
 				target.trigger('expand');
+				//top = offset.top;
 				$.mobile.silentScroll(offset.top);
 			}
 		}
