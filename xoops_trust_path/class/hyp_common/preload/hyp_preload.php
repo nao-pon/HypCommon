@@ -301,8 +301,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					unset($_COOKIE['_hypktaipc']);
 				}
 			}
+			$_k_tai_ua_regex = isset($this->k_tai_conf['ua_regex#'.XOOPS_URL])? $this->k_tai_conf['ua_regex#'.XOOPS_URL] : $this->k_tai_conf['ua_regex'];
 			if (empty($_COOKIE['_hypktaipc']) && isset($_SERVER['HTTP_USER_AGENT']) &&
-				preg_match($this->k_tai_conf['ua_regex'], $_SERVER['HTTP_USER_AGENT'])) {
+				preg_match($_k_tai_ua_regex, $_SERVER['HTTP_USER_AGENT'])) {
 
 				// Reset each site values.
 				foreach (array_keys($this->k_tai_conf) as $key) {
