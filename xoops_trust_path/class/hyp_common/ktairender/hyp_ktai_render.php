@@ -515,7 +515,8 @@ class HypKTaiRender
 	}
 	
 	function _check_checkbox_smart($match) {
-		if (strpos($match[1], '<label') !== false || strpos($match[3], '<label') !== false) {
+		static $reg = '#<label[^>]+for=#i';
+		if (preg_match($reg, $match[1]) || preg_match($reg, $match[3])) {
 			return $match[0];
 		}
 		return $this->_check_checkbox_smart_check($match[1]).$match[2].' data-role="none">'.$this->_check_checkbox_smart_check($match[3]);
