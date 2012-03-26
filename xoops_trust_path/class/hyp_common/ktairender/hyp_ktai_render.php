@@ -496,12 +496,31 @@ class HypKTaiRender
 		// "on*" 属性のあるフォームエレメントは jqm で装飾しない
 		$body = preg_replace('#(<(?:input|select|textarea))([^>]+? on[^>]+>)#iS', '$1 data-role="none"$2', $body);
 
+		// jqm 1.1.0 から checkbox, radio に <label> が必須になった？
+		// @todo jqm バージョンアップ時に確認すること
+		$body = preg_replace_callback('#(<[^>]+>[^<>]*)(<input[^>]+type=["\']?(?:checkbox|radio)[^>/]+)/?'.'>([^<>]*<[^>]+>)#i', array(& $this, '_check_checkbox_smart'), $body);
+		
 		// give data-ajax="false"
 		$body = preg_replace_callback('#(<script.+?/script>)|((<(?:a|form)[^>]+?)((?:href|action)=("|\')([^>]+?)\\5)([^>]*?>))#isS', array(& $this, '_check_href_smart'), $body);
 
 		return $body;
 	}
 
+	function _check_checkbox_smart_check($tag) {
+		if (preg_match('#([^<>]*<input[^>]+type=["\']?(?:checkbox|radio)[^>/]+)/?>([^<>]*)#i', $tag, $match)) {
+			return $match[1].' data-role="none">'.$match[2];
+		} else {
+			return $tag;
+		}
+	}
+	
+	function _check_checkbox_smart($match) {
+		if (strpos($match[1], '<label') !== false || strpos($match[3], '<label') !== false) {
+			return $match[0];
+		}
+		return $this->_check_checkbox_smart_check($match[1]).$match[2].' data-role="none">'.$this->_check_checkbox_smart_check($match[3]);
+	}
+	
 	function _check_href_smart($match) {
 		if ($match[1] || strpos($match[2], 'data-ajax=') !== false) {
 			return $match[0];
