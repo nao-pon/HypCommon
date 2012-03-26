@@ -1416,17 +1416,17 @@ EOD;
 				$blockmenu = join('</li><li>', $blockmenu);
 				$body .= <<<EOD
 <!--blockMenu-->
-<div data-role="header">
+<div id="keitaiblockmenu" data-role="footer">
+ <div data-role="navbar">
+  <ul><li>{$blockmenu}</li></ul>
+ </div>
+</div>
+<div data-role="footer">
  <a href="{$_url}" data-ajax="false" data-icon="home" data-iconpos="notext">Home</a>
  <h4>
   <a id="keitaifixedbar_main" href="#keitaiMainContents" data-ajax="false" style="display:inline;text-decoration:none;"><pagetitle></a>
  </h4>
  <a id="keitaifixedbar_block" href="#" data-ajax="false" data-icon="grid" data-iconpos="notext">block</a>
- <div id="keitaiblockmenu" style="display:none" data-role="header">
-  <div data-role="navbar">
-   <ul><li>{$blockmenu}</li></ul>
-  </div>
- </div>
 </div>
 <!--/blockMenu-->
 EOD;
