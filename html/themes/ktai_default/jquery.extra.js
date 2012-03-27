@@ -34,6 +34,9 @@ $.extend({
 
 		var target = $('#'+id);
 		var scrTo;
+		var doc = $($.browser.safari ? 'body' : 'html');
+		var speed = 600;
+
 		if (target) {
 			var offset = target.offset();
 			if (offset == null) {
@@ -42,8 +45,8 @@ $.extend({
 				target.trigger('expand');
 				scrTo = offset.top;
 			}
-			setTimeout(function(){$.mobile.silentScroll(scrTo);}, 100);
 			//$.mobile.silentScroll(scrTo);
+			doc.stop().animate({ scrollTop: scrTo } , { duration : speed });
 		}
 	},
 
