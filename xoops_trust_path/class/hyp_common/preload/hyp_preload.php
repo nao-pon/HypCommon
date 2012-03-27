@@ -1263,8 +1263,11 @@ EOD;
 		}
 		if ($insert) {
 			$insert = "\n".$insert."\n";
-			return preg_replace('/<form[^>]+?>/isS' ,
-				"$0".$insert, $s);
+			return preg_replace_callback('#(<script.+?/script>)|<form[^>]+?>#isS',
+				create_function('$match','
+					if ($match[1]) return $match[0];
+					return $match[0].\''.$insert.'\';
+				'), $s);
 		}
 		$this->changeContentLength = true;
 		return $s;
