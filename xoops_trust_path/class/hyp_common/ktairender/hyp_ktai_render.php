@@ -1363,7 +1363,7 @@ class HypKTaiRender
 //				$this->vars['ua']['ver'] = $ua_vers = isset($match[2])? $match[2] : '';
 			$carrier = 'unknown';
 			//if ( preg_match('#((Android|Windows Phone|BlackBerry|(?:web|hpw)OS))#', $this->SERVER['HTTP_USER_AGENT'], $match)
-			if ( preg_match('#((Android|Windows Phone)#', $this->SERVER['HTTP_USER_AGENT'], $match)
+			if ( preg_match('#((Android|Windows Phone))#', $this->SERVER['HTTP_USER_AGENT'], $match)
 			  || preg_match('#(?:^(?:KDDI-([^\s]+) |Mozilla/[0-9.]+\s*\()?|\b)([a-zA-Z.-]+)(?:/([0-9.]+)(?:(?:/| )([a-zA-Z0-9.-]+))?)?#', $this->SERVER['HTTP_USER_AGENT'], $match)
 			   ) {
 
