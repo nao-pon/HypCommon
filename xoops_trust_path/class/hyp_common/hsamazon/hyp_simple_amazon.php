@@ -44,6 +44,7 @@ class HypSimpleAmazon
 	);
 	var $marketplace_listup = FALSE;
 	var $ServiceName = 'amazon';
+	var $parseXml = true;
 
 	function HypSimpleAmazon ($AssociateTag = '', $AccessKeyId = null, $SecretAccessKey = null) {
 
@@ -167,20 +168,24 @@ class HypSimpleAmazon
 			if ($ht->rc === 200 || $ht->rc === 403) {
 				$data = $ht->data;
 
-				$xm = new HypSimpleXML();
-
-				$this->xml = $xm->XMLstr_in($data);
-				//var_dump($this->xml);exit();
-				if ($xm->error) {
-					$this->error = $xm->error;
-				} else if ($error = @ $this->xml['Items']['Request']['Errors']['Error']) {
-					$this->error = mb_convert_encoding($error['Message'], $this->encoding, 'UTF-8');
-				} else if ($error = @ $this->xml['Items'][0]['Request']['Errors']['Error']) {
-					$this->error = mb_convert_encoding($error['Message'], $this->encoding, 'UTF-8');
-				} else if ($error = @ $this->xml['OperationRequest']['Errors']['Error']) {
-					$this->error = $error['Code'] . ': ' . mb_convert_encoding($error['Message'], $this->encoding, 'UTF-8');
-				} else if ($error = @ $this->xml['Error']) {
-					$this->error = $error['Code'] . ': ' . mb_convert_encoding($error['Message'], $this->encoding, 'UTF-8');
+				if (! $this->parseXml) {
+					$this->xml = '';
+				} else {
+					$xm = new HypSimpleXML();
+	
+					$this->xml = $xm->XMLstr_in($data);
+					//var_dump($this->xml);exit();
+					if ($xm->error) {
+						$this->error = $xm->error;
+					} else if ($error = @ $this->xml['Items']['Request']['Errors']['Error']) {
+						$this->error = mb_convert_encoding($error['Message'], $this->encoding, 'UTF-8');
+					} else if ($error = @ $this->xml['Items'][0]['Request']['Errors']['Error']) {
+						$this->error = mb_convert_encoding($error['Message'], $this->encoding, 'UTF-8');
+					} else if ($error = @ $this->xml['OperationRequest']['Errors']['Error']) {
+						$this->error = $error['Code'] . ': ' . mb_convert_encoding($error['Message'], $this->encoding, 'UTF-8');
+					} else if ($error = @ $this->xml['Error']) {
+						$this->error = $error['Code'] . ': ' . mb_convert_encoding($error['Message'], $this->encoding, 'UTF-8');
+					}
 				}
 			} else {
 				$this->xml = '';
