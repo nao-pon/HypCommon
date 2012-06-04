@@ -516,7 +516,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				define ('HYP_GET_ENCODING', strtoupper(mb_detect_encoding($enchint)));
 				$_GET = HypCommonFunc::input_filter($_GET, $this->input_filter_strength, HYP_GET_ENCODING);
 				if (HYP_GET_ENCODING !== $this->encode) {
-					mb_convert_variables($this->encode, HYP_GET_ENCODING, $_GET);
+					mb_convert_variables(($this->encode === 'EUC-JP')? 'eucJP-win' : $this->encode, (HYP_POST_ENCODING === 'EUC-JP')? 'eucJP-win' : HYP_POST_ENCODING, $_GET);
 					if (isset($_GET['charset'])) $_GET['charset'] = $this->encode;
 				}
 			} else {
@@ -570,7 +570,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 			// 文字コードを正規化
 			if (! $this->wizMobileUse && defined('HYP_POST_ENCODING') && $this->encode !== HYP_POST_ENCODING) {
-				mb_convert_variables($this->encode, HYP_POST_ENCODING, $_POST);
+				mb_convert_variables(($this->encode === 'EUC-JP')? 'eucJP-win' : $this->encode, (HYP_POST_ENCODING === 'EUC-JP')? 'eucJP-win' : HYP_POST_ENCODING, $_POST);
 				if (isset($_POST['charset'])) $_POST['charset'] = $this->encode;
 			}
 
