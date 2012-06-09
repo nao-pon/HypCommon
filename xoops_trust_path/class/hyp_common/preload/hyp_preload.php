@@ -246,6 +246,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->xpwiki_render_dirname)) $this->xpwiki_render_dirname = '';
 		if (! isset($this->xpwiki_render_use_wikihelper)) $this->xpwiki_render_use_wikihelper = 0;
 		if (! isset($this->xpwiki_render_notuse_wikihelper_modules)) $this->xpwiki_render_notuse_wikihelper_modules = array();
+		if (! isset($this->misc_head_last_tag)) $this->misc_head_last_tag = '';
 
 		// init
 		$this->nowModuleDirname = '';
@@ -253,7 +254,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 		// Load conf file.
 		$conffile = XOOPS_TRUST_PATH . HYP_COMMON_PRELOAD_CONF;
-		$sections = array('main_switch', 'xpwiki_render', 'spam_block');
+		$sections = array('main_switch', 'xpwiki_render', 'spam_block', 'misc');
 		if (is_file($conffile) && $conf = parse_ini_file($conffile, true)) {
 			foreach($conf as $name => $section) {
 				if ($name === 'k_tai_conf') {
@@ -1130,6 +1131,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					$GLOBALS['hyp_preload_head_tag'] .= "\n" . $js;
 				}
 			}
+		}
+		
+		if (! defined('HYP_COMMON_HYPCONF_ADMIN_MODE') && $this->misc_head_last_tag) {
+			$_tag = $this->misc_head_last_tag;
+			$_tag = str_replace(array('<{$xoops_url}>', '[XOOPS_URL]'), XOOPS_URL, $_tag);
+			$GLOBALS['hyp_preload_head_tag'] .= "\n" . $_tag;
 		}
 
 		if (! empty($GLOBALS['hyp_preload_head_tag'])) {

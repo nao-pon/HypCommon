@@ -22,6 +22,7 @@ define($constpref.'_ADMENU_K_TAI_CONF' , '¥â¥Ð¥¤¥ëÂÐ±þ¤ÎÀßÄê');
 define($constpref.'_ADMENU_MYBLOCKSADMIN' , '¥¢¥¯¥»¥¹¸¢¸ÂÀßÄê');
 define($constpref.'_ADMENU_XPWIKI_RENDER', 'xpWiki¥ì¥ó¥À¥é¡¼ÀßÄê');
 define($constpref.'_ADMENU_SPAM_BLOCK', '¥¹¥Ñ¥àËÉ»ßÀßÄê');
+define($constpref.'_ADMENU_MISC', '¤½¤ÎÂ¾¤ÎÀßÄê');
 
 // notice error
 define($constpref.'_MAIN_SWITCH_NOT_ENABLE', '¥á¥¤¥ó¥¹¥¤¥Ã¥Á¤Ç¡Ö<b>$1</b>¡×¤¬Ìµ¸ú¤Ë¤Ê¤Ã¤Æ¤¤¤Þ¤¹¡£¤³¤³¤Ç¤ÎÀßÄê¤òµ¡Ç½¤µ¤»¤ë¤¿¤á¤Ë¤Ï¡¢¥á¥¤¥ó¥¹¥¤¥Ã¥Á¤Ç¡Ö<b>$1</b>¡×¤òÍ­¸ú¤Ë¤·¤Æ¤¯¤À¤µ¤¤¡£');
@@ -122,5 +123,9 @@ define($constpref.'_POST_SPAM_BADIP_FOREVER', '<b>ProtectorÏ¢·È</b>: Ìµ´ü¸Â¥¢¥¯¥
 define($constpref.'_POST_SPAM_BADIP_FOREVER_DESC', '');
 define($constpref.'_POST_SPAM_BADIP_TTL0', '<b>ProtectorÏ¢·È</b>: Ìµ´ü¸Â¥¢¥¯¥»¥¹µñÈÝ·ÑÂ³»þ´Ö[ÉÃ] (0:ËÜÅö¤ËÌµ´ü¸Â)');
 define($constpref.'_POST_SPAM_BADIP_TTL0_DESC', '');
+
+// misc
+define($constpref.'_MISC_HEAD_LAST_TAG', '&lt;head&gt;Æâ¤ÎºÇ¸å¤ËÁÞÆþ¤¹¤ë¥¿¥°');
+define($constpref.'_MISC_HEAD_LAST_TAG_DESC', '¤³¤³¤Ëµ­½Ò¤·¤¿ÆâÍÆ¤¬ &lt;/head&gt; ¤ÎÄ¾Á°¤ËÁÞÆþ¤µ¤ì¤Þ¤¹¡£&lt;meta&gt;, &lt;script&gt;, &lt;link&gt; ¥¿¥°¤Ê¤É¤¬µ­½Ò¤Ç¤­¤Þ¤¹¡£<br />&lt;{$xoops_url}&gt; ¤Þ¤¿¤Ï [XOOPS_URL] ¤Ï "'.XOOPS_URL.'" ¤ËÃÖ´¹¤µ¤ì¤Þ¤¹¡£');
 
 }

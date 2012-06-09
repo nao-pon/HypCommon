@@ -24,6 +24,10 @@ $adminmenu = array(
 		'link' => 'admin/index.php?mode=admin&page=spam_block' ,
 	),
 	array(
+		'title' => hypconf_constant( $constpref.'_ADMENU_MISC' ) ,
+		'link' => 'admin/index.php?mode=admin&page=misc' ,
+	),
+	array(
 		'title' => 'PHP info' ,
 		'link' => 'admin/index.php?mode=admin&page=phpinfo' ,
 	)

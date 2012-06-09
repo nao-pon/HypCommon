@@ -22,6 +22,7 @@ define($constpref.'_ADMENU_K_TAI_CONF' , 'モバイル対応の設定');
 define($constpref.'_ADMENU_MYBLOCKSADMIN' , 'アクセス権限設定');
 define($constpref.'_ADMENU_XPWIKI_RENDER', 'xpWikiレンダラー設定');
 define($constpref.'_ADMENU_SPAM_BLOCK', 'スパム防止設定');
+define($constpref.'_ADMENU_MISC', 'その他の設定');
 
 // notice error
 define($constpref.'_MAIN_SWITCH_NOT_ENABLE', 'メインスイッチで「<b>$1</b>」が無効になっています。ここでの設定を機能させるためには、メインスイッチで「<b>$1</b>」を有効にしてください。');
@@ -122,5 +123,9 @@ define($constpref.'_POST_SPAM_BADIP_FOREVER', '<b>Protector連携</b>: 無期限
 define($constpref.'_POST_SPAM_BADIP_FOREVER_DESC', '');
 define($constpref.'_POST_SPAM_BADIP_TTL0', '<b>Protector連携</b>: 無期限アクセス拒否継続時間[秒] (0:本当に無期限)');
 define($constpref.'_POST_SPAM_BADIP_TTL0_DESC', '');
+
+// misc
+define($constpref.'_MISC_HEAD_LAST_TAG', '&lt;head&gt;内の最後に挿入するタグ');
+define($constpref.'_MISC_HEAD_LAST_TAG_DESC', 'ここに記述した内容が &lt;/head&gt; の直前に挿入されます。&lt;meta&gt;, &lt;script&gt;, &lt;link&gt; タグなどが記述できます。<br />&lt;{$xoops_url}&gt; または [XOOPS_URL] は "'.XOOPS_URL.'" に置換されます。');
 
 }

@@ -22,6 +22,7 @@ define($constpref.'_ADMENU_K_TAI_CONF' , 'Setup for mobile');
 define($constpref.'_ADMENU_MYBLOCKSADMIN' , 'Permissions Setting');
 define($constpref.'_ADMENU_XPWIKI_RENDER', 'xpWiki renderer');
 define($constpref.'_ADMENU_SPAM_BLOCK', 'SPAM blocker');
+define($constpref.'_ADMENU_MISC', 'MISC.');
 
 // notice error
 define($constpref.'_MAIN_SWITCH_NOT_ENABLE', '"<b>$1</b>" is invalid with the main switch. In order to operate a setup here, please validate "<b>$1</b>" with a main switch.');
@@ -122,5 +123,9 @@ define($constpref.'_POST_SPAM_BADIP_FOREVER', '<b>Protector cooperation</b>: Acc
 define($constpref.'_POST_SPAM_BADIP_FOREVER_DESC', '');
 define($constpref.'_POST_SPAM_BADIP_TTL0', '<b>Protector cooperation</b>: Indefinite duration access denied [s] (0: indeed indefinitely)');
 define($constpref.'_POST_SPAM_BADIP_TTL0_DESC', '');
+
+// misc
+define($constpref.'_MISC_HEAD_LAST_TAG', 'TAG inserted in last of &lt;head&gt;');
+define($constpref.'_MISC_HEAD_LAST_TAG_DESC', 'The contents described here are inserted just before &lt;/head&gt;. &lt;meta&gt;, &lt;script&gt;, &lt;link&gt;, etc. are can describe.<br />&lt;{$xoops_url}&gt; or [XOOPS_URL] is replaced to  "'.XOOPS_URL.'".');
 
 }
