@@ -11,7 +11,7 @@ $constpref = '_MI_' . strtoupper( $mydirname ) ;
 
 $modversion['name'] = constant($constpref.'_NAME') ;
 $modversion['description'] = constant($constpref.'_DESC') ;
-$modversion['version'] = 1.01 ;
+$modversion['version'] = 1.02 ;
 $modversion['credits'] = 'hypweb.net';
 $modversion['author'] = 'nao-pon<br />hypweb.net(http://xoops.hypweb.net/)' ;
 $modversion['help'] = '' ;
