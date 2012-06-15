@@ -45,6 +45,7 @@ class HypSimpleAmazon
 	var $marketplace_listup = FALSE;
 	var $ServiceName = 'amazon';
 	var $parseXml = true;
+	var $releaseTime = array();
 
 	function HypSimpleAmazon ($AssociateTag = '', $AccessKeyId = null, $SecretAccessKey = null) {
 
@@ -887,6 +888,7 @@ class HypSimpleAmazon
 		}
 		if ($timeString) {
 			$item['ReleaseUTIME'] = intval(@ strtotime($timeString, strtotime(date('Y').'/1/1')));
+			$this->releaseTime[trim($item['ItemAttributes']['Title'])] = $item['ReleaseUTIME'];
 			$this->newestTime = max($item['ReleaseUTIME'], $this->newestTime);
 		}
 		return $timeString;
@@ -931,6 +933,11 @@ class HypSimpleAmazon
 			$str = mb_substr($str, 0, $len) . '...';
 		}
 		return $str;
+	}
+	
+	function getReleaseTime($title) {
+		$title = mb_convert_encoding(trim($title), 'UTF-8', $this->encoding);
+		return isset($this->releaseTime[$title])? $this->releaseTime[$title] : $this->newestTime;
 	}
 }
 
