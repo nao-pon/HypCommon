@@ -127,5 +127,7 @@ define($constpref.'_POST_SPAM_BADIP_TTL0_DESC', '');
 // misc
 define($constpref.'_MISC_HEAD_LAST_TAG', 'TAG inserted in last of &lt;head&gt;');
 define($constpref.'_MISC_HEAD_LAST_TAG_DESC', 'The contents described here are inserted just before &lt;/head&gt;. &lt;meta&gt;, &lt;script&gt;, &lt;link&gt;, etc. are can describe.<br />&lt;{$xoops_url}&gt; or [XOOPS_URL] is replaced to  "'.XOOPS_URL.'".');
+define($constpref.'_XOOPSTPL_PLUGINS_DIR', 'Directorys of smarty plugins(Priority order)');
+define($constpref.'_XOOPSTPL_PLUGINS_DIR_DESC', 'Specify the directory where Smarty plug-in has been saved. Please write line by line in order of preference from top to bottom. (Files in a directory on the file of the same name if there was a will be used)<br />Returns to the initial value of XOOPS When you save us without anything.<br />If you want to manage your own plug-ins are used in top priority and write, such as "'.XOOPS_TRUST_PATH.'/lib/my_smartyplugins" at the top, and put your own plug-ins in that directory.<br />* If you do not have expertise, it is recommended that you do not change, including the priorities for the directory that is displayed in the initial state.');
 
 }

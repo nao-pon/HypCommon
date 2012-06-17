@@ -247,7 +247,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->xpwiki_render_use_wikihelper)) $this->xpwiki_render_use_wikihelper = 0;
 		if (! isset($this->xpwiki_render_notuse_wikihelper_modules)) $this->xpwiki_render_notuse_wikihelper_modules = array();
 		if (! isset($this->misc_head_last_tag)) $this->misc_head_last_tag = '';
-
+		if (! isset($this->xoopstpl_plugins_dir)) $this->xoopstpl_plugins_dir = '';
+		
 		// init
 		$this->nowModuleDirname = '';
 		$this->detect_order_org = mb_detect_order();
@@ -415,35 +416,41 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 	function preBlockFilter()
 	{
-		// Use K_TAI Render (XCL only)
-		if (defined('XOOPS_CUBE_LEGACY') && defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
-
-			// Set theme set
-			if (isset($this->k_tai_conf['themeSet']) && is_file(XOOPS_THEME_PATH . '/' . $this->k_tai_conf['themeSet'] . '/theme.html')) {
-				$GLOBALS['xoopsConfig']['theme_set'] = $this->k_tai_conf['themeSet'];
-				$this->mRoot->mContext->setThemeName($this->k_tai_conf['themeSet']);
-				$this->mRoot->mDelegateManager->add( 'XoopsTpl.New' , array(& $this , '_xoopsConfig_theme_set' ) , XCUBE_DELEGATE_PRIORITY_FIRST) ;
+		// XCL only
+		if (defined('XOOPS_CUBE_LEGACY')) {
+			
+			// xoopsTpl plugins dir
+			$this->mRoot->mDelegateManager->add( 'Legacy_RenderSystem.SetupXoopsTpl' , array(& $this , '_xoopsConfig_tpl_hook' ) , XCUBE_DELEGATE_PRIORITY_FINAL) ;
+			
+			// Use K_TAI Render 
+			if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
+				// Set theme set
+				if (isset($this->k_tai_conf['themeSet']) && is_file(XOOPS_THEME_PATH . '/' . $this->k_tai_conf['themeSet'] . '/theme.html')) {
+					$GLOBALS['xoopsConfig']['theme_set'] = $this->k_tai_conf['themeSet'];
+					$this->mRoot->mContext->setThemeName($this->k_tai_conf['themeSet']);
+					$this->mRoot->mDelegateManager->add( 'XoopsTpl.New' , array(& $this , '_xoopsConfig_theme_set' ) , XCUBE_DELEGATE_PRIORITY_FIRST) ;
+				}
+	
+				// Set template set
+				if (! empty($this->k_tai_conf['templateSet'])) {
+					$GLOBALS['xoopsConfig']['template_set'] = $this->k_tai_conf['templateSet'];
+					$this->mRoot->mDelegateManager->add( 'XoopsTpl.New' , array(& $this , '_xoopsConfig_template_set' ) , XCUBE_DELEGATE_PRIORITY_FIRST) ;
+				}
+				
+		        // For cubeUtils (disable auto login)
+		        $config_handler =& xoops_gethandler('config');
+		        $moduleConfigCubeUtils =& $config_handler->getConfigsByDirname('cubeUtils');
+				if ($moduleConfigCubeUtils) {
+		        	$moduleConfigCubeUtils['cubeUtils_use_autologin'] = FALSE;
+				}
+	
+				include_once(dirname(dirname(__FILE__)).'/xc_classes/disabledBlock.php');
+				$this->mRoot->mDelegateManager->add( 'Legacy_Utils.CreateBlockProcedure' , array(& $this , 'blockControlXCL' )) ;
+	
+				// For STD cache module (cache disabled)
+				$this->mController->mSetBlockCachePolicy->add(array(& $this, '_stdCacheHook'), XCUBE_DELEGATE_PRIORITY_FIRST + 11);
+				$this->mController->mSetModuleCachePolicy->add(array(& $this, '_stdCacheHook'), XCUBE_DELEGATE_PRIORITY_FIRST + 11);
 			}
-
-			// Set template set
-			if (! empty($this->k_tai_conf['templateSet'])) {
-				$GLOBALS['xoopsConfig']['template_set'] = $this->k_tai_conf['templateSet'];
-				$this->mRoot->mDelegateManager->add( 'XoopsTpl.New' , array(& $this , '_xoopsConfig_template_set' ) , XCUBE_DELEGATE_PRIORITY_FIRST) ;
-			}
-
-	        // For cubeUtils (disable auto login)
-	        $config_handler =& xoops_gethandler('config');
-	        $moduleConfigCubeUtils =& $config_handler->getConfigsByDirname('cubeUtils');
-			if ($moduleConfigCubeUtils) {
-	        	$moduleConfigCubeUtils['cubeUtils_use_autologin'] = FALSE;
-			}
-
-			include_once(dirname(dirname(__FILE__)).'/xc_classes/disabledBlock.php');
-			$this->mRoot->mDelegateManager->add( 'Legacy_Utils.CreateBlockProcedure' , array(& $this , 'blockControlXCL' )) ;
-
-			// For STD cache module (cache disabled)
-			$this->mController->mSetBlockCachePolicy->add(array(& $this, '_stdCacheHook'), XCUBE_DELEGATE_PRIORITY_FIRST + 11);
-			$this->mController->mSetModuleCachePolicy->add(array(& $this, '_stdCacheHook'), XCUBE_DELEGATE_PRIORITY_FIRST + 11);
 		}
 	}
 
@@ -454,7 +461,42 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	function _xoopsConfig_template_set () {
 		$GLOBALS['xoopsConfig']['template_set'] = $this->k_tai_conf['templateSet'];
 	}
-
+	
+	function _xoopsConfig_tpl_hook (&$xoopsTpl) {
+		
+		if (empty($this->xoopstpl_plugins_dir) || strpos($this->xoopstpl_plugins_dir, rtrim(SMARTY_DIR, '/') . '/plugins') === false) {
+			$target_dir = XOOPS_TRUST_PATH.'/libs/smartyplugins';
+			if(is_dir($target_dir)) {
+				$_1st = array_shift($xoopsTpl->plugins_dir);
+				if (defined('LEGACY_BASE_VERSION') && version_compare(LEGACY_BASE_VERSION, '2.2.1.0', '>=')) {
+			
+					// XCL >= 2.2.1 (Revision >= 982 Feature Request #3165296 - Replace resource.db.php with HD version)
+					// see http://xoopscube.svn.sourceforge.net/viewvc/xoopscube/Package_Legacy/branches/r2_2_00-branch/xoops_trust_path/libs/smarty/plugins/resource.db.php?revision=982&view=markup
+			
+					if ($_1st === $target_dir) {
+						$_1st = array_shift($xoopsTpl->plugins_dir);
+					}
+					// regist 2nd
+					array_unshift($xoopsTpl->plugins_dir, $_1st, $target_dir);
+				} else {
+					// regist first
+					if ($_1st !== $target_dir) {
+						array_unshift($xoopsTpl->plugins_dir, $target_dir, $_1st);
+					} else {
+						array_unshift($xoopsTpl->plugins_dir, $_1st) ;
+					}
+				}
+			}
+		} else {
+			$plugins_dir = preg_split('/\s+/', trim($this->xoopstpl_plugins_dir));
+			$xoopsTpl->plugins_dir = $plugins_dir;
+		}
+		
+		$compile_id = substr(XOOPS_URL, 7) . '-' . $GLOBALS['xoopsConfig']['template_set'] . '-' . $GLOBALS['xoopsConfig']['theme_set'] ;
+		$xoopsTpl->compile_id = $compile_id ;
+		$xoopsTpl->_compile_id = $compile_id ;
+	}
+	
 	function _stdCacheHook (& $cacheInfo) {
 		$cacheInfo->setEnableCache(false);
 	}

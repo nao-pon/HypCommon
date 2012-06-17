@@ -29,10 +29,13 @@ function hypconfSetValue(& $config, $page) {
 				$val = $hyp_preload->k_tai_conf[$name];
 			}
 		} else {
-			if (isset($hyp_preload->$name)) {
-				$val = $hyp_preload->$name;
-			} else {
-				$val = null;
+			$val = hypconf_initVal($name);
+			if (is_null($val)) {
+				if (isset($hyp_preload->$name)) {
+					$val = $hyp_preload->$name;
+				} else {
+					$val = null;
+				}
 			}
 		}
 		if (substr($conf['valuetype'], 0, 5) === 'file:') {
@@ -325,4 +328,16 @@ function hypconf_get_data_filename($file) {
 
 function hypconf_constant($const) {
 	return defined($const)? constant($const) : $const;
+}
+
+function hypconf_initVal($key) {
+	switch ($key) {
+		case 'xoopstpl_plugins_dir':
+			$val = join("\n", $GLOBALS['xoopsTpl']->plugins_dir);
+			break;
+		default:
+			$val = null;
+		
+	}
+	return $val;
 }
