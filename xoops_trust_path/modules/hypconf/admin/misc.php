@@ -8,13 +8,13 @@ $config[] = array(
 	'valuetype' => 'text',
 	'size' => 80
 );
-if (defined('XOOPS_CUBE_LEGACY')) {
+
 $config[] = array(
 	'name' => 'xoopstpl_plugins_dir',
 	'title' => $constpref.'_XOOPSTPL_PLUGINS_DIR',
-	'description' => $constpref.'_XOOPSTPL_PLUGINS_DIR_DESC',
-	'formtype' => 'textarea',
+	'description' => defined('XOOPS_CUBE_LEGACY')? $constpref.'_XOOPSTPL_PLUGINS_DIR_DESC' : $constpref.'_REQUERE_XCL',
+	'formtype' => defined('XOOPS_CUBE_LEGACY')? 'textarea' : 'label',
 	'valuetype' => 'text',
 	'size' => 80
 );
-}
+

@@ -292,6 +292,10 @@ function hypconfShowForm($config) {
 				$myts =& MyTextSanitizer::getInstance();
 				$ele = new XoopsFormPassword($title, $config[$i]['name'], $size, 255, $myts->htmlspecialchars($config[$i]['value']));
 				break;
+			case 'label':
+				$ele = new XoopsFormLabel($title, $description);
+				$description = '';
+				break;
 			case 'textbox':
 			default:
 				$size = 50;
