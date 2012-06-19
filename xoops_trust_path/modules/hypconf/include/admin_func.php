@@ -152,14 +152,14 @@ function hypconfSaveConf($config) {
 					$lines[] = $conf['name'] . ' = ' . (float)$_POST[$conf['name']];
 					break;
 				case 'text':
-					$lines[] = $conf['name'] . ' = "' . str_replace('"', '\\"', trim($_POST[$conf['name']])) . '"';
+					$lines[] = $conf['name'] . ' = "' . str_replace(array('\\', '"'), array(str_repeat('\\', 4), '\\"'), trim($_POST[$conf['name']])) . '"';
 					break;
 				case 'array':
 					if (empty($_POST[$conf['name']])) {
 						$lines[] = $conf['name'] . '[] = ""';
 					} else {
 						foreach($_POST[$conf['name']] as $key => $val) {
-							$lines[] = $conf['name'] . '[] = "' . str_replace('"', '\\"', trim($val)) . '"';
+							$lines[] = $conf['name'] . '[] = "' . str_replace(array('\\', '"'), array(str_repeat('\\', 4), '\\"'), trim($val)) . '"';
 						}
 					}
 					break;
