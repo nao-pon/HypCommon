@@ -112,16 +112,16 @@ class HypCommonFunc
 	}
 
 	// 配列対応 & gpc 対応のstripslashes
-	function stripslashes_gpc(&$v)
+	function stripslashes_gpc(&$v, $check = false)
 	{
-		if(ini_get("magic_quotes_gpc"))
+		if ($check || get_magic_quotes_gpc()) 
 		{
 			if (is_array($v))
 			{
 				$arr =array();
 				foreach($v as $k=>$m)
 				{
-					$arr[$k] = HypCommonFunc::stripslashes_gpc($m);
+					$arr[$k] = HypCommonFunc::stripslashes_gpc($m, true);
 				}
 				$v = $arr;
 			}
