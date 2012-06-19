@@ -42,7 +42,7 @@ xoops_cp_header();
 include dirname(__FILE__).'/mymenu.php' ;
 
 echo '<h3>'.hypconf_constant($constpref . '_DESC').' - '.hypconf_constant($constpref . '_ADMENU_CONTENTSADMIN').'</h3>' ;
-echo '<h4>trust'.HYP_COMMON_PRELOAD_CONF.'</h4>' ;
+echo '<h4>'.XOOPS_TRUST_PATH.HYP_COMMON_PRELOAD_CONF.'</h4>' ;
 echo <<<EOD
 
 $content
