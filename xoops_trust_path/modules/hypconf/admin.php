@@ -68,6 +68,7 @@ if( ! empty( $_GET['lib'] ) ) {
 		if ( ! $xoopsGTicket->check( true , $mydirname ) ) {
 			redirect_header(XOOPS_URL.'/',3,$xoopsGTicket->getErrors());
 		}
+		HypCommonFunc::stripslashes_gpc($_POST);
 		if (isset($_POST['page'])) $_GET['page'] = $_POST['page'];
 	}
 
