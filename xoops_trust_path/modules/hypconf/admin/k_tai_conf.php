@@ -15,12 +15,46 @@ $config[] = array(
 	'size' => 80
 	);
 $config[] = array(
+		'name' => 'themeSet',
+		'title' => $constpref.'_THEMESET',
+		'description' => $constpref.'_THEMESET_DESC',
+		'formtype' => 'theme',
+		'valuetype' => 'text',
+		'notempty' => true
+);
+$config[] = array(
+		'name' => 'templateSet',
+		'title' => $constpref.'_TEMPLATESET',
+		'description' => $constpref.'_TEMPLATESET_DESC',
+		'formtype' => 'tplset',
+		'valuetype' => 'text',
+		'notempty' => true
+);
+$config[] = array(
 	'name' => 'jquery_profiles',
 	'title' => $constpref.'_JQM_PROFILES',
 	'description' => $constpref.'_JQM_PROFILES_DESC',
 	'formtype' => 'textbox',
 	'valuetype' => 'text'
 	);
+$config[] = array(
+		'name' => 'themeSets',
+		'arrkey' => 'jqm',
+		'title' => $constpref.'_THEMESETS_JQM',
+		'description' => $constpref.'_THEMESETS_JQM_DESC',
+		'formtype' => 'theme',
+		'valuetype' => 'text',
+		'notempty' => true
+);
+$config[] = array(
+		'name' => 'templateSets',
+		'arrkey' => 'jqm',
+		'title' => $constpref.'_TEMPLATESETS_JQM',
+		'description' => $constpref.'_TEMPLATESETS_JQM_DESC',
+		'formtype' => 'tplset',
+		'valuetype' => 'text',
+		'notempty' => true
+);
 $config[] = array(
 	'name' => 'jquery_theme',
 	'title' => $constpref.'_JQM_THEME',

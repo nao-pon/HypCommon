@@ -23,10 +23,18 @@ function hypconfSetValue(& $config, $page) {
 		$name = $conf['name'];
 		if ($page === 'k_tai_conf') {
 			// Reset each site values.
-			if (isset($hyp_preload->k_tai_conf[$name.'#'.XOOPS_URL])) {
-				$val = $hyp_preload->k_tai_conf[$name.'#'.XOOPS_URL];
+			if (empty($conf['arrkey'])) {
+				if (isset($hyp_preload->k_tai_conf[$name.'#'.XOOPS_URL])) {
+					$val = $hyp_preload->k_tai_conf[$name.'#'.XOOPS_URL];
+				} else {
+					$val = $hyp_preload->k_tai_conf[$name];
+				}
 			} else {
-				$val = $hyp_preload->k_tai_conf[$name];
+				if (isset($hyp_preload->k_tai_conf[$name.'#'.XOOPS_URL][$conf['arrkey']])) {
+					$val = $hyp_preload->k_tai_conf[$name.'#'.XOOPS_URL][$conf['arrkey']];
+				} else {
+					$val = isset($hyp_preload->k_tai_conf[$name][$conf['arrkey']])? $hyp_preload->k_tai_conf[$name][$conf['arrkey']] : '';
+				}
 			}
 		} else {
 			$val = hypconf_initVal($name);
@@ -140,26 +148,33 @@ function hypconfSaveConf($config) {
 	$lines = array('['.$section.']');
 	foreach($config as $conf){
 		if (isset($_POST[$conf['name']]) || $conf['valuetype'] === 'array') {
+			if (!empty($conf['notempty']) && ! $_POST[$conf['name']]) {
+				continue;
+			}
+			$confkey = $conf['name'];
+			if (! empty($conf['arrkey'])) {
+				$confkey .= '["'.$conf['arrkey'].'"]';
+			}
 			switch (substr($conf['valuetype'], 0, 5)) {
 				case 'int':
 					if (strtolower($_POST[$conf['name']]) === 'null') {
-						$lines[] = $conf['name'] . ' = -1';
+						$lines[] = $confkey . ' = -1';
 					} else {
-						$lines[] = $conf['name'] . ' = ' . (int)$_POST[$conf['name']];
+						$lines[] = $confkey . ' = ' . (int)$_POST[$conf['name']];
 					}
 					break;
 				case 'float':
-					$lines[] = $conf['name'] . ' = ' . (float)$_POST[$conf['name']];
+					$lines[] = $confkey . ' = ' . (float)$_POST[$conf['name']];
 					break;
 				case 'text':
-					$lines[] = $conf['name'] . ' = "' . str_replace(array('\\', '"'), array(str_repeat('\\', 4), '\\"'), trim($_POST[$conf['name']])) . '"';
+					$lines[] = $confkey . ' = "' . str_replace(array('\\', '"'), array(str_repeat('\\', 4), '\\"'), trim($_POST[$conf['name']])) . '"';
 					break;
 				case 'array':
 					if (empty($_POST[$conf['name']])) {
-						$lines[] = $conf['name'] . '[] = ""';
+						$lines[] = $confkey . '[] = ""';
 					} else {
 						foreach($_POST[$conf['name']] as $key => $val) {
-							$lines[] = $conf['name'] . '[] = "' . str_replace(array('\\', '"'), array(str_repeat('\\', 4), '\\"'), trim($val)) . '"';
+							$lines[] = $confkey . '[] = "' . str_replace(array('\\', '"'), array(str_repeat('\\', 4), '\\"'), trim($val)) . '"';
 						}
 					}
 					break;
@@ -167,10 +182,10 @@ function hypconfSaveConf($config) {
 					$file = substr($conf['valuetype'], 5);
 					if ($_POST[$conf['name']]) {
 						file_put_contents(hypconf_get_data_filename($file), $_POST[$conf['name']]);
-						$lines[] = $conf['name'] . ' = "' . $file . ':' . time() . '"';
+						$lines[] = $confkey . ' = "' . $file . ':' . time() . '"';
 					} else {
 						@ unlink(hypconf_get_data_filename($file));
-						$lines[] = $conf['name'] . ' = ""';
+						$lines[] = $confkey . ' = ""';
 					}
 					break;
 
@@ -295,6 +310,33 @@ function hypconfShowForm($config) {
 			case 'label':
 				$ele = new XoopsFormLabel($title, $description);
 				$description = '';
+				break;
+			case 'theme':
+			case 'theme_multi':
+				$ele = ($config[$i]['formtype'] !== 'theme_multi') ? new XoopsFormSelect($title, $config[$i]['name'], $config[$i]['value']) : new XoopsFormSelect($title, $config[$i]['name'], $config[$i]['value'], 5, true);
+				$handle = opendir(XOOPS_THEME_PATH.'/');
+				$dirlist = array();
+				while (false !== ($file = readdir($handle))) {
+					if (is_dir(XOOPS_THEME_PATH.'/'.$file) && !preg_match("/^\..*$/",$file) && strtolower($file) != 'cvs') {
+						$dirlist[$file]=$file;
+					}
+				}
+				closedir($handle);
+				$ele->addOption('', hypconf_constant($constpref . '_NOT_SPECIFY'));
+				if (!empty($dirlist)) {
+					asort($dirlist);
+					$ele->addOptionArray($dirlist);
+				}
+				break;
+			case 'tplset':
+				$ele = new XoopsFormSelect($title, $config[$i]['name'], $config[$i]['value']);
+				$tplset_handler =& xoops_gethandler('tplset');
+				$tplsetlist =& $tplset_handler->getList();
+				asort($tplsetlist);
+				$ele->addOption('', hypconf_constant($constpref . '_NOT_SPECIFY'));
+				foreach ($tplsetlist as $key => $name) {
+					$ele->addOption($key, htmlspecialchars($name, ENT_QUOTES));
+				}
 				break;
 			case 'textbox':
 			default:

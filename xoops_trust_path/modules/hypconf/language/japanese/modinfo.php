@@ -14,6 +14,7 @@ define($constpref.'_DESC', 'HypCommonFunc 関連の設定');
 
 define($constpref.'_MSG_SAVED' , '設定を保存しました。');
 define($constpref.'_COUSTOM_BLOCK' , 'カスタムブロック');
+define($constpref.'_NOT_SPECIFY' , '指定しない');
 
 // admin menus
 define($constpref.'_ADMENU_CONTENTSADMIN' , '設定の確認');
@@ -55,8 +56,16 @@ define($constpref.'_INPUT_FILTER_STRENGTH_2', '制御文字の内 \t,\r,\n のみ許可');
 // k_tai_render
 define($constpref.'_UA_REGEX', 'User agent');
 define($constpref.'_UA_REGEX_DESC', 'モバイル対応機能で処理する User agent を PCRE(Perl互換)正規表現で記述。');
+define($constpref.'_THEMESET', 'XOOPSテーマ');
+define($constpref.'_THEMESET_DESC', 'モバイル対応時に使用するテーマ名(指定しない場合はテーマの切り替えをしません)');
+define($constpref.'_TEMPLATESET', 'DBテンプレートセット');
+define($constpref.'_TEMPLATESET_DESC', 'モバイル対応時に使用するDBテンプレートセット名(指定しない場合はデフォルトテンプレートセットが使用されます)');
 define($constpref.'_JQM_PROFILES', 'jQuery Mobile');
 define($constpref.'_JQM_PROFILES_DESC', 'jQuery Mobile を適用するプロファイル名をカンマ区切りで記述。プロファイル名は携帯対応レンダラーで定義されていて、docomo, au, softbank, willcom, android, iphone, ipod, ipad, windows mobile などが使用できます。');
+define($constpref.'_THEMESETS_JQM', 'XOOPSテーマ(jqm)');
+define($constpref.'_THEMESETS_JQM_DESC', 'jQuery Mobile 適用時のテーマ名(指定しない場合は、モバイル対応時のテーマ名が使用されます)');
+define($constpref.'_TEMPLATESETS_JQM', 'DBテンプレートセット(jqm)');
+define($constpref.'_TEMPLATESETS_JQM_DESC', 'jQuery Mobile 適用時のDBテンプレートセット名(指定しない場合は、モバイル対応時のテーマ名が使用されます)');
 define($constpref.'_JQM_THEME', 'jqmテーマ');
 define($constpref.'_JQM_THEME_DESC', 'ページ全体の jQuery Mobile のテーマ。標準では a, b, c, d, e が有効です。');
 define($constpref.'_JQM_THEME_CONTENT', 'メイン部');
