@@ -128,7 +128,7 @@ class Hyp_TextFilter extends Legacy_TextFilter
                 $rep[$className][$image][] = '\'[[\'.Hyp_TextFilter::renderWiki_ret2br(\'$3\').\':http://$2]]\'';
 
                 $pat[$className][$image][] = '/\[siteurl=([\'"]?)\/?([!~*\'();?:\@&=+\$,%#\w.-][!~*\'();\/?:\@&=+\$,%#\w.-]+)\\1\](.+)\[\/siteurl\]/esUS';
-                $rep[$className][$image][] = '\'[[\'.Hyp_TextFilter::renderWiki_ret2br(\'$3\').\':http:///$2]]\'';
+                $rep[$className][$image][] = '\'[[\'.Hyp_TextFilter::renderWiki_ret2br(\'$3\').\':site://$2]]\'';
 
                 // BB Code quote
                 $pat[$className][$image][] = '/(\[quote[^\]]*])(?:\r\n|\r|\n)(?![<>*|,#: \t+-])/S';
@@ -156,11 +156,11 @@ class Hyp_TextFilter extends Legacy_TextFilter
 
 				// BB Code siteimage with align
 				$pat[$className][$image][] = '/\[siteimg\s+align=([\'"]?)(left|center|right)\1(?:\s+title=([\'"]?)([^\'"][^\]\s]*?)\3)?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\5)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\7)?]\/?([!~*\'();?\@&=+\$,%#\w.-][!~*\'();\/?\@&=+\$,%#\w.-]+?)\[\/siteimg\]/US';
-				$rep[$className][$image][] = '&ref(http:///$9,$2,"t:$4",mw:$6,mw:$8);';
+				$rep[$className][$image][] = '&ref(site://$9,$2,"t:$4",mw:$6,mw:$8);';
 
 				// BB Code siteimage normal
 				$pat[$className][$image][] = '/\[siteimg(?:\s+title=([\'"]?)([^\'"][^\]\s]*?)\1)?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\3)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\5)?]\/?([!~*\'();?\@&=+\$,%#\w.-][!~*\'();\/?\@&=+\$,%#\w.-]+?)\[\/siteimg\]/US';
-				$rep[$className][$image][] = '&ref(http:///$7,"t:$2",mw:$4,mw:$6);';
+				$rep[$className][$image][] = '&ref(site://$7,"t:$2",mw:$4,mw:$6);';
 
                 // Some BB Code Tags, Contents allows xpWiki rendering.
                 if ($_reg = join('|', $this->renderWiki_getEscTags())) {
