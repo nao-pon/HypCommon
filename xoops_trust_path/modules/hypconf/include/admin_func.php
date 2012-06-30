@@ -144,7 +144,7 @@ function hypconfSaveConf($config) {
 	global $constpref, $mydirname;
 
 	$section = $_POST['page'];
-
+	$quote = version_compare(PHP_VERSION, '5.3.0', '>=')? '\\"' : '"HYP_QUOTE"';
 	$lines = array('['.$section.']');
 	foreach($config as $conf){
 		if (isset($_POST[$conf['name']]) || $conf['valuetype'] === 'array') {
@@ -167,14 +167,14 @@ function hypconfSaveConf($config) {
 					$lines[] = $confkey . ' = ' . (float)$_POST[$conf['name']];
 					break;
 				case 'text':
-					$lines[] = $confkey . ' = "' . str_replace(array('\\', '"'), array(str_repeat('\\', 4), '\\"'), trim($_POST[$conf['name']])) . '"';
+					$lines[] = $confkey . ' = "' . str_replace(array('\\', '"'), array(str_repeat('\\', 4), $quote), trim($_POST[$conf['name']])) . '"';
 					break;
 				case 'array':
 					if (empty($_POST[$conf['name']])) {
 						$lines[] = $confkey . '[] = ""';
 					} else {
 						foreach($_POST[$conf['name']] as $key => $val) {
-							$lines[] = $confkey . '[] = "' . str_replace(array('\\', '"'), array(str_repeat('\\', 4), '\\"'), trim($val)) . '"';
+							$lines[] = $confkey . '[] = "' . str_replace(array('\\', '"'), array(str_repeat('\\', 4), $quote), trim($val)) . '"';
 						}
 					}
 					break;
