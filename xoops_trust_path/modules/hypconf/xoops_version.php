@@ -9,6 +9,8 @@ $langman->read( 'modinfo.php' , $mydirname , $mytrustdirname , false ) ;
 
 $constpref = '_MI_' . strtoupper( $mydirname ) ;
 
+include XOOPS_TRUST_PATH . '/class/hyp_common/version.php';
+
 $modversion['name'] = constant($constpref.'_NAME') ;
 $modversion['description'] = constant($constpref.'_DESC') ;
 $modversion['version'] = 1.04 ;
@@ -21,6 +23,7 @@ $modversion['image'] = file_exists( $mydirpath.'/module_icon.png' ) ? 'module_ic
 $modversion['dirname'] = $mydirname ;
 $modversion['read_any'] = true ;
 $modversion['trust_dirname'] = $mytrustdirname ;
+$modversion['detailed_version'] = $version ;
 
 // Any tables can't be touched by modulesadmin.
 $modversion['sqlfile'] = false ;
