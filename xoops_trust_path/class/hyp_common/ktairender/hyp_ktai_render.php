@@ -482,6 +482,17 @@ class HypKTaiRender
 			}
 		}
 
+		// スマホのみ有効にする部分
+		$body = str_replace('<!--HypSmartOnly', '', $body);
+		$body = str_replace('HypSmartOnly-->', '', $body);
+		
+		// 無視する部分(<!--HypSmartIgnore-->...<!--/HypSmartIgnore-->)を削除
+		while(strpos($body, '<!--HypSmartIgnore-->') !== FALSE) {
+			$arr1 = explode('<!--HypSmartIgnore-->', $body, 2);
+			$arr2 = array_pad(explode('<!--/HypSmartIgnore-->', $arr1[1], 2), 2, '');
+			$body = $arr1[0] . $arr2[1];
+		}
+		
 		// img src のチェック
 		if ($this->Config_jquery_image_convert) {
 			$this->Config_pictSizeMax = intval($this->Config_jquery_image_convert);
