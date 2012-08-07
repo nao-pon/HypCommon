@@ -9,7 +9,7 @@ header("Last-Modified: ".date('r',intval(time()/$icon_cache_limit)*$icon_cache_l
 header("Content-type: image/png");
 
 // custom icon
-if( file_exists( $mydirpath.'/module_icon.png' ) ) {
+if( is_file( $mydirpath.'/module_icon.png' ) ) {
 	$draw_dirname = false ;
 	$icon_fullpath = $mydirpath.'/module_icon.png' ;
 } else {
@@ -26,15 +26,20 @@ if( file_exists( $mydirpath.'/module_icon.png' ) ) {
 	//	$file_base .= '_icms' ;
 	//} else if( defined( 'XOOPS_CUBE_LEGACY' ) ) {
 	if( defined( 'XOOPS_CUBE_LEGACY' ) ) {
-		$draw_dirname = true ;
-		$file_base .= '_xcl' ;
-		$px_y = 8;
-		$strwidth = 7 * strlen( $mydirname );
-		if ($strwidth > 79) {
-			$px = max(0, 126 - $strwidth);
+		if ($mydirname === 'hypconf') {
+			$draw_dirname = false ;
+			$file_base .= '_x';
 		} else {
-			$px = 47;
-			$px = ( 79 - $strwidth ) / 2 + 47 ;
+			$draw_dirname = true ;
+			$file_base .= '_xcl' ;
+			$px_y = 8;
+			$strwidth = 7 * strlen( $mydirname );
+			if ($strwidth > 79) {
+				$px = max(0, 126 - $strwidth);
+			} else {
+				$px = 47;
+				$px = ( 79 - $strwidth ) / 2 + 47 ;
+			}
 		}
 	} else {
 		$draw_dirname = true ;
@@ -64,4 +69,3 @@ if( $draw_dirname && function_exists( 'imagecreatefrompng' ) && function_exists(
 
 }
 
-?>
