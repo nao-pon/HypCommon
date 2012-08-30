@@ -69,6 +69,18 @@ class HypSimpleAmazon
 			if (isset($ini['SecretAccessKey'])) {
 				$this->SecretAccessKey = $ini['SecretAccessKey'];
 			}
+			if (defined('XOOPS_CUBE_LEGACY') && (! $AssociateTag || ! $this->AccessKeyId || ! $this->SecretAccessKey)) {
+				$xcroot = XCube_Root::getSingleton();
+				if (! $this->AccessKeyId) {
+					$this->AccessKeyId = $xcroot->getSiteConfig('amazon', 'AWSAccessKeyId');
+				}
+				if (! $AssociateTag) {
+					$AssociateTag = $xcroot->getSiteConfig('amazon', 'AssociateTag');
+				}
+				if (! $this->SecretAccessKey) {
+					$this->SecretAccessKey = $xcroot->getSiteConfig('amazon', 'secret_key');
+				}
+			}
 		} else {
 			$this->AccessKeyId = $AccessKeyId;
 			$this->SecretAccessKey = $SecretAccessKey;
