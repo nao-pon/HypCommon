@@ -1,4 +1,12 @@
 <?php
+// hide strict error
+if (defined('E_STRICT')) {
+	$_error_reporting = error_reporting();
+	if (($_error_reporting & E_STRICT) == E_STRICT) {
+		error_reporting($_error_reporting ^ E_STRICT);
+	}
+}
+
 define('X2_ADD_SMARTYPLUGINS_DIR', XOOPS_TRUST_PATH . '/libs/smartyplugins/x2');
 define('HYP_COMMON_PRELOAD_CONF', '/uploads/hyp_common/hypconf_'.md5(XOOPS_URL . (defined('XOOPS_SALT')?XOOPS_SALT:XOOPS_DB_PASS)).'.conf');
 //// mbstring ////
