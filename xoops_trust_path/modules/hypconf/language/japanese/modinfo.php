@@ -93,6 +93,8 @@ define($constpref.'_XPWIKI_RENDER_DIRNAME', 'xpWiki レンダラー');
 define($constpref.'_XPWIKI_RENDER_DIRNAME_DESC', 'サイトワイド xpWiki レンダラー機能で使用する xpWiki を指定してください。<br />サイトワイドで xpWiki レンダラー機能を使用すると、ほとんどのモジュールで xpWiki(PukiWiki)の記法が使えるようになります。');
 define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER', 'サイトワイド Wiki ヘルパー');
 define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_DESC', '「はい」を選択するとテキストエリアが機能拡張され Wiki ヘルパー及びリッチエディタをサイトワイドで使用できるようになります。');
+define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_BBCODE', 'Wiki ヘルパー(BBCodeエディタ)');
+define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_BBCODE_DESC', 'XCL 2.2 以降の xoops_dhtmltarea(Smartyプラグイン) で editor=bbcode としたテキストエリアにも適用します。');
 define($constpref.'_XPWIKI_RENDER_NOTUSE_WIKIHELPER_MODULES', 'Wiki ヘルパー無効');
 define($constpref.'_XPWIKI_RENDER_NOTUSE_WIKIHELPER_MODULES_DESC', 'サイトワイド Wiki ヘルパーを無効にするモジュールを選択して下さい。');
 define($constpref.'_REQUERE_XCL', 'この設定は XOOPS Cube Legacy システムでのみ利用可能です。');

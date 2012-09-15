@@ -253,6 +253,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 		if (! isset($this->xpwiki_render_dirname)) $this->xpwiki_render_dirname = '';
 		if (! isset($this->xpwiki_render_use_wikihelper)) $this->xpwiki_render_use_wikihelper = 0;
+		if (! isset($this->xpwiki_render_use_wikihelper_bbcode)) $this->xpwiki_render_use_wikihelper_bbcode = 1;
 		if (! isset($this->xpwiki_render_notuse_wikihelper_modules)) $this->xpwiki_render_notuse_wikihelper_modules = array();
 		if (! isset($this->misc_head_last_tag)) $this->misc_head_last_tag = '';
 		if (! isset($this->xoopstpl_plugins_dir)) $this->xoopstpl_plugins_dir = '';
@@ -417,6 +418,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (defined('XOOPS_CUBE_LEGACY') && !defined('XPWIKI_RENDERER_DIR') && $this->xpwiki_render_dirname) {
 			if (! defined('XPWIKI_RENDERER_DIR')) define('XPWIKI_RENDERER_DIR', $this->xpwiki_render_dirname);
 			if (! defined('XPWIKI_RENDERER_USE_WIKIHELPER')) define('XPWIKI_RENDERER_USE_WIKIHELPER', $this->xpwiki_render_use_wikihelper);
+			define('XPWIKI_RENDERER_USE_WIKIHELPER_BBCODE', (XPWIKI_RENDERER_USE_WIKIHELPER && $this->xpwiki_render_use_wikihelper_bbcode));
 			include_once XOOPS_TRUST_PATH . '/class/hyp_common/xc_classes/Hyp_TextFilter.php';
 			$this->mController->mSetupTextFilter->add('Hyp_TextFilter::getInstance', XCUBE_DELEGATE_PRIORITY_FINAL-2);
 		}
@@ -537,9 +539,21 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	    }
 	    return TRUE;
 	}
+	
+	function BBCode_wiki_render(&$html, $element) {
+		$element['class'] = trim(preg_replace('/ +/', ' ', str_replace('bbcode', '', $element['class'])));
+		$html = '<textarea name="'.$element['name'].'" class="'.$element['class'].'" cols="'.$element['cols'].'" rows="'.$element['rows'].'" id="'.$element['id'].'">'.$element['value'].'</textarea>';
+		return;
+	}
 
 	function postFilter() {
 
+		// <xoops_dhtmltarea editor=bbcode>
+		if (XPWIKI_RENDERER_USE_WIKIHELPER_BBCODE && defined('LEGACY_BASE_VERSION') && version_compare(LEGACY_BASE_VERSION, '2.2', '>=')) {
+			$this->mRoot->mDelegateManager->reset('Site.TextareaEditor.BBCode.Show');
+			$this->mRoot->mDelegateManager->add('Site.TextareaEditor.BBCode.Show',array(&$this, 'BBCode_wiki_render'));
+		}
+		
 		if (defined('HYP_COMMON_SKIP_POST_FILTER')) return;
 
 		// Set mb_detect_order

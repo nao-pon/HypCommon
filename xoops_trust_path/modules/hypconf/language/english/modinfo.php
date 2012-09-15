@@ -93,6 +93,8 @@ define($constpref.'_XPWIKI_RENDER_DIRNAME', 'xpWiki renderer');
 define($constpref.'_XPWIKI_RENDER_DIRNAME_DESC', 'Please select a "xpWiki" to be used as xpWiki renderer in the site-wide.<br />By using the site-wide xpWiki renderer, can be use xpWiki (PukiWiki) text formatter.');
 define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER', 'Site-wide Wiki Helper');
 define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_DESC', 'If "Yes" is chosen, will be able to uses Wiki helper & Rich editor at site-wide.');
+define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_BBCODE', 'Wiki Helper(BBCode Editor)');
+define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_BBCODE_DESC', 'On XCL >= 2.2, It applies also to the text area made into "editor=bbcode" by xoops_dhtmltarea (Smarty plug-in).');
 define($constpref.'_XPWIKI_RENDER_NOTUSE_WIKIHELPER_MODULES', 'Disabled Wiki Helper');
 define($constpref.'_XPWIKI_RENDER_NOTUSE_WIKIHELPER_MODULES_DESC', 'Please choose the module which sets a site wide Wiki helper to disabled.');
 define($constpref.'_REQUERE_XCL', 'This setting is only available in XOOPS Cube Legacy system.');

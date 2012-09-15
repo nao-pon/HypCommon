@@ -30,6 +30,15 @@ if (defined('XOOPS_CUBE_LEGACY')) {
 		);
 
 	$config[] = array(
+		'name' => 'xpwiki_render_use_wikihelper_bbcode',
+		'title' => $constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_BBCODE',
+		'description' => $constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_BBCODE_DESC',
+		'formtype' => 'yesno',
+		'valuetype' => 'int',
+		'default' => 1,
+		);
+
+	$config[] = array(
 		'name' => 'xpwiki_render_notuse_wikihelper_modules',
 		'title' => $constpref.'_XPWIKI_RENDER_NOTUSE_WIKIHELPER_MODULES',
 		'description' => $constpref.'_XPWIKI_RENDER_NOTUSE_WIKIHELPER_MODULES_DESC',
