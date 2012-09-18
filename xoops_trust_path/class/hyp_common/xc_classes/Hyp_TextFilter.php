@@ -138,29 +138,29 @@ class Hyp_TextFilter extends Legacy_TextFilter
 
                 if ($image) {
                     // BB Code image with align
-                    $pat[$className][$image][] = '/\[img\s+align=([\'"]?)(left|center|right)\1(?:\s+title=([\'"]?)([^\'"][^\]\s]*?)\3)?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\5)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\7)?]([!~*\'();\/?:\@&=+\$,%#\w.-]+)\[\/img\]/US';
-                    $rep[$className][$image][] = '&ref($9,$2,"t:$4",mw:$6,mw:$8);';
+                    $pat[$className][$image][] = '/\[img\s+align=([\'"]?)(left|center|right)\1(?:\s+title=([\'"])?((?(3)[^]]*|[^\]\s]*))(?(3)\3))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\5)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\7)?]([!~*\'();\/?:\@&=+\$,%#\w.-]+)\[\/img\]/US';
+                    $rep[$className][$image][] = '&ref($9,$2,"t:$4",mw:$6,mh:$8);';
 
                     // BB Code image normal
-                    $pat[$className][$image][] = '/\[img(?:\s+title=([\'"]?)([^\'"][^\]\s]*?)\1)?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\3)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\5)?]([!~*\'();\/?:\@&=+\$,%#\w.-]+)\[\/img\]/US';
-                    $rep[$className][$image][] = '&ref($7,"t:$2",mw:$4,mw:$6);';
+                    $pat[$className][$image][] = '/\[img(?:\s+title=([\'"])?((?(1)[^]]*|[^\]\s]*))(?(1)\1))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\3)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\5)?]([!~*\'();\/?:\@&=+\$,%#\w.-]+)\[\/img\]/US';
+                    $rep[$className][$image][] = '&ref($7,"t:$2",mw:$4,mh:$6);';
                 } else {
                     // BB Code image with align
-                    $pat[$className][$image][] = '/\[img\s+align=([\'"]?)(left|center|right)\1(?:\s+title=([\'"]?)([^\'"][^\]\s]*?)\3)?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\5)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\7)?]([!~*\'();\/?:\@&=+\$,%#\w.-]+)\[\/img\]/US';
+                    $pat[$className][$image][] = '/\[img\s+align=([\'"]?)(left|center|right)\1(?:\s+title=([\'"])?((?(3)[^]]*|[^\]\s]*))(?(3)\3))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\5)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\7)?]([!~*\'();\/?:\@&=+\$,%#\w.-]+)\[\/img\]/US';
                     $rep[$className][$image][] = '&ref($9,"t:$4",noimg);';
 
                     // BB Code image normal
-                    $pat[$className][$image][] = '/\[img(?:\s+title=([\'"]?)([^\'"][^\]\s]*?)\1)?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\3)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\5)?]([!~*\'();\/?:\@&=+\$,%#\w.-]+)\[\/img\]/US';
+                    $pat[$className][$image][] = '/\[img(?:\s+title=([\'"])?((?(1)[^]]*|[^\]\s]*))(?(1)\1))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\3)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\5)?]([!~*\'();\/?:\@&=+\$,%#\w.-]+)\[\/img\]/US';
                     $rep[$className][$image][] = '&ref($7,"t:$2",noimg);';
                 }
 
 				// BB Code siteimage with align
-				$pat[$className][$image][] = '/\[siteimg\s+align=([\'"]?)(left|center|right)\1(?:\s+title=([\'"]?)([^\'"][^\]\s]*?)\3)?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\5)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\7)?]\/?([!~*\'();?\@&=+\$,%#\w.-][!~*\'();\/?\@&=+\$,%#\w.-]+?)\[\/siteimg\]/US';
-				$rep[$className][$image][] = '&ref(site://$9,$2,"t:$4",mw:$6,mw:$8);';
+				$pat[$className][$image][] = '/\[siteimg\s+align=([\'"]?)(left|center|right)\1(?:\s+title=([\'"])?((?(3)[^]]*|[^\]\s]*))(?(3)\3))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\5)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\7)?]\/?([!~*\'();?\@&=+\$,%#\w.-][!~*\'();\/?\@&=+\$,%#\w.-]+?)\[\/siteimg\]/US';
+				$rep[$className][$image][] = '&ref(site://$9,$2,"t:$4",mw:$6,mh:$8);';
 
 				// BB Code siteimage normal
-				$pat[$className][$image][] = '/\[siteimg(?:\s+title=([\'"]?)([^\'"][^\]\s]*?)\1)?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\3)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\5)?]\/?([!~*\'();?\@&=+\$,%#\w.-][!~*\'();\/?\@&=+\$,%#\w.-]+?)\[\/siteimg\]/US';
-				$rep[$className][$image][] = '&ref(site://$7,"t:$2",mw:$4,mw:$6);';
+				$pat[$className][$image][] = '/\[siteimg(?:\s+title=([\'"])?((?(1)[^]]*|[^\]\s]*))(?(1)\1))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\3)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\5)?]\/?([!~*\'();?\@&=+\$,%#\w.-][!~*\'();\/?\@&=+\$,%#\w.-]+?)\[\/siteimg\]/US';
+				$rep[$className][$image][] = '&ref(site://$7,"t:$2",mw:$4,mh:$6);';
 
                 // Some BB Code Tags, Contents allows xpWiki rendering.
                 if ($_reg = join('|', $this->renderWiki_getEscTags())) {
