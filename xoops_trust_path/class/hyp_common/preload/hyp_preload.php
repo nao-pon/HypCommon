@@ -423,7 +423,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			include_once XOOPS_TRUST_PATH . '/class/hyp_common/xc_classes/Hyp_TextFilter.php';
 			$this->mController->mSetupTextFilter->add('Hyp_TextFilter::getInstance', XCUBE_DELEGATE_PRIORITY_FINAL-2);
 		} else {
-			if (! defined('XPWIKI_RENDERER_USE_WIKIHELPER')) define('XPWIKI_RENDERER_USE_WIKIHELPER', false);
 			define('XPWIKI_RENDERER_USE_WIKIHELPER_BBCODE', false);
 		}
 	}
