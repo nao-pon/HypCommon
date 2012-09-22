@@ -162,7 +162,18 @@ class Hyp_TextFilter extends Legacy_TextFilter
 				$pat[$className][$image][] = '/\[siteimg(?:\s+title=([\'"])?((?(1)[^]]*|[^\]\s]*))(?(1)\1))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\3)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\5)?]\/?([!~*\'();?\@&=+\$,%#\w.-][!~*\'();\/?\@&=+\$,%#\w.-]+?)\[\/siteimg\]/US';
 				$rep[$className][$image][] = '&ref(site://$7,"t:$2",mw:$4,mh:$6);';
 
-                // Some BB Code Tags, Contents allows xpWiki rendering.
+				// BB code list
+				$list_tag = '(("$1"=="1"||"$1"=="a"||"$1"=="A"||"$1"=="r"||"$1"=="R"||"$1"=="d")?"+":"-")';
+				/// pre convert
+				$pat[$className][$image][] = '/\[list/';
+				$rep[$className][$image][] = "\x01";
+				$pat[$className][$image][] = '/\[\/list\]/';
+				$rep[$className][$image][] = "\x02";
+				/// outer matting
+				$pat[$className][$image][] = '/\x01(?:\=([^\]]+))?\](?:\r\n|[\r\n])((?:(?>[^\x01\x02]+)|(?R))*)\x02(?:\r\n|[\r\n]|$)?/eS';
+				$rep[$className][$image][] = '"\n".preg_replace(array(\'/(?:\x01[^\]]*\]|\x02)(\r\n|[\r\n])/\',\'/\[\*\]/\'),array("\n",'.$list_tag.'), str_replace(\'\\"\',\'"\',\'$2\'))."\n\n"';
+				
+				// Some BB Code Tags, Contents allows xpWiki rendering.
                 if ($_reg = join('|', $this->renderWiki_getEscTags())) {
                     $pat[$className][$image][] = '/\[\/?(?:' . $_reg . ')(?:(?: |=)[^\]]+)?\]/eS';
                     $rep[$className][$image][] = '\'[ b 6 4 ]\' . base64_encode(\'$0\') . \'[ / b 6 4 ]\'';
