@@ -1,7 +1,7 @@
 (function ($){
 
 $(document).ready(function (){
-	$('#keitaiblockmenu').attr('_height', $('#keitaiblockmenu').height());
+	$('#ktai_theme_block_menu').attr('_height', $('#ktai_theme_block_menu').height());
 	$('#keitaiblockmenu').hide();
 	
 	$('textarea').bind('focus', function (){
@@ -19,7 +19,6 @@ $(document).ready(function (){
 		e.stopPropagation();
 		e.preventDefault();
 		$.androidDomStackEventFix.set($('#keitaiblockmenu'));
-		//$('#keitaiblockmenu').slideToggle('fast', function(){
 		$('#keitaiblockmenu').toggle();
 		return false;
 	});
@@ -27,10 +26,7 @@ $(document).ready(function (){
 
 $.extend({
 	keitaiShowBlock: function(id) {
-		//$.androidDomStackEventFix.set($('#keitaiblockmenu'));
-		//$('#keitaiblockmenu').slideUp('fast', function(){
 		$('#keitaiblockmenu').hide();
-		$.androidDomStackEventFix.hideOverlay($('#keitaiblockmenu'));
 
 		var target = $('#'+id);
 		var scrTo;
@@ -45,8 +41,7 @@ $.extend({
 				target.trigger('expand');
 				scrTo = offset.top;
 			}
-			//$.mobile.silentScroll(scrTo);
-			doc.stop().animate({ scrollTop: scrTo } , { duration : speed });
+			doc.stop().animate({ scrollTop: scrTo } , { duration : speed }, "linear", function(){$.androidDomStackEventFix.hideOverlay($('#keitaiblockmenu'));});
 		}
 	},
 
@@ -85,15 +80,16 @@ $.extend({
 					return null;
 				}
 			};
-			var ye = $(window).scrollTop() + $(window).height() - $('#ktai_theme_block_menu').height(); // y end
-			var ys = ye - target.attr('_height');  // y start
-			var xs = $(window).scrollLeft(); // x start
-			var xe = xs + $(window).width(); // x end
+			var ye = $(window).height();
+			var ys = ye - $('#ktai_theme_block_menu').attr('_height');
+			ye -= $('#ktai_theme_block_menu').height();
+			var xs = 0;
+			var xe = $(window).width();
 			
 			$.androidDomStackEventFix.touchedElements = [];
 			
-			for (var y = ys; y < ye; y += 15) {
-				for (var x = xs; x < xe; x += 15) {
+			for (var y = ys; y < ye; y += 20) {
+				for (var x = xs; x < xe; x += 20) {
 					var e = document.elementFromPoint(x, y);
 					if (!e) continue;
 					if (e._checked) continue;
@@ -139,7 +135,7 @@ $.extend({
 					for (i = 0, len = $.androidDomStackEventFix.checkedElements.length; i < len; i++) {
 						$.androidDomStackEventFix.checkedElements[i]._checked = false;
 					}
-				}, 1000);
+				}, 500);
 			}
 		}
 	}
