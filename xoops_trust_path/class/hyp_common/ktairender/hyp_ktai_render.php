@@ -516,6 +516,9 @@ class HypKTaiRender
 		// give data-ajax="false"
 		$body = preg_replace_callback('#(<script.+?/script>)|((<(?:a|form)[^>]+?)((?:href|action)=("|\')([^>]+?)\\5)([^>]*?>))#isS', array(& $this, '_check_href_smart'), $body);
 
+		// for Smarty {mailto encode="javascript"}
+		$body = preg_replace_callback('#<script type="text/javascript">eval\((unescape\(\'[%0-9a-f]+\'\))\)</script>#S', array(& $this, '_check_js_email'), $body);
+		
 		return $body;
 	}
 
@@ -548,6 +551,12 @@ class HypKTaiRender
 		} else {
 			return $match[0];
 		}
+	}
+	
+	function _check_js_email($match) {
+		static $num = 0;
+		$id = 'ktai_js_email_' . $num++;
+		return '<span id="'.$id.'">(Email hidden)</span><script type="text/javascript">jQuery(\'#'.$id.'\').html('.$match[1].'.replace(/document\.write\(\'(.+)\'\);/,"$1"));</script>';
 	}
 
 	// HTML を携帯端末用にシェイプアップする
