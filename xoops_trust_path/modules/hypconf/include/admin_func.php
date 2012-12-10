@@ -145,6 +145,7 @@ function hypconfSaveConf($config) {
 
 	$section = $_POST['page'];
 	$quote = version_compare(PHP_VERSION, '5.3.0', '>=')? '\\"' : '"HYP_QUOTE"';
+	$ini_array_key = (version_compare(PHP_VERSION, '5.3.0', '>='));
 	$lines = array('['.$section.']');
 	foreach($config as $conf){
 		if (isset($_POST[$conf['name']]) || $conf['valuetype'] === 'array') {
@@ -153,7 +154,11 @@ function hypconfSaveConf($config) {
 			}
 			$confkey = $conf['name'];
 			if (! empty($conf['arrkey'])) {
-				$confkey .= '["'.$conf['arrkey'].'"]';
+				if ($ini_array_key) {
+					$confkey .= '["'.$conf['arrkey'].'"]';
+				} else {
+					$confkey .= '.'.$conf['arrkey'];
+				}
 			}
 			switch (substr($conf['valuetype'], 0, 5)) {
 				case 'int':

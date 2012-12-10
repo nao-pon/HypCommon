@@ -266,13 +266,34 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		$conffile = XOOPS_TRUST_PATH . HYP_COMMON_PRELOAD_CONF;
 		$sections = array('main_switch', 'xpwiki_render', 'spam_block', 'misc');
 		if (is_file($conffile) && $conf = parse_ini_file($conffile, true)) {
+			$ini_array_key = (version_compare(PHP_VERSION, '5.3.0', '>='));
 			foreach($conf as $name => $section) {
 				if ($name === 'k_tai_conf') {
 					foreach($section as $key => $val) {
+						if (! $ini_array_key) {
+							if (strpos($key, '.') !== false) {
+								list($key, $arr_key) = explode('.', $key, 2);
+								if (! isset($this->k_tai_conf[$key.'#'.XOOPS_URL])) {
+									$this->k_tai_conf[$key.'#'.XOOPS_URL] = array();
+								}
+								$this->k_tai_conf[$key.'#'.XOOPS_URL][$arr_key] = $val;
+								continue;
+							}
+						}
 						$this->k_tai_conf[$key.'#'.XOOPS_URL] = $val;
 					}
 				} else if (in_array($name, $sections)) {
 					foreach($section as $key => $val) {
+						if (! $ini_array_key) {
+							if (strpos($key, '.') !== false) {
+								list($key, $arr_key) = explode('.', $key, 2);
+								if (! isset($this->$key)) {
+									$this->$key = array();
+								}
+								$this->$key[$arr_key] = $val;
+								continue;
+							}
+						}
 						$this->$key = $val;
 					}
 				}
