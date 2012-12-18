@@ -574,8 +574,16 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 		// <xoops_dhtmltarea editor=bbcode>
 		if (XPWIKI_RENDERER_USE_WIKIHELPER_BBCODE && defined('LEGACY_BASE_VERSION') && version_compare(LEGACY_BASE_VERSION, '2.2', '>=')) {
-			$this->mRoot->mDelegateManager->reset('Site.TextareaEditor.BBCode.Show');
-			$this->mRoot->mDelegateManager->add('Site.TextareaEditor.BBCode.Show',array(&$this, 'BBCode_wiki_render'));
+			if ( ! $this->mRoot->mContext->mUser->isInRole('Site.Administrator')
+			  || (
+			    strpos($_SERVER['REQUEST_URI'], 'action=CustomBlockEdit') === false
+			    &&
+			    strpos($_SERVER['REQUEST_URI'], '__CustomBlocks__&op=edit') === false
+			     )
+			) {
+				$this->mRoot->mDelegateManager->reset('Site.TextareaEditor.BBCode.Show');
+				$this->mRoot->mDelegateManager->add('Site.TextareaEditor.BBCode.Show',array(&$this, 'BBCode_wiki_render'));
+			}
 		}
 		
 		if (defined('HYP_COMMON_SKIP_POST_FILTER')) return;
