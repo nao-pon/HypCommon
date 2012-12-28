@@ -57,7 +57,7 @@ class Hyp_TextFilter extends Legacy_TextFilter
         if (!$html) {
             $text = $this->renderWikistyleFinsher($text);
         }
-        if ($html && $br != 0) $text = $this->nl2Br($text);
+        if ($html && $br != 0) $text = $this->nl2Br($text, $html);
         if ($html) $text = $this->postConvertXCode($text, $xcode, $image);
         return $text;
     }

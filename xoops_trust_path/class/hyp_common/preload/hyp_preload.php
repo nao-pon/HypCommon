@@ -313,6 +313,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			if ($this->post_spam_badip_ttl == -1) {
 				$this->post_spam_badip_ttl = null;
 			}
+			if (defined('XOOPS_CUBE_LEGACY') && $this->xpwiki_render_dirname && !XC_CLASS_EXISTS('Hyp_TextFilter')) {
+				include_once XOOPS_TRUST_PATH . '/class/hyp_common/xc_classes/Hyp_TextFilter.php';
+			}
 		}
 
 		parent::XCube_ActionFilter($controller);
@@ -437,11 +440,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 		// xpWiki renderer setting
 		if (defined('XOOPS_CUBE_LEGACY') && !defined('XPWIKI_RENDERER_DIR') && $this->xpwiki_render_dirname) {
-			if (! defined('XPWIKI_RENDERER_DIR')) define('XPWIKI_RENDERER_DIR', $this->xpwiki_render_dirname);
+			define('XPWIKI_RENDERER_DIR', $this->xpwiki_render_dirname);
 			if (! defined('XPWIKI_RENDERER_USE_WIKIHELPER')) define('XPWIKI_RENDERER_USE_WIKIHELPER', $this->xpwiki_render_use_wikihelper);
 			define('XPWIKI_RENDERER_USE_WIKIHELPER_BBCODE', (XPWIKI_RENDERER_USE_WIKIHELPER && $this->xpwiki_render_use_wikihelper_bbcode));
 			
-			include_once XOOPS_TRUST_PATH . '/class/hyp_common/xc_classes/Hyp_TextFilter.php';
 			$this->mController->mSetupTextFilter->add('Hyp_TextFilter::getInstance', XCUBE_DELEGATE_PRIORITY_FINAL-2);
 		} else {
 			define('XPWIKI_RENDERER_USE_WIKIHELPER_BBCODE', false);
