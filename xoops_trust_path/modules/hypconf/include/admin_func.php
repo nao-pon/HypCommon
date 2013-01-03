@@ -392,3 +392,20 @@ function hypconf_initVal($key) {
 	}
 	return $val;
 }
+
+function hypconfGetDirnameAsOptions($dir) {
+	$dir = rtrim($dir, '/') . '/';
+	$options = array();
+	if ($handle = opendir($dir)) {
+		while (false !== ($entry = readdir($handle))) {
+			if ($entry !== '.' && $entry !== '..' && is_dir($dir.$entry)) {
+				$options[$entry] = array(
+					'confop_name' => $entry,
+					'confop_value' => $entry
+				);
+			}
+		}
+		ksort($options);
+	}
+	return $options;
+}

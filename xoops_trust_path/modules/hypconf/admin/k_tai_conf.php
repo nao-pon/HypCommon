@@ -4,6 +4,8 @@
  * $Id: k_tai_conf.php,v 1.4 2011/12/13 08:12:18 nao-pon Exp $
  */
 
+$_k_tai_conf_template_dirs = hypconfGetDirnameAsOptions(XOOPS_TRUST_PATH . '/class/hyp_common/ktairender/templates');
+
 $config['main_switch'] = 'use_k_tai_render';
 
 $config[] = array(
@@ -15,20 +17,28 @@ $config[] = array(
 	'size' => 80
 	);
 $config[] = array(
-		'name' => 'themeSet',
-		'title' => $constpref.'_THEMESET',
-		'description' => $constpref.'_THEMESET_DESC',
-		'formtype' => 'theme',
-		'valuetype' => 'text',
-		'notempty' => true
+	'name' => 'themeSet',
+	'title' => $constpref.'_THEMESET',
+	'description' => $constpref.'_THEMESET_DESC',
+	'formtype' => 'theme',
+	'valuetype' => 'text',
+	'notempty' => true
 );
 $config[] = array(
-		'name' => 'templateSet',
-		'title' => $constpref.'_TEMPLATESET',
-		'description' => $constpref.'_TEMPLATESET_DESC',
-		'formtype' => 'tplset',
-		'valuetype' => 'text',
-		'notempty' => true
+	'name' => 'templateSet',
+	'title' => $constpref.'_TEMPLATESET',
+	'description' => $constpref.'_TEMPLATESET_DESC',
+	'formtype' => 'tplset',
+	'valuetype' => 'text',
+	'notempty' => true
+);
+$config[] = array(
+	'name' => 'template',
+	'title' => $constpref.'_TEMPLATE',
+	'description' => $constpref.'_TEMPLATE_DESC',
+	'formtype' => 'select',
+	'valuetype' => 'text',
+	'options' => $_k_tai_conf_template_dirs
 );
 $config[] = array(
 	'name' => 'jquery_profiles',
@@ -38,22 +48,31 @@ $config[] = array(
 	'valuetype' => 'text'
 	);
 $config[] = array(
-		'name' => 'themeSets',
-		'arrkey' => 'jqm',
-		'title' => $constpref.'_THEMESETS_JQM',
-		'description' => $constpref.'_THEMESETS_JQM_DESC',
-		'formtype' => 'theme',
-		'valuetype' => 'text',
-		'notempty' => true
+	'name' => 'themeSets',
+	'arrkey' => 'jqm',
+	'title' => $constpref.'_THEMESETS_JQM',
+	'description' => $constpref.'_THEMESETS_JQM_DESC',
+	'formtype' => 'theme',
+	'valuetype' => 'text',
+	'notempty' => true
 );
 $config[] = array(
-		'name' => 'templateSets',
-		'arrkey' => 'jqm',
-		'title' => $constpref.'_TEMPLATESETS_JQM',
-		'description' => $constpref.'_TEMPLATESETS_JQM_DESC',
-		'formtype' => 'tplset',
-		'valuetype' => 'text',
-		'notempty' => true
+	'name' => 'templateSets',
+	'arrkey' => 'jqm',
+	'title' => $constpref.'_TEMPLATESETS_JQM',
+	'description' => $constpref.'_TEMPLATESETS_JQM_DESC',
+	'formtype' => 'tplset',
+	'valuetype' => 'text',
+	'notempty' => true
+);
+$config[] = array(
+	'name' => 'templates',
+	'arrkey' => 'jqm',
+	'title' => $constpref.'_TEMPLATE_JQM',
+	'description' => $constpref.'_TEMPLATE_JQM_DESC',
+	'formtype' => 'select',
+	'valuetype' => 'text',
+	'options' => $_k_tai_conf_template_dirs
 );
 $config[] = array(
 	'name' => 'jquery_theme',
