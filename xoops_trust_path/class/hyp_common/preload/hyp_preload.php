@@ -1747,11 +1747,16 @@ EOD;
 			}
 			if ($rss) {
 				if ($use_jquery && count($rss) > 1) {
-					$body = '<div data-role="collapsible" data-theme="'.$this->k_tai_conf['jquery_theme_block'].'" data-content-theme="'.$this->k_tai_conf['jquery_theme_block'].'" data-collapsed="true"><h4>RSS Links</h4>' . $r->Config_icons['RSS'] . join('<br />' . $r->Config_icons['RSS'], $rss) . '</div>' . $body;
+					$rss = '<div data-role="collapsible" data-theme="'.$this->k_tai_conf['jquery_theme_block'].'" data-content-theme="'.$this->k_tai_conf['jquery_theme_block'].'" data-collapsed="true"><h4>RSS Links</h4>' . $r->Config_icons['RSS'] . join('<br />' . $r->Config_icons['RSS'], $rss) . '</div>';
 				} else {
-					$body = '<div style="font-size:0.9em">' . $r->Config_icons['RSS'] . join('<br />' . $r->Config_icons['RSS'], $rss) . '</div>' . $body;
+					$rss = '<div style="font-size:0.9em">' . $r->Config_icons['RSS'] . join('<br />' . $r->Config_icons['RSS'], $rss) . '</div>';
 				}
+			} else {
+				$rss = '';
 			}
+			$header = str_replace('<rssLink>', $rss, $header);
+			$body = str_replace('<rssLink>', $rss, $body);
+			$footer = str_replace('<rssLink>', $rss, $footer);
 
 			if ($use_jquery) {
 				$_head .= '<link href="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.mobile.min.css" rel="stylesheet" type="text/css" />';
