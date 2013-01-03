@@ -24,9 +24,12 @@ if (defined('XOOPS_CUBE_LEGACY')) {
 		'name' => 'xpwiki_render_use_wikihelper',
 		'title' => $constpref.'_XPWIKI_RENDER_USE_WIKIHELPER',
 		'description' => $constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_DESC',
-		'formtype' => 'yesno',
+		'formtype' => 'radio',
 		'valuetype' => 'int',
 		'default' => 0,
+		'options' => array(array('confop_value' => 0, 'confop_name' => $constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_0'),
+	                       array('confop_value' => 1, 'confop_name' => $constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_1'),
+	                       array('confop_value' => 2, 'confop_name' => $constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_2')),
 		);
 
 	$config[] = array(
