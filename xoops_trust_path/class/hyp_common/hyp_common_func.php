@@ -2002,7 +2002,14 @@ EOD;
 	function flock_put_contents ($filename, $src, $mode = 'wb', $maxRetry = 10) {
 		$return = FALSE;
 		if (is_string($filename) && ! empty($filename)) {
-			if ($handle = @ fopen($filename, $mode)) {
+			// rename を使用する方法を試みる touch() が可能なら rename() も、たぶん可
+			if (@ touch($filename) && ($temp = tempnam(dirname($filename), 'hyp') or $temp = tempnam(XOOPS_TRUST_PATH . '/cache', 'hyp'))) {
+				if (file_put_contents($temp, $src)) {
+					$return = @ rename($temp, $filename);
+				}
+				unlink($temp);
+			}
+			if (! $return && $handle = @ fopen($filename, $mode)) {
 				$i = 0;
 				while ($return === FALSE && $maxRetry > $i++) {
 					if (flock($handle, LOCK_EX)) {
