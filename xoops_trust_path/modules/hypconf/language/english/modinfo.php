@@ -90,6 +90,14 @@ define($constpref.'_LIMITEDBLOCKIDS', 'Alive Block');
 define($constpref.'_LIMITEDBLOCKIDS_DESC', 'Enables the selected block when the mobile access. If you select a block, the block is not selected is disabled. If you do not specify any filtering is not.');
 define($constpref.'_SHOWBLOCKIDS', 'Expand Block');
 define($constpref.'_SHOWBLOCKIDS_DESC', 'Block mobile access to view every time. <br />When using jQuery Mobile will initially be deployed collapse. <br />In a conventional mobile phone selected block is displayed, the non-selected block is the link to view the block.');
+define($constpref.'_USEJQMBLOCKCTL', 'Use Block Ctl for jqm');
+define($constpref.'_USEJQMBLOCKCTL_DESC', 'The following block control is applied at the time of jQuery Mobile use.<br />Selection of "no" will apply the block control at the time of the above-mentioned mobile access.');
+define($constpref.'_DISABLEDBLOCKIDS_JQM', 'Disable Block(jqm)');
+define($constpref.'_DISABLEDBLOCKIDS_JQM_DESC', 'Disable the selected block when uses jQuery Mobile.');
+define($constpref.'_LIMITEDBLOCKIDS_JQM', 'Alive Block(jqm)');
+define($constpref.'_LIMITEDBLOCKIDS_JQM_DESC', 'Enables the selected block when uses jQuery Mobile. If you select a block, the block is not selected is disabled. If you do not specify any filtering is not.');
+define($constpref.'_SHOWBLOCKIDS_JQM', 'Expand Block(jqm)');
+define($constpref.'_SHOWBLOCKIDS_JQM_DESC', 'The block which folds up at the time of jQuery Mobile use, and develops a display in the state of the first stage.');
 
 // xpwiki_render
 define($constpref.'_XPWIKI_RENDER_NONE', 'Do not use');

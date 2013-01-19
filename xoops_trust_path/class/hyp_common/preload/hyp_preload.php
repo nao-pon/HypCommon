@@ -218,6 +218,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->k_tai_conf['disabledBlockIds'])) $this->k_tai_conf['disabledBlockIds'] = array();
 		if (! isset($this->k_tai_conf['limitedBlockIds'])) $this->k_tai_conf['limitedBlockIds'] = array();
 		if (! isset($this->k_tai_conf['showBlockIds'])) $this->k_tai_conf['showBlockIds'] = array();
+		if (! isset($this->k_tai_conf['useJqmBlockCtl'])) $this->k_tai_conf['useJqmBlockCtl'] = 0;
+		if (! isset($this->k_tai_conf['disabledBlockIds_jqm'])) $this->k_tai_conf['disabledBlockIds_jqm'] = array();
+		if (! isset($this->k_tai_conf['limitedBlockIds_jqm'])) $this->k_tai_conf['limitedBlockIds_jqm'] = array();
+		if (! isset($this->k_tai_conf['showBlockIds_jqm'])) $this->k_tai_conf['showBlockIds_jqm'] = array();
 		if (! isset($this->k_tai_conf['pictSizeMax'])) $this->k_tai_conf['pictSizeMax'] = '200';
 		if (! isset($this->k_tai_conf['showImgHosts'])) $this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com', 'google.com');
 		if (! isset($this->k_tai_conf['directImgHosts'])) $this->k_tai_conf['directImgHosts'] = array('google-analytics.com', 'maps.google.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
@@ -304,6 +308,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 			if (isset($this->k_tai_conf['limitedBlockIds#'.XOOPS_URL])) {
 				$this->k_tai_conf['limitedBlockIds#'.XOOPS_URL] = array_filter($this->k_tai_conf['limitedBlockIds#'.XOOPS_URL]);
+			}
+			if (isset($this->k_tai_conf['disabledBlockIds_jqm#'.XOOPS_URL])) {
+				$this->k_tai_conf['disabledBlockIds_jqm#'.XOOPS_URL] = array_filter($this->k_tai_conf['disabledBlockIds_jqm#'.XOOPS_URL]);
+			}
+			if (isset($this->k_tai_conf['limitedBlockIds_jqm#'.XOOPS_URL])) {
+				$this->k_tai_conf['limitedBlockIds_jqm#'.XOOPS_URL] = array_filter($this->k_tai_conf['limitedBlockIds_jqm#'.XOOPS_URL]);
 			}
 			if (isset($this->k_tai_conf['jquery_theme#'.XOOPS_URL])) {
 				$this->k_tai_conf['rebuildsEx']['jqm']['header']['above'] = preg_replace('/data-theme="[a-z]"/', 'data-theme="' . $this->k_tai_conf['jquery_theme#'.XOOPS_URL] . '"', $this->k_tai_conf['rebuildsEx']['jqm']['header']['above']);
@@ -412,6 +422,13 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					} else {
 						$this->k_tai_conf['jqm_css'] = XOOPS_URL . $jqm_css;
 					}
+				}
+				
+				//jqm block control
+				if ($use_jqm && ! empty($this->k_tai_conf['useJqmBlockCtl'])) {
+					$this->k_tai_conf['disabledBlockIds'] = $this->k_tai_conf['disabledBlockIds_jqm'];
+					$this->k_tai_conf['limitedBlockIds'] = $this->k_tai_conf['limitedBlockIds_jqm'];
+					$this->k_tai_conf['showBlockIds'] = $this->k_tai_conf['showBlockIds_jqm'];
 				}
 
 				// Session setting
@@ -2247,14 +2264,20 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// <body> attributes
 		$this->k_tai_conf['bodyAttribute'] = '';
 
+		// ブロックコントロールで jqm 用の設定を有効にする
+		$this->k_tai_conf['useJqmBlockCtl'] = 0;
+		
 		// 無効にするブロックの bid (Block Id) (無指定:フィルタリングしない)
 		$this->k_tai_conf['disabledBlockIds'] = array();
+		$this->k_tai_conf['disabledBlockIds_jqm'] = array(); // jQuery mobile 用
 
 		// 有効にするブロックの bid (Block Id) (無指定:フィルタリングしない)
 		$this->k_tai_conf['limitedBlockIds'] = array();
+		$this->k_tai_conf['limitedBlockIds_jqm'] = array(); // jQuery mobile 用
 
 		// 常に表示するブロックの bid (Block Id) (メインメニューなど)
 		$this->k_tai_conf['showBlockIds'] = array();
+		$this->k_tai_conf['showBlockIds_jqm'] = array(); // jQuery mobile 用
 
 		// インラインイメージのリサイズ最大ピクセル
 		$this->k_tai_conf['pictSizeMax'] = '200';

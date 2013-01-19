@@ -90,6 +90,14 @@ define($constpref.'_LIMITEDBLOCKIDS', '有効ブロック');
 define($constpref.'_LIMITEDBLOCKIDS_DESC', 'モバイルアクセス時に選択されたブロックを有効にします。一つでも選択すると非選択のブロックはすべて無効になります。何も指定しないとフィルタリングはされません。');
 define($constpref.'_SHOWBLOCKIDS', '展開ブロック');
 define($constpref.'_SHOWBLOCKIDS_DESC', 'モバイルアクセス時に常に表示するブロック。<br />jQuery Mobile 使用時は折りたたみ表示が初期状態で展開されます。<br />従来の携帯表示では選択したブロックは表示され、非選択のブロックはそのブロックを表示するためのリンクになります。');
+define($constpref.'_USEJQMBLOCKCTL', 'jqm専用ブロックコントロールの使用');
+define($constpref.'_USEJQMBLOCKCTL_DESC', '以下のブロックコントロールを jQuery Mobile 使用時に適用します。<br />「いいえ」を選択すると上記のモバイルアクセス時のブロックコントロールが適用されます。');
+define($constpref.'_DISABLEDBLOCKIDS_JQM', '無効ブロック(jqm)');
+define($constpref.'_DISABLEDBLOCKIDS_JQM_DESC', 'jQuery Mobile 使用時に選択されたブロックを無効にします。');
+define($constpref.'_LIMITEDBLOCKIDS_JQM', '有効ブロック(jqm)');
+define($constpref.'_LIMITEDBLOCKIDS_JQM_DESC', 'jQuery Mobile 使用時に選択されたブロックを有効にします。一つでも選択すると非選択のブロックはすべて無効になります。何も指定しないとフィルタリングはされません。');
+define($constpref.'_SHOWBLOCKIDS_JQM', '展開ブロック(jqm)');
+define($constpref.'_SHOWBLOCKIDS_JQM_DESC', 'jQuery Mobile 使用時に折りたたみ表示を初期状態で展開するブロック。');
 
 // xpwiki_render
 define($constpref.'_XPWIKI_RENDER_NONE', '使用しない');

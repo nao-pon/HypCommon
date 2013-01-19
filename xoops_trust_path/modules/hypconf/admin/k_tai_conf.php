@@ -152,3 +152,34 @@ $config[] = array(
 	'valuetype' => 'array',
 	'options' => 'blocks'
 	);
+$config[] = array(
+	'name' => 'useJqmBlockCtl',
+	'title' => $constpref.'_USEJQMBLOCKCTL',
+	'description' => $constpref.'_USEJQMBLOCKCTL_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int'
+);
+$config[] = array(
+	'name' => 'disabledBlockIds_jqm',
+	'title' => $constpref.'_DISABLEDBLOCKIDS_JQM',
+	'description' => $constpref.'_DISABLEDBLOCKIDS_JQM_DESC',
+	'formtype' => 'check',
+	'valuetype' => 'array',
+	'options' => 'blocks',
+	);
+$config[] = array(
+	'name' => 'limitedBlockIds_jqm',
+	'title' => $constpref.'_LIMITEDBLOCKIDS_JQM',
+	'description' => $constpref.'_LIMITEDBLOCKIDS_JQM_DESC',
+	'formtype' => 'check',
+	'valuetype' => 'array',
+	'options' => 'blocks'
+	);
+$config[] = array(
+	'name' => 'showBlockIds_jqm',
+	'title' => $constpref.'_SHOWBLOCKIDS_JQM',
+	'description' => $constpref.'_SHOWBLOCKIDS_JQM_DESC',
+	'formtype' => 'check',
+	'valuetype' => 'array',
+	'options' => 'blocks'
+	);

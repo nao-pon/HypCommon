@@ -1,7 +1,6 @@
 <?php
 /*
  * Created on 2007/02/13 by nao-pon http://hypweb.net/
- * $Id: hyp_preload.conf.php.rename.php, v 1.0 2007/02/13 11:28:04 nao-pon Exp $
 
  HypCommonPreLoad の設定値を変更したい場合は
  このファイルを編集して hyp_preload.conf.php にリネームしてください。
@@ -221,14 +220,20 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// <body> attributes
 		$this->k_tai_conf['bodyAttribute'] = '';
 
+		// ブロックコントロールで jqm 用の設定を有効にする
+		$this->k_tai_conf['useJqmBlockCtl'] = 0;
+		
 		// 無効にするブロックの bid (Block Id) (無指定:フィルタリングしない)
 		$this->k_tai_conf['disabledBlockIds'] = array();
+		$this->k_tai_conf['disabledBlockIds_jqm'] = array(); // jQuery mobile 用
 
 		// 有効にするブロックの bid (Block Id) (無指定:フィルタリングしない)
 		$this->k_tai_conf['limitedBlockIds'] = array();
+		$this->k_tai_conf['limitedBlockIds_jqm'] = array(); // jQuery mobile 用
 
 		// 常に表示するブロックの bid (Block Id) (メインメニューなど)
 		$this->k_tai_conf['showBlockIds'] = array();
+		$this->k_tai_conf['showBlockIds_jqm'] = array(); // jQuery mobile 用
 
 		// インラインイメージのリサイズ最大ピクセル
 		$this->k_tai_conf['pictSizeMax'] = '200';
@@ -305,6 +310,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 
 		// 携帯対応レンダー設定 以上
 		/////////////////////////////
+
 
 		///////////////////////////////
 		// 以下は変更してはいけません。
