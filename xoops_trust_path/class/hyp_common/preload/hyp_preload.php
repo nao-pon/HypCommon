@@ -808,7 +808,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 
 		// Insert tag into <head>
-		ob_start(array(& $this, 'addHeadTag'));
+		if (! defined('HYP_K_TAI_RENDER') || HYP_K_TAI_RENDER !== 1) {
+			ob_start(array(& $this, 'addHeadTag'));
+		}
 
 		// Set Query Words
 		if ($this->use_set_query_words) {

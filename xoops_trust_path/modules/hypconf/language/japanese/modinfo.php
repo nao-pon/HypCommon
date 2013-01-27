@@ -149,7 +149,7 @@ define($constpref.'_POST_SPAM_BADIP_TTL0_DESC', '');
 
 // misc
 define($constpref.'_MISC_HEAD_LAST_TAG', '&lt;head&gt;内の最後に挿入するタグ');
-define($constpref.'_MISC_HEAD_LAST_TAG_DESC', 'ここに記述した内容が &lt;/head&gt; の直前に挿入されます。&lt;meta&gt;, &lt;script&gt;, &lt;link&gt; タグなどが記述できます。<br />&lt;{$xoops_url}&gt; または [XOOPS_URL] は "'.XOOPS_URL.'" に置換されます。');
+define($constpref.'_MISC_HEAD_LAST_TAG_DESC', 'ここに記述した内容が &lt;/head&gt; の直前に挿入されます。(jQuery Mobile を利用しない携帯対応時を除く)<br />&lt;meta&gt;, &lt;script&gt;, &lt;link&gt; タグなどが記述できます。<br />&lt;{$xoops_url}&gt; または [XOOPS_URL] は "'.XOOPS_URL.'" に置換されます。');
 define($constpref.'_XOOPSTPL_PLUGINS_DIR', 'Smartyプラグインディレクトリ(優先順)');
 define($constpref.'_XOOPSTPL_PLUGINS_DIR_DESC', 'Smartyプラグインが保存されているディレクトリを指定します。上から優先順に行単位で記述してください。(同名のファイルが存在した場合上のディレクトリのファイルが使用されます)<br />何も記入せずに保存するとXOOPSの初期値に戻ります。<br />独自プラグインを管理したい場合は、一番上に '.XOOPS_TRUST_PATH.'/lib/my_smartyplugins などとして、そのディレクトリに独自プラグインを置くと最優先で使用されます。<br />※ 初期状態で表示されているディレクトリについて専門知識がない場合は、優先順位も含めて変更されないことをお勧めします。');
 
