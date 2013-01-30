@@ -584,7 +584,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 	
 	function BBCode_wiki_render(&$html, $element) {
-		if (preg_match('/(?:^| )(?:html|rich|wysiwyg)(?: |$)/',
+		if (defined('XCUBE_DELEGATE_CHAIN_BREAK') && preg_match('/(?:^| )(?:html|rich|wysiwyg)(?: |$)/',
 				$element['class'])) {
 			return; // ここでは何もせず chain の続きを処理する
 		} else {
@@ -595,7 +595,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			rows="'.$element['rows'].'"
 			id="'.$element['id'].'">'.$element['value'].'</textarea>';
 			// このあとの chain はキャンセルして 'Site.TextareaEditor.BBCode.Show' デリゲートを終了する
-			return XCUBE_DELEGATE_CHAIN_BREAK;
+			return (defined('XCUBE_DELEGATE_CHAIN_BREAK')? XCUBE_DELEGATE_CHAIN_BREAK : null);
 		}
 	}
 	
@@ -610,8 +610,14 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			    strpos($_SERVER['REQUEST_URI'], '__CustomBlocks__&op=edit') === false
 			     )
 			) {
-				$this->mRoot->mDelegateManager->add('Site.TextareaEditor.BBCode.Show',
-						array(&$this, 'BBCode_wiki_render'), XCUBE_DELEGATE_PRIORITY_FIRST);
+				if (defined('XCUBE_DELEGATE_CHAIN_BREAK')) {
+					$this->mRoot->mDelegateManager->add('Site.TextareaEditor.BBCode.Show',
+							array(&$this, 'BBCode_wiki_render'), XCUBE_DELEGATE_PRIORITY_FIRST);
+				} else {
+					$this->mRoot->mDelegateManager->reset('Site.TextareaEditor.BBCode.Show');
+					$this->mRoot->mDelegateManager->add('Site.TextareaEditor.BBCode.Show',
+							array(&$this, 'BBCode_wiki_render'));
+				}
 			}
 		}
 		
