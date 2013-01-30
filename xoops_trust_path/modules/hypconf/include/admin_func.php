@@ -301,6 +301,18 @@ function hypconfShowForm($config) {
 					$ele->addOption($optval, $optkey);
 				}
 				break;
+			case 'radio':
+				$ele = new XoopsFormRadio($title, $config[$i]['name'], $config[$i]['value']);
+				if (! empty($config[$i]['width'])) {
+					//$ele->setWidth($config[$i]['width']);
+				}
+				$options = $config[$i]['options'];
+				foreach($options as $option) {
+					$optval = defined($option['confop_value']) ? hypconf_constant($option['confop_value']) : $option['confop_value'];
+					$optkey = defined($option['confop_name']) ? hypconf_constant($option['confop_name']) : $option['confop_name'];
+					$ele->addOption($optval, $optkey);
+				}
+				break;
 			case 'yesno':
 				$ele = new XoopsFormRadioYN($title, $config[$i]['name'], $config[$i]['value'], _YES, _NO);
 				break;
