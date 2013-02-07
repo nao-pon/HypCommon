@@ -1766,7 +1766,9 @@ EOD;
 							if ($use_jquery) $_head .= $match[0][$key];
 						}
 					} else if (preg_match('#rel=("|\')stylesheet\\1#iS', $attrs)) {
-						if (preg_match('# media=("|\')[a-z, ]*\b(?:'.$_css_type.'|'.$r->vars['ua']['carrier'].')\b[a-z, ]*\\1#iS', $attrs)) {
+						if (strpos($_css_type, 'all') !== false && strpos($attrs, 'media=') === false) {
+							$_head .= '<link' . $attrs . '>';
+						} else if (preg_match('# media=("|\')[a-z, ]*\b(?:'.$_css_type.'|'.$r->vars['ua']['carrier'].')\b[a-z, ]*\\1#iS', $attrs)) {
 							$_head .= '<link' . preg_replace('# media=("|\')[^"\']*?\\1#iS', '', $attrs) . '>';
 						}
 					}
@@ -1774,7 +1776,7 @@ EOD;
 			}
 			if (preg_match_all('#<script(.+?)/script>\r?\n?#isS', $head, $match)) {
 				foreach($match[1] as $i => $attrs) {
-					if (preg_match('#jquery\.#iS', $attrs)) {
+					if (preg_match('#jquery#iS', $attrs)) {
 						$jquery_script[] = $match[0][$i];
 						$head = str_replace($match[0][$i], '', $head);
 					}
