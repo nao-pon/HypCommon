@@ -593,6 +593,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			) {
 			return; // ここでは何もせず chain の続きを処理する
 		} else {
+			$this->check_XpWiki();
 			$script = (method_exists('XpWiki', 'get_BBCode_switch_js'))? XpWiki::get_BBCode_switch_js($element['id'], XPWIKI_RENDERER_DIR) : '';
 			$element['class'] = trim(preg_replace('/ +/', '
 					', str_replace('bbcode', '', $element['class'])));
@@ -606,8 +607,15 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 	
 	function BBCode_add_switch(&$html, $element) {
+		$this->check_XpWiki();
 		$script = (method_exists('XpWiki', 'get_BBCode_switch_js'))? XpWiki::get_BBCode_switch_js($element['id'], XPWIKI_RENDERER_DIR) : '';
 		$html .= $script;
+	}
+	
+	function check_XpWiki() {
+		if (! class_exists('XpWiki')) {
+			include XOOPS_TRUST_PATH . '/modules/xpwiki/include.php';
+		}
 	}
 	
 	function postFilter() {
