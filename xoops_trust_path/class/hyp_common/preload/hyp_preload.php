@@ -584,19 +584,30 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 	
 	function BBCode_wiki_render(&$html, $element) {
-		if (defined('XCUBE_DELEGATE_CHAIN_BREAK') && preg_match('/(?:^| )(?:html|rich|wysiwyg)(?: |$)/',
-				$element['class'])) {
+		if (defined('XCUBE_DELEGATE_CHAIN_BREAK')
+				 && (
+				(isset($_COOKIE['__whlp']) && $_COOKIE['__whlp'][0] == '1')
+				 ||
+				preg_match('/(?:^| )(?:html|rich|wysiwyg)(?: |$)/', $element['class'])
+				 )
+			) {
 			return; // ここでは何もせず chain の続きを処理する
 		} else {
+			$script = (method_exists('XpWiki', 'get_BBCode_switch_js'))? XpWiki::get_BBCode_switch_js($element['id'], XPWIKI_RENDERER_DIR) : '';
 			$element['class'] = trim(preg_replace('/ +/', '
 					', str_replace('bbcode', '', $element['class'])));
 			$html = '<textarea name="'.$element['name'].'"
 			class="'.$element['class'].'" cols="'.$element['cols'].'"
 			rows="'.$element['rows'].'"
-			id="'.$element['id'].'">'.$element['value'].'</textarea>';
+			id="'.$element['id'].'">'.$element['value'].'</textarea>'.$script;
 			// このあとの chain はキャンセルして 'Site.TextareaEditor.BBCode.Show' デリゲートを終了する
 			return (defined('XCUBE_DELEGATE_CHAIN_BREAK')? XCUBE_DELEGATE_CHAIN_BREAK : null);
 		}
+	}
+	
+	function BBCode_add_switch(&$html, $element) {
+		$script = (method_exists('XpWiki', 'get_BBCode_switch_js'))? XpWiki::get_BBCode_switch_js($element['id'], XPWIKI_RENDERER_DIR) : '';
+		$html .= $script;
 	}
 	
 	function postFilter() {
@@ -613,6 +624,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				if (defined('XCUBE_DELEGATE_CHAIN_BREAK')) {
 					$this->mRoot->mDelegateManager->add('Site.TextareaEditor.BBCode.Show',
 							array(&$this, 'BBCode_wiki_render'), XCUBE_DELEGATE_PRIORITY_FIRST);
+					$this->mRoot->mDelegateManager->add('Site.TextareaEditor.BBCode.Show',
+							array(&$this, 'BBCode_add_switch'), XCUBE_DELEGATE_PRIORITY_FINAL + 10);
 				} else {
 					$this->mRoot->mDelegateManager->reset('Site.TextareaEditor.BBCode.Show');
 					$this->mRoot->mDelegateManager->add('Site.TextareaEditor.BBCode.Show',
