@@ -1795,6 +1795,7 @@ EOD;
 					}
 				}
 			}
+			/*
 			if (preg_match_all('#<script(.+?)/script>\r?\n?#isS', $head, $match)) {
 				foreach($match[1] as $i => $attrs) {
 					if (preg_match('#jquery#iS', $attrs)) {
@@ -1803,6 +1804,7 @@ EOD;
 					}
 				}
 			}
+			*/
 			if ($rss) {
 				if ($use_jquery && count($rss) > 1) {
 					$rss = '<div data-role="collapsible" data-theme="'.$this->k_tai_conf['jquery_theme_block'].'" data-content-theme="'.$this->k_tai_conf['jquery_theme_block'].'" data-collapsed="true"><h4>RSS Links</h4>' . $r->Config_icons['RSS'] . join('<br />' . $r->Config_icons['RSS'], $rss) . '</div>';
@@ -1830,7 +1832,7 @@ EOD;
 				$_head .= '<script type="text/javascript" src="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.min.js"></script>';
 				$_head .= '<script type="text/javascript" src="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.mobile-config.js"></script>';
 				$_head .= '<script type="text/javascript" src="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.mobile.min.js"></script>';
-				$_head .= join('', $jquery_script);
+				//$_head .= join('', $jquery_script);
 				$_head .= '<script type="text/javascript" src="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.extra.js"></script>';
 				if (preg_match('/<!--jqm_theme_([a-z])/', $head, $_match)) {
 					$this->k_tai_conf['jquery_theme'] = $_match[1];
