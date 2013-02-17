@@ -202,7 +202,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			                          'below' => '</h1>'),
 			'easylogin'      => array( 'above' => '',
 			                          'below' => ''),
-			'blockMenu'      => array( 'above' => '</div><div data-role="footer" data-position="fixed" style="line-height:1">',
+			'blockMenu'      => array( 'above' => '</div><div data-role="footer" data-position="fixed" data-disable-page-zoom="false" style="line-height:1">',
 			                          'below' => ''),
 		);
 		if (! isset($this->k_tai_conf['jqm_css'])) $this->k_tai_conf['jqm_css'] = '';
@@ -224,7 +224,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->k_tai_conf['showBlockIds_jqm'])) $this->k_tai_conf['showBlockIds_jqm'] = array();
 		if (! isset($this->k_tai_conf['pictSizeMax'])) $this->k_tai_conf['pictSizeMax'] = '200';
 		if (! isset($this->k_tai_conf['showImgHosts'])) $this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com', 'google.com');
-		if (! isset($this->k_tai_conf['directImgHosts'])) $this->k_tai_conf['directImgHosts'] = array('google-analytics.com', 'maps.google.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
+		if (! isset($this->k_tai_conf['directImgHosts'])) $this->k_tai_conf['directImgHosts'] = array('google-analytics.com', 'maps.google.com', 'maps.googleapis.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
 		if (! isset($this->k_tai_conf['directLinkHosts'])) $this->k_tai_conf['directLinkHosts'] = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com', 'afl.rakuten.co.jp', 'maps.google.com', 'google.co.jp');
 		if (! isset($this->k_tai_conf['redirect'])) $this->k_tai_conf['redirect'] = XOOPS_URL . '/class/hyp_common/gate.php?way=redirect&amp;_d=0&amp;_u=0&amp;_x=0&amp;l=';
 		if (! isset($this->k_tai_conf['easyLogin'])) $this->k_tai_conf['easyLogin'] = 1;
@@ -2333,7 +2333,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->k_tai_conf['showImgHosts'] = array('amazon.com', 'yimg.jp', 'yimg.com', 'google.com');
 
 		// 直接画像を表示するホスト名(後方一致)
-		$this->k_tai_conf['directImgHosts'] = array('google-analytics.com', 'maps.google.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
+		$this->k_tai_conf['directImgHosts'] = array('google-analytics.com', 'maps.google.com', 'maps.googleapis.com', 'ad.jp.ap.valuecommerce.com', 'ba.afl.rakuten.co.jp', 'assoc-amazon.jp', 'ad.linksynergy.com');
 
 		// リダイレクトスクリプトを経由しないホスト名(後方一致)
 		$this->k_tai_conf['directLinkHosts'] = array('amazon.co.jp', 'ck.jp.ap.valuecommerce.com', 'afl.rakuten.co.jp', 'maps.google.com');
