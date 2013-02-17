@@ -202,8 +202,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			                          'below' => '</h1>'),
 			'easylogin'      => array( 'above' => '',
 			                          'below' => ''),
-			'blockMenu'      => array( 'above' => '</div><div data-role="footer" data-position="fixed" data-disable-page-zoom="false" style="line-height:1">',
-			                          'below' => ''),
+			'blockMenu'      => array( 'above' => '<div data-role="header" style="line-height:1">',
+			                          'below' => '</div>'),
 		);
 		if (! isset($this->k_tai_conf['jqm_css'])) $this->k_tai_conf['jqm_css'] = '';
 
