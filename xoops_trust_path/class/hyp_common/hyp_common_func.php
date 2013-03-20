@@ -2007,7 +2007,7 @@ EOD;
 				if (file_put_contents($temp, $src)) {
 					$return = @ rename($temp, $filename);
 				}
-				unlink($temp);
+				if (! $return) unlink($temp);
 			}
 			if (! $return && $handle = @ fopen($filename, $mode)) {
 				$i = 0;
