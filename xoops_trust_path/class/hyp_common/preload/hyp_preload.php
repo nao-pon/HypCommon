@@ -1351,7 +1351,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			return '';
 		} else {
 			if (!empty($_SESSION['hyp_redirect_message'])) {
-				$wait = max($this->smart_redirect_min_sec, $_SESSION['hyp_redirect_wait']);
+				$wait = isset($_SESSION['hyp_redirect_wait'])? max($this->smart_redirect_min_sec, $_SESSION['hyp_redirect_wait']) : $this->smart_redirect_min_sec;
 				$msg = '<div id="redirect_message" style="text-align:center;">' . $_SESSION['hyp_redirect_message'] . '</div>';
 				if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) $msg = '<!--redirectMessage-->' . $msg. '<!--/redirectMessage-->';
 				$js_head = <<<EOD
