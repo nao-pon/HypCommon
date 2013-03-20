@@ -40,13 +40,21 @@
 <{if $xoops_breadcrumbs}>
 <!--breadcrumbs-->
 <div style="font-size:small;color:#FFFFFF;background-color:#A9A9A9">
-	<a href="<{$xoops_url}>/">Home</a>
-	<{foreach from=$xoops_breadcrumbs item="item"}>
-		&gt;
-		<{if $item.url}>
-			<a href="<{$item.url}>"><{$item.name}></a>
-		<{else}>
-			<{$item.name}>
+	<{if $xoops_breadcrumbs[0].url|rtrim:'/' != $xoops_url}>
+		<a href="<{$xoops_url}>/">Home</a>
+		<{assign var="breadcrumbs_start" value=0}>
+	<{else}>
+		<a href="<{$xoops_breadcrumbs[0].url}>"><{$xoops_breadcrumbs[0].name}></a>
+		<{assign var="breadcrumbs_start" value=1}>
+	<{/if}>
+	<{foreach name=breadcrumbs from=$xoops_breadcrumbs item="item"}>
+		<{if $smarty.foreach.breadcrumbs.index >= $breadcrumbs_start}>
+			&gt;
+			<{if $item.url}>
+				<a href="<{$item.url}>"><{$item.name}></a>
+			<{else}>
+				<{$item.name}>
+			<{/if}>
 		<{/if}>
 	<{/foreach}>
 </div>
