@@ -61,7 +61,7 @@ $.extend({
 		checkedElements: [],
 		touchedElements: [],
 		set: function(target) {
-			if (navigator.userAgent.indexOf('Android') > 0) {
+			if (navigator.userAgent.indexOf('Linux; U; Android 2.') > 0) {
 				if (target.css('display') != 'none') {
 					$.androidDomStackEventFix.hideOverlay(target);
 				} else {
