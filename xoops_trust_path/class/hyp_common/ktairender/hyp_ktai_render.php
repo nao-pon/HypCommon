@@ -514,7 +514,7 @@ class HypKTaiRender
 		$body = preg_replace_callback('#(<[^>]+>[^<>]*)(<input[^>]+type=["\']?(?:checkbox|radio)[^>/]+)/?'.'>([^<>]*<[^>]+>)#i', array(& $this, '_check_checkbox_smart'), $body);
 		
 		// give data-ajax="false"
-		$body = preg_replace_callback('#(<script.+?/script>)|((<(?:a|form)[^>]+?)((?:href|action)=("|\')([^>]+?)\\5)([^>]*?>))#isS', array(& $this, '_check_href_smart'), $body);
+		$body = preg_replace_callback('#(<script.+?/script>)|((<(?:a|form)[^>]+?)((?:href|action)=("|\')([^>]*?)\\5)([^>]*?>))#isS', array(& $this, '_check_href_smart'), $body);
 
 		// for Smarty {mailto encode="javascript"}
 		$body = preg_replace_callback('#<script type="text/javascript">eval\((unescape\(\'[%0-9a-f]+\'\))\)</script>#S', array(& $this, '_check_js_email'), $body);
