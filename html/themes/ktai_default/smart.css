@@ -118,7 +118,7 @@ span.button a {
 	background-color: #E0E0FF;
 	padding: 5px;
 	font-weight: bold;
-	white-space: nowrap;
+	/*white-space: nowrap;*/
 }
 .even {
 	background-color: #E0E0FF;
