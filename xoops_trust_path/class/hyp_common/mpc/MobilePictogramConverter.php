@@ -84,7 +84,7 @@ class MobilePictogramConverter
             return $error;
         }
 
-        $mpc =& new $classname;
+        $mpc = new $classname;
         $mpc->setFromCharset($charset);
         $mpc->setString($str);
         $mpc->setFrom(strtoupper($carrier));
@@ -107,7 +107,7 @@ class MobilePictogramConverter
 
         require_once($filepath);
 
-        $mpc =& new MPC_Common();
+        $mpc = new MPC_Common();
         $mpc->setFromCharset($charset);
 
         if (is_object($mpc) == false) {
