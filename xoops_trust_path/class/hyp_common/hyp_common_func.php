@@ -504,9 +504,9 @@ class HypCommonFunc
 		}
 		else
 		{
-			if (!HypCommonFunc::check_memory4gd($org_w,$org_h))
+			if (!HypCommonFunc::check_memory4gd($org_w,$org_h,$zoom))
 			{
-				// メモリー制限に引っ掛かりそう。（マージン 1MB）
+				// メモリー制限に引っ掛かりそう。
 				return $o_file;
 			}
 			return HypCommonFunc::make_thumb_gd($o_file, $s_file, $zoom, $quality, $size[2], $org_w, $org_h);
@@ -991,7 +991,7 @@ class HypCommonFunc
 		return $match[0];
 	}
 
-	function check_memory4gd($w,$h)
+	function check_memory4gd($w,$h,$zoom = 1)
 	{
 		// GDで処理可能なメモリーサイズ
 		static $memory_limit = NULL;
@@ -1001,16 +1001,20 @@ class HypCommonFunc
 		}
 		if ($memory_limit)
 		{
-			// ビットマップ展開時のメモリー上のサイズ
-			$bitmap_size = $w * $h * 3 + 54;
+			$sw = $w * $zoom;
+			$sh = $h * $zoom;
+			// GD で利用するメモリ量の計算
+			// @author Mocchi (http://sakamocchi.jp/item/277)
+			$gd_size = ($sw * $sh * 5 + $sh * 24 + 10000)
+			         + ($w  * $h  * 5 + $h  * 24 + 10000);
 
 			$now_use_mem = intval(memory_get_usage(true));
 			if (!$now_use_mem) {
-				$now_use_mem = 4 * 1024 * 1024;
+				$now_use_mem = 8 * 1024 * 1024; // おおよそ 8MB 使用済みと仮定
 			}
-			if ($bitmap_size > ($memory_limit - $now_use_mem - (1 * 1024 * 1024)))
+			if ($gd_size > ($memory_limit - $now_use_mem ))
 			{
-				// メモリー制限に引っ掛かりそう。（マージン 1MB）
+				// メモリー制限に引っ掛かりそう。
 				return false;
 			}
 		}
