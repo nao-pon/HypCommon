@@ -1,10 +1,9 @@
 <?php
 /*
  * Created on 2011/11/17 by nao-pon http://xoops.hypweb.net/
- * $Id: Hyp_TextFilter.php,v 1.4 2012/01/15 00:08:40 nao-pon Exp $
  */
 
-class Hyp_TextFilter extends Legacy_TextFilter
+class Hyp_TextFilterAbstract extends Legacy_TextFilter
 {
     var $hypInternalTags = array('email', 'siteimg', 'img', 'siteurl', 'url');
     var $hypEscTags      = array('quote', 'color', 'font', 'size', 'b', 'c', 'd', 'i', 'u');
@@ -15,30 +14,9 @@ class Hyp_TextFilter extends Legacy_TextFilter
         $this->mMakeXCodeConvertTable->add('Hyp_TextFilter::makeXCodeConvertTable', XCUBE_DELEGATE_PRIORITY_3);
         $this->mMakeXCodeConvertTable->add(array(& $this, 'getXcodeBBcode'), XCUBE_DELEGATE_PRIORITY_FINAL);
     }
-
-    function makeXCodeConvertTable(& $patterns, & $replacements) {
-        if ($key = array_search('/\[quote\]/sU', $patterns)) {
-            $replacements[0][$key] = $replacements[1][$key] = '<div class="paragraph">'._QUOTEC.'<div class="xoopsQuote"><blockquote>';
-        }
-        if ($key = array_search('/\[\/quote\]/sU', $patterns)) {
-            $replacements[0][$key] = $replacements[1][$key] = '</blockquote></div></div>';
-        }
-        $patterns[] = "/\[quote sitecite=([^\"'<>]*)\]/sU";
-        $replacements[0][] = $replacements[1][] = '<div class="paragraph">'._QUOTEC.'<div class="xoopsQuote"><blockquote cite="'.XOOPS_URL.'/\\1">';
-    }
-
-    function getXcodeBBcode($patterns, $replacements) {
-    	$_arr = $this->hypBypassTags;
-    	foreach($patterns as $_pat) {
-    		if (preg_match('#^/\\\\\[([a-zA-Z0-9_-]+)\b#', $_pat, $_match)) {
-   				$_arr[] = $_match[1];
-    		}
-    	}
-    	$this->hypBypassTags = array_unique(array_diff($_arr, $this->hypEscTags, $this->hypInternalTags));
-    }
-
+	
     // Over write
-    function getInstance(&$instance) {
+    public function getInstance(&$instance) {
         if (empty($instance)) {
             $instance = new Hyp_TextFilter();
         }
@@ -66,6 +44,29 @@ class Hyp_TextFilter extends Legacy_TextFilter
 	function toPreviewTarea($text, $html = 0, $smiley = 1, $xcode = 1, $image = 1, $br = 1, $x2comat=false) {
 		return $this->toShowTarea($text, $html, $smiley, $xcode, $image, $br, $x2comat, 0);
 	}
+
+	// Original function for Over write "makeXCodeConvertTable"
+	private static function _makeXCodeConvertTable(& $patterns, & $replacements) {
+		if ($key = array_search('/\[quote\]/sU', $patterns)) {
+			$replacements[0][$key] = $replacements[1][$key] = '<div class="paragraph">'._QUOTEC.'<div class="xoopsQuote"><blockquote>';
+		}
+		if ($key = array_search('/\[\/quote\]/sU', $patterns)) {
+			$replacements[0][$key] = $replacements[1][$key] = '</blockquote></div></div>';
+		}
+		$patterns[] = "/\[quote sitecite=([^\"'<>]*)\]/sU";
+		$replacements[0][] = $replacements[1][] = '<div class="paragraph">'._QUOTEC.'<div class="xoopsQuote"><blockquote cite="'.XOOPS_URL.'/\\1">';
+    }
+
+    // Original function
+    function getXcodeBBcode($patterns, $replacements) {
+    	$_arr = $this->hypBypassTags;
+    	foreach($patterns as $_pat) {
+    		if (preg_match('#^/\\\\\[([a-zA-Z0-9_-]+)\b#', $_pat, $_match)) {
+   				$_arr[] = $_match[1];
+    		}
+    	}
+    	$this->hypBypassTags = array_unique(array_diff($_arr, $this->hypEscTags, $this->hypInternalTags));
+    }
 
     // Original function
     function renderWiki_getEscTags () {
@@ -244,4 +245,20 @@ class Hyp_TextFilter extends Legacy_TextFilter
         }
         return preg_replace_callback($regex, array(& $this, 'renderWikistyleParagraphRegularize'), $input);
     }
+}
+
+if (! defined('LEGACY_BASE_VERSION') || (version_compare(LEGACY_BASE_VERSION, '2.2.2.2', '<') && (! defined('_MI_LEGACY_DETAILED_VERSION') || version_compare(_MI_LEGACY_DETAILED_VERSION, 'CorePack 20130503', '<')))) {
+	class Hyp_TextFilter extends Hyp_TextFilterAbstract {
+		// Over write
+		public function makeXCodeConvertTable(& $patterns, & $replacements) {
+			self::_makeXCodeConvertTable($patterns, $replacements);
+	    }
+	}
+} else {
+	class Hyp_TextFilter extends Hyp_TextFilterAbstract {
+		// Over write
+		public static function makeXCodeConvertTable(& $patterns, & $replacements) {
+			self::_makeXCodeConvertTable($patterns, $replacements);
+	    }
+	}
 }
