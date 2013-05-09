@@ -247,7 +247,7 @@ class Hyp_TextFilterAbstract extends Legacy_TextFilter
     }
 }
 
-if (! defined('LEGACY_BASE_VERSION') || (version_compare(LEGACY_BASE_VERSION, '2.2.2.2', '<') && (! defined('_MI_LEGACY_DETAILED_VERSION') || version_compare(_MI_LEGACY_DETAILED_VERSION, 'CorePack 20130503', '<')))) {
+if (! defined('LEGACY_BASE_VERSION') || version_compare(LEGACY_BASE_VERSION, '2.2.2.2', '>=') || (! defined('_MI_LEGACY_DETAILED_VERSION') || version_compare(_MI_LEGACY_DETAILED_VERSION, 'CorePack 20130503', '<'))) {
 	class Hyp_TextFilter extends Hyp_TextFilterAbstract {
 		// Over write
 		public function makeXCodeConvertTable(& $patterns, & $replacements) {
