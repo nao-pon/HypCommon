@@ -733,6 +733,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 			// PostSpam をチェック
 			if ($this->use_post_spam_filter) {
+				// spamdat 自動アップデート用タグ
+				$GLOBALS['hyp_preload_head_tag'] .= "\n" . '<script type="text/javascript" src="'.XOOPS_URL.'/class/hyp_common/gate.php?way=spamdatup&_x&_d&_u" defer="defer"></script>';
+				
 				// 加算 pt
 				if ($this->post_spam_rules) {
 					foreach ($this->post_spam_rules as $rule => $point) {
@@ -763,7 +766,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 				// Default スパムサイト定義読み込み
 				$datfiles = array();
-				$datfiles[] = HYP_COMMON_ROOT_PATH . '/dat/spamsites.dat';
+				if (is_file(XOOPS_TRUST_PATH . '/uploads/hyp_common/spamsites.dat')) {
+					$datfiles[] = XOOPS_TRUST_PATH . '/uploads/hyp_common/spamsites.dat';
+				} else {
+					$datfiles[] = HYP_COMMON_ROOT_PATH . '/dat/spamsites.dat';
+				}
 				$datfiles[] = HYP_COMMON_ROOT_PATH . '/config/spamsites.conf.dat';
 				$checks = array();
 				$mtime = 0;
@@ -792,7 +799,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 				// Default スパムワード定義読み込み
 				$datfiles = array();
-				$datfiles[] = HYP_COMMON_ROOT_PATH . '/dat/spamwords.dat';
+				if (is_file(XOOPS_TRUST_PATH . '/uploads/hyp_common/spamwords.dat')) {
+					$datfiles[] = XOOPS_TRUST_PATH . '/uploads/hyp_common/spamwords.dat';
+				} else {
+					$datfiles[] = HYP_COMMON_ROOT_PATH . '/dat/spamwords.dat';
+				}
 				$datfiles[] = HYP_COMMON_ROOT_PATH . '/config/spamwords.conf.dat';
 				$checks = array();
 				$mtime = 0;

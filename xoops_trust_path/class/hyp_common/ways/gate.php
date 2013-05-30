@@ -28,7 +28,7 @@ $cacheurl = $rooturl . '/class/hyp_common/cache';
 $cachepath = $rootpath . '/class/hyp_common/cache';
 
 $file_php = dirname(__FILE__) . '/' . $way . '.php';
-if (file_exists($file_php)) {
+if (is_file($file_php)) {
 	include $file_php;
 } else {
 	hyp_Gate_goOut('File not found.');
