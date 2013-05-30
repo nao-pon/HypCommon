@@ -1440,6 +1440,31 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 			return 0;
 		}
 	}
+	
+	// xoops_trust_path/uploads/hyp_common の spamdat を自動更新
+	function spamdat_auto_update($trustpath = '') {
+		if (! defined('XOOPS_TRUST_PATH') && $trustpath) {
+			define('XOOPS_TRUST_PATH', $trustpath);
+		}
+		if (! defined('XOOPS_TRUST_PATH')) return;
+		
+		$ht = new Hyp_HTTP_Request();
+		$files = array('spamsites.dat', 'spamwords.dat');
+		foreach($files as $file) {
+			$target = XOOPS_TRUST_PATH . '/uploads/hyp_common/' . $file;
+			if (filemtime($target) + 600 < time()) {
+				$ht->init();
+				$ht->url = 'http://nao-pon.github.io/HypContents/spamdat/' . $file;
+				$ht->get();
+				if ($ht->rc == 200 && $ht->data) {
+					$data = $ht->data;
+					if (md5($data) !== @ md5_file($target)) {
+						file_put_contents($target, $data);
+					}
+				}
+			}
+		}
+	}
 
 	// Input フィルター
 	// $strength - 0: null 以外許可, 1: SoftBankの絵文字と\t,\r,\n は許可, 2: \t,\r,\n のみ許可

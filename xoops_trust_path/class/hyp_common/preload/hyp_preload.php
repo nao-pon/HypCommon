@@ -851,6 +851,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 						$ttl = ($level > $this->post_spam_badip_forever)? $this->post_spam_badip_ttl0 : $this->post_spam_badip_ttl;
 						if ($level > $this->post_spam_badip) { HypCommonFunc::register_bad_ips(null, $ttl); }
 						if ($this->use_mail_notify) { $this->sendMail($level); }
+						HypCommonFunc::spamdat_auto_update();
 						exit('Processing was not completed.');
 					} else {
 						if ($this->use_mail_notify > 1) { $this->sendMail($level); }
