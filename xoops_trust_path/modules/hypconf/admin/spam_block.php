@@ -159,4 +159,9 @@ $config[] = array(
 	'size' => 80
 	);
 
-$config['underContents'] = '<hr />'.hypconf_constant($constpref.'_POST_SPAM_SITES_SYSTEM').'<form><textarea style="width:98%;height:15em;" readonly="readonly">'.htmlspecialchars(file_get_contents(XOOPS_TRUST_PATH . '/uploads/hyp_common/spamsites.dat')).'</textarea></form>';
+$config['underContents'] = '<hr />'
+		. hypconf_constant($constpref.'_POST_SPAM_SITES_SYSTEM')
+		. '<p>Updated: '.date('r', filemtime(XOOPS_TRUST_PATH.'/uploads/hyp_common/spamsites.dat')).'</p>'
+		. '<form><textarea style="width:98%;height:15em;" readonly="readonly">'
+		. htmlspecialchars(file_get_contents(XOOPS_TRUST_PATH.'/uploads/hyp_common/spamsites.dat'))
+		. '</textarea></form>';
