@@ -110,6 +110,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->post_spam_guest)) $this->post_spam_guest = 15;
 		if (! isset($this->post_spam_pass_names)) $this->post_spam_pass_names = 'reference_quote,msg_before,msg_after';
 		if (! isset($this->post_spam_badip)) $this->post_spam_badip = 100;
+		if (! isset($this->post_spam_site_auto_regist)) $this->post_spam_site_auto_regist = 1;		
+		if (! isset($this->post_spam_safe_url)) $this->post_spam_safe_url = 'google\.|yahoo\.';
+		
 		if (! isset($this->post_spam_badip_ttl)) $this->post_spam_badip_ttl = 900;
 		if (! isset($this->post_spam_badip_forever)) $this->post_spam_badip_forever = 200;
 		if (! isset($this->post_spam_badip_ttl0)) $this->post_spam_badip_ttl0 = 2592000;
@@ -851,7 +854,31 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 						$ttl = ($level > $this->post_spam_badip_forever)? $this->post_spam_badip_ttl0 : $this->post_spam_badip_ttl;
 						if ($level > $this->post_spam_badip) { HypCommonFunc::register_bad_ips(null, $ttl); }
 						if ($this->use_mail_notify) { $this->sendMail($level); }
+						
+						// dat/spam*.dat の自動アップデート
 						HypCommonFunc::spamdat_auto_update();
+						
+						// config/spamsites.conf.dat への自動登録
+						$confFile = XOOPS_TRUST_PATH . '/class/hyp_common/config/spamsites.conf.dat';
+						if ($this->post_spam_site_auto_regist &&  isset($_POST[$this->post_spam_trap]) && is_writable($confFile)) {
+							if (preg_match('#^https?://(?:www\.)?([\-_.!~*\'()a-zA-Z0-9;/?:@&=+$,%]+)#', $_POST[$this->post_spam_trap], $_match)) {
+								$badurl = rtrim($_match[1], '/');
+								$badurl = preg_replace('#^(.+)/[^/]+\.[0-9a-zA-Z]+$#', '$1', $badurl);
+								$myhost = parse_url(XOOPS_URL, PHP_URL_HOST);
+								// 正規表現の検査
+								if (@ preg_match('#(?:'. $this->post_spam_safe_url . ')#', '') === false) {
+									$this->post_spam_safe_url = '(?!)';
+								}
+								if (! preg_match('#' . preg_quote($myhost, '#') . '|(?:' . $this->post_spam_safe_url . ')#', $badurl)) {
+									$confUrls = file($confFile);
+									$confUrls = array_map('rtrim', $confUrls);
+									if (! in_array($badurl, $confUrls)) {
+										file_put_contents($confFile, $badurl . "\n", FILE_APPEND | LOCK_EX);
+									}
+								}
+							}
+						}
+						
 						exit('Processing was not completed.');
 					} else {
 						if ($this->use_mail_notify > 1) { $this->sendMail($level); }
@@ -2155,6 +2182,11 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_user  = 150;     // POST SPAM 閾値: ログインユーザー
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
 		$this->post_spam_badip = 100;     // アクセス拒否リストへ登録する閾値
+
+		$this->post_spam_site_auto_regist = 1;  // Spam 罠用無効フィールドに入力された URL を spamsites.conf.dat に自動登録する
+												// trust/class/hyp_common/config/spamsites.conf.dat に書き込み権限を与えてください。
+
+		$this->post_spam_safe_url        = '[./](?:google|yahoo)\.'; // 自動登録しない正規表現パターン。ここで指定したパターンと運用しているホスト名が含まれる場合は自動登録されません。
 
 		// 処理をパスするフォームフィールド名 (,<カンマ> 区切り)
 		// reference_quote : d3forum

@@ -49,6 +49,11 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_filed = 200;     // Spam 無効フィールドの加算ポイント
 		$this->post_spam_trap  = '___url';// Spam 罠用無効フィールド名
 
+		$this->post_spam_url_auto_regist = 1;   // Spam 罠用無効フィールドに入力された URL を spamsites.dat に自動登録する
+												// trust/class/hyp_common/config/spamsites.dat に書き込み権限を与えてください。
+
+		$this->post_spam_safe_url        = '[./](?:google|yahoo)\.'; // 自動登録しない正規表現パターン。ここで指定したパターンと運用しているホスト名が含まれる場合は自動登録されません。
+
 		$this->post_spam_user  = 150;     // POST SPAM 閾値: ログインユーザー
 		$this->post_spam_guest = 15;      // POST SPAM 閾値: ゲスト
 		$this->post_spam_badip = 100;     // アクセス拒否リストへ登録する閾値

@@ -12,7 +12,7 @@ function hypconfSetValue(& $config, $page) {
 	$hyp_preload = new HypCommonPreLoad($dum);
 	$error = array();
 	foreach($config as $key => $conf) {
-		if ($key === 'error' || $key === 'contents') continue;
+		if ($key === 'error' || $key === 'contents' || $key === 'underContents') continue;
 		if ($key === 'main_switch') {
 			if (! $hyp_preload->$conf) {
 				$error[] = str_replace('$1', hypconf_constant($constpref . '_' . strtoupper($conf)), hypconf_constant($constpref . '_MAIN_SWITCH_NOT_ENABLE'));
@@ -185,8 +185,8 @@ function hypconfSaveConf($config) {
 					break;
 				case 'file:':
 					$file = substr($conf['valuetype'], 5);
-					if ($_POST[$conf['name']]) {
-						file_put_contents(hypconf_get_data_filename($file), $_POST[$conf['name']]);
+					if ($file[0] === '/' || $_POST[$conf['name']]) {
+						file_put_contents(hypconf_get_data_filename($file), str_replace(array("\r\n", "\r"), array("\n", "\n"), $_POST[$conf['name']]));
 						$lines[] = $confkey . ' = "' . $file . ':' . time() . '"';
 					} else {
 						@ unlink(hypconf_get_data_filename($file));
@@ -235,6 +235,11 @@ function hypconfShowForm($config) {
 		echo $config['contents'];
 		unset($config['contents']);
 	}
+	$underContents = '';
+	if (isset($config['underContents'])) {
+		$underContents = $config['underContents'];
+		unset($config['underContents']);
+	}
 	if ($config) {
 		$count = count($config);
 		include_once XOOPS_ROOT_PATH.'/class/xoopsformloader.php';
@@ -259,7 +264,7 @@ function hypconfShowForm($config) {
 					$ele = ($config[$i]['value'] != '') ? new XoopsFormTextArea($title, $config[$i]['name'], $myts->htmlspecialchars(implode('|', $config[$i]['value'])), 5, 50) : new XoopsFormTextArea($title, $config[$i]['name'], '', 5, 50);
 				} else {
 					$ele = new XoopsFormTextArea($title, $config[$i]['name'], $myts->htmlspecialchars($config[$i]['value']), 5, 50);
-					$ele->setExtra('class="norich"');
+					$ele->setExtra('class="norich plain" spellcheck="false"');
 				}
 				break;
 			case 'select':
@@ -383,10 +388,17 @@ function hypconfShowForm($config) {
 
 		$form->display();
 	}
+	if ($underContents) {
+		echo '<div>' . $underContents . '</div>';
+	}
 }
 
 function hypconf_get_data_filename($file) {
-	return XOOPS_TRUST_PATH . '/uploads/hyp_common/' . urlencode(substr(XOOPS_URL, 7)) . '_' . $file;
+	if ($file[0] === '/') {
+		return XOOPS_TRUST_PATH . $file;
+	} else {
+		return XOOPS_TRUST_PATH . '/uploads/hyp_common/' . urlencode(substr(XOOPS_URL, 7)) . '_' . $file;
+	}
 }
 
 function hypconf_constant($const) {

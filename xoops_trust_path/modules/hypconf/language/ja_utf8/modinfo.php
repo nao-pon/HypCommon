@@ -149,6 +149,13 @@ define($constpref.'_POST_SPAM_BADIP_FOREVER', '<b>Protector連携</b>: 無期限
 define($constpref.'_POST_SPAM_BADIP_FOREVER_DESC', '');
 define($constpref.'_POST_SPAM_BADIP_TTL0', '<b>Protector連携</b>: 無期限アクセス拒否継続時間[秒] (0:本当に無期限)');
 define($constpref.'_POST_SPAM_BADIP_TTL0_DESC', '');
+define($constpref.'_POST_SPAM_SITE_AUTO_REGIST', 'spamsites.conf.dat 自動登録');
+define($constpref.'_POST_SPAM_SITE_AUTO_REGIST_DESC', 'Spam 罠用無効フィールドに入力された URL を spamsites.conf.dat に自動登録する。');
+define($constpref.'_POST_SPAM_SAFE_URL', '自動登録しない正規表現パターン(デリミタは含めない)');
+define($constpref.'_POST_SPAM_SAFE_URL_DESC', 'デリミタは "#" が使用されます。ここで指定したパターンと当サイトのホスト名にマッチする場合は登録されません。');
+define($constpref.'_POST_SPAM_SITES', 'spamsites.conf.dat　の編集');
+define($constpref.'_POST_SPAM_SITES_DESC', 'サーバー上の実パス: ' . XOOPS_TRUST_PATH . '/class/hyp_common/config/spamsites.conf.dat<br />データが更新できない場合は、上記ファイルに書き込み権限を与えてください。');
+define($constpref.'_POST_SPAM_SITES_SYSTEM', '<h4>システム上に設定されている spamsites.dat の確認</h4><p>サーバー上の実パス: ' . XOOPS_TRUST_PATH . '/uploads/hyp_common/spamsites.dat</p>');
 
 // misc
 define($constpref.'_MISC_HEAD_LAST_TAG', '&lt;head&gt;内の最後に挿入するタグ');

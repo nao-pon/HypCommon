@@ -134,3 +134,29 @@ $config[] = array(
 	'valuetype' => 'int',
 	'size' => 10
 	);
+$config[] = array(
+	'name' => 'post_spam_site_auto_regist',
+	'title' => $constpref.'_POST_SPAM_SITE_AUTO_REGIST',
+	'description' => $constpref.'_POST_SPAM_SITE_AUTO_REGIST_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 1,
+	);
+$config[] = array(
+	'name' => 'post_spam_safe_url',
+	'title' => $constpref.'_POST_SPAM_SAFE_URL',
+	'description' => $constpref.'_POST_SPAM_SAFE_URL_DESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'size' => 50
+	);
+$config[] = array(
+	'name' => 'post_spam_sites_conf_file',
+	'title' => $constpref.'_POST_SPAM_SITES',
+	'description' => $constpref.'_POST_SPAM_SITES_DESC',
+	'formtype' => 'textarea',
+	'valuetype' => 'file:/class/hyp_common/config/spamsites.conf.dat',
+	'size' => 80
+	);
+
+$config['underContents'] = '<hr />'.hypconf_constant($constpref.'_POST_SPAM_SITES_SYSTEM').'<form><textarea style="width:98%;height:15em;" readonly="readonly">'.htmlspecialchars(file_get_contents(XOOPS_TRUST_PATH . '/uploads/hyp_common/spamsites.dat')).'</textarea></form>';
