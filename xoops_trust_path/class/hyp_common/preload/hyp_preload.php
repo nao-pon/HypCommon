@@ -737,7 +737,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			// PostSpam をチェック
 			if ($this->use_post_spam_filter) {
 				// spamdat 自動アップデート用タグ
-				$GLOBALS['hyp_preload_head_tag'] .= "\n" . '<script type="text/javascript" src="'.XOOPS_URL.'/class/hyp_common/gate.php?way=spamdatup&_x&_d&_u" defer="defer"></script>';
+				$GLOBALS['hyp_preload_head_tag'] .= "\n" . '<script type="text/javascript" src="'.XOOPS_URL.'/class/hyp_common/gate.php?way=spamdatup&amp;_x&amp;_d&amp;_u" defer="defer"></script>';
 				
 				// 加算 pt
 				if ($this->post_spam_rules) {
