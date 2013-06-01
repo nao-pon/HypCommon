@@ -155,7 +155,7 @@ define($constpref.'_POST_SPAM_SAFE_URL', '¼«Æ°ÅÐÏ¿¤·¤Ê¤¤Àµµ¬É½¸½¥Ñ¥¿¡¼¥ó(¥Ç¥ê¥ß¥
 define($constpref.'_POST_SPAM_SAFE_URL_DESC', '¥Ç¥ê¥ß¥¿¤Ï "#" ¤¬»ÈÍÑ¤µ¤ì¤Þ¤¹¡£¤³¤³¤Ç»ØÄê¤·¤¿¥Ñ¥¿¡¼¥ó¤ÈÅö¥µ¥¤¥È¤Î¥Û¥¹¥ÈÌ¾¤Ë¥Þ¥Ã¥Á¤¹¤ë¾ì¹ç¤ÏÅÐÏ¿¤µ¤ì¤Þ¤»¤ó¡£');
 define($constpref.'_POST_SPAM_SITES', 'spamsites.conf.dat¡¡¤ÎÊÔ½¸');
 define($constpref.'_POST_SPAM_SITES_DESC', '¥µ¡¼¥Ð¡¼¾å¤Î¼Â¥Ñ¥¹: ' . XOOPS_TRUST_PATH . '/class/hyp_common/config/spamsites.conf.dat<br />¥Ç¡¼¥¿¤¬¹¹¿·¤Ç¤­¤Ê¤¤¾ì¹ç¤Ï¡¢¾åµ­¥Õ¥¡¥¤¥ë¤Ë½ñ¤­¹þ¤ß¸¢¸Â¤òÍ¿¤¨¤Æ¤¯¤À¤µ¤¤¡£');
-define($constpref.'_POST_SPAM_SITES_SYSTEM', '<h4>¥·¥¹¥Æ¥à¾å¤ËÀßÄê¤µ¤ì¤Æ¤¤¤ë spamsites.dat ¤Î³ÎÇ§</h4><p>¥µ¡¼¥Ð¡¼¾å¤Î¼Â¥Ñ¥¹: ' . XOOPS_TRUST_PATH . '/uploads/hyp_common/spamsites.dat</p>');
+define($constpref.'_POST_SPAM_SITES_SYSTEM', '<h4>¥·¥¹¥Æ¥à¾å¤ËÀßÄê¤µ¤ì¤Æ¤¤¤ë spamsites.dat ¤Î³ÎÇ§</h4><p>¥µ¡¼¥Ð¡¼¾å¤Î¼Â¥Ñ¥¹: %s</p>');
 
 // misc
 define($constpref.'_MISC_HEAD_LAST_TAG', '&lt;head&gt;Æâ¤ÎºÇ¸å¤ËÁÞÆþ¤¹¤ë¥¿¥°');

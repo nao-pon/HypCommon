@@ -159,9 +159,10 @@ $config[] = array(
 	'size' => 80
 	);
 
+$_spamsites_dat_file = is_file(XOOPS_TRUST_PATH.'/uploads/hyp_common/spamsites.dat')? XOOPS_TRUST_PATH.'/uploads/hyp_common/spamsites.dat' : XOOPS_TRUST_PATH.'/class/hyp_common/dat/spamsites.dat';
 $config['underContents'] = '<hr />'
-		. hypconf_constant($constpref.'_POST_SPAM_SITES_SYSTEM')
-		. '<p>Updated: '.date('r', filemtime(XOOPS_TRUST_PATH.'/uploads/hyp_common/spamsites.dat')).'</p>'
+		. sprintf(hypconf_constant($constpref.'_POST_SPAM_SITES_SYSTEM'), $_spamsites_dat_file)
+		. '<p>Updated: '.date('r', filemtime($_spamsites_dat_file)).'</p>'
 		. '<form><textarea style="width:98%;height:15em;" readonly="readonly">'
-		. htmlspecialchars(file_get_contents(XOOPS_TRUST_PATH.'/uploads/hyp_common/spamsites.dat'))
+		. htmlspecialchars(file_get_contents($_spamsites_dat_file))
 		. '</textarea></form>';
