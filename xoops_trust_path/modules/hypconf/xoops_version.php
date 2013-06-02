@@ -13,7 +13,7 @@ include XOOPS_TRUST_PATH . '/class/hyp_common/version.php';
 
 $modversion['name'] = constant($constpref.'_NAME') ;
 $modversion['description'] = constant($constpref.'_DESC') ;
-$modversion['version'] = 1.09 ;
+$modversion['version'] = 1.10 ;
 $modversion['credits'] = 'hypweb.net';
 $modversion['author'] = 'nao-pon<br />hypweb.net(http://xoops.hypweb.net/)' ;
 $modversion['help'] = '' ;
