@@ -111,7 +111,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->post_spam_pass_names)) $this->post_spam_pass_names = 'reference_quote,msg_before,msg_after';
 		if (! isset($this->post_spam_badip)) $this->post_spam_badip = 100;
 		if (! isset($this->post_spam_site_auto_regist)) $this->post_spam_site_auto_regist = 1;		
-		if (! isset($this->post_spam_safe_url)) $this->post_spam_safe_url = 'google\.|yahoo\.';
+		if (! isset($this->post_spam_safe_url)) $this->post_spam_safe_url = '(?:^|\.)(?:google|yahoo)\.';
 		
 		if (! isset($this->post_spam_badip_ttl)) $this->post_spam_badip_ttl = 900;
 		if (! isset($this->post_spam_badip_forever)) $this->post_spam_badip_forever = 200;
@@ -2186,7 +2186,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_site_auto_regist = 1;  // Spam 罠用無効フィールドに入力された URL を spamsites.conf.dat に自動登録する
 												// trust/class/hyp_common/config/spamsites.conf.dat に書き込み権限を与えてください。
 
-		$this->post_spam_safe_url        = '[./](?:google|yahoo)\.'; // 自動登録しない正規表現パターン。ここで指定したパターンと運用しているホスト名が含まれる場合は自動登録されません。
+		$this->post_spam_safe_url        = '(?:^|\.)(?:google|yahoo)\.'; // 自動登録しない正規表現パターン。ここで指定したパターンと運用しているホスト名が含まれる場合は自動登録されません。
 
 		// 処理をパスするフォームフィールド名 (,<カンマ> 区切り)
 		// reference_quote : d3forum

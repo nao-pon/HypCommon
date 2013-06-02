@@ -40,7 +40,12 @@ function hypconfSetValue(& $config, $page) {
 			$val = hypconf_initVal($name);
 			if (is_null($val)) {
 				if (isset($hyp_preload->$name)) {
-					$val = $hyp_preload->$name;
+					if ($name === 'post_spam_safe_url') {
+						// HypCommonFunc 20130601 で post_spam_safe_url の規定値が間違っていたため修正 orz...
+						$val = str_replace('[./](?:google|yahoo)\.', '(?:^|\.)(?:google|yahoo)\.', $hyp_preload->$name);
+					} else {
+						$val = $hyp_preload->$name;
+					}
 				} else {
 					$val = null;
 				}
