@@ -191,7 +191,15 @@ function hypconfSaveConf($config) {
 				case 'file:':
 					$file = substr($conf['valuetype'], 5);
 					if ($file[0] === '/' || $_POST[$conf['name']]) {
-						file_put_contents(hypconf_get_data_filename($file), str_replace(array("\r\n", "\r"), array("\n", "\n"), $_POST[$conf['name']]));
+						$data = str_replace(array("\r\n", "\r"), array("\n", "\n"), $_POST[$conf['name']]);
+						if ($conf['name'] === 'post_spam_sites_conf_file') {
+							// spamsites.dat に登録済みのエントリを除外する
+							if (is_readable(XOOPS_TRUST_PATH . '/cache/hyp_spamsites.dat')) {
+								$reg = file_get_contents(XOOPS_TRUST_PATH . '/cache/hyp_spamsites.dat');
+								$data = preg_replace('/^'.$reg.'[\r\n]+/m', '', $data);
+							}
+						}
+						file_put_contents(hypconf_get_data_filename($file), $data);
 						$lines[] = $confkey . ' = "' . $file . ':' . time() . '"';
 					} else {
 						@ unlink(hypconf_get_data_filename($file));

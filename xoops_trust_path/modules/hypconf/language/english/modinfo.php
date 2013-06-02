@@ -154,7 +154,7 @@ define($constpref.'_POST_SPAM_SITE_AUTO_REGIST_DESC', 'Auto-registration of the 
 define($constpref.'_POST_SPAM_SAFE_URL', 'Safe hosts regex pattern (without delimiters)');
 define($constpref.'_POST_SPAM_SAFE_URL_DESC', 'As for a delimiter, "#" is used. It is not registered when it matches the host name of the pattern and this site which were specified here.');
 define($constpref.'_POST_SPAM_SITES', 'Edit "spamsites.conf.dat"');
-define($constpref.'_POST_SPAM_SITES_DESC', 'Real path on server: ' . XOOPS_TRUST_PATH . '/class/hyp_common/config/spamsites.conf.dat<br />When data cannot be updated, please make the above-mentioned file into the attribute which can be written in.');
+define($constpref.'_POST_SPAM_SITES_DESC', 'Real path on server: ' . XOOPS_TRUST_PATH . '/class/hyp_common/config/spamsites.conf.dat<br />Here, updating of data will except the entry which overlaps with following "spamsites.dat set up on this system".<br />When data cannot be updated, please make the above-mentioned file into the attribute which can be written in.');
 define($constpref.'_POST_SPAM_SITES_SYSTEM', '<h4>The check of "spamsites.dat" set up on this system</h4><p>Real path on server: %s</p>');
 
 // misc

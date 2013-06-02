@@ -154,7 +154,7 @@ define($constpref.'_POST_SPAM_SITE_AUTO_REGIST_DESC', 'Spam 罠用無効フィールドに
 define($constpref.'_POST_SPAM_SAFE_URL', '自動登録しない正規表現パターン(デリミタは含めない)');
 define($constpref.'_POST_SPAM_SAFE_URL_DESC', 'デリミタは "#" が使用されます。ここで指定したパターンと当サイトのホスト名にマッチする場合は登録されません。');
 define($constpref.'_POST_SPAM_SITES', 'spamsites.conf.dat　の編集');
-define($constpref.'_POST_SPAM_SITES_DESC', 'サーバー上の実パス: ' . XOOPS_TRUST_PATH . '/class/hyp_common/config/spamsites.conf.dat<br />データが更新できない場合は、上記ファイルに書き込み権限を与えてください。');
+define($constpref.'_POST_SPAM_SITES_DESC', 'サーバー上の実パス: ' . XOOPS_TRUST_PATH . '/class/hyp_common/config/spamsites.conf.dat<br />ここで、データを更新すると下記の「システム上に設定されている spamsites.dat」と重複するエントリは除外されます。<br />データが更新できない場合は、上記ファイルに書き込み権限を与えてください。');
 define($constpref.'_POST_SPAM_SITES_SYSTEM', '<h4>システム上に設定されている spamsites.dat の確認</h4><p>サーバー上の実パス: %s</p>');
 
 // misc
