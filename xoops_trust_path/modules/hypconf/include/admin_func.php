@@ -194,18 +194,19 @@ function hypconfSaveConf($config) {
 						$data = str_replace(array("\r\n", "\r"), array("\n", "\n"), $_POST[$conf['name']]);
 						if ($conf['name'] === 'post_spam_sites_conf_file') {
 							// spamsites.dat に登録済みのエントリを除外する
-							if (is_readable(XOOPS_TRUST_PATH . '/cache/hyp_spamsites.dat')) {
-								$data = rtrim($data) . "\n";
-								$regs = file_get_contents(XOOPS_TRUST_PATH . '/cache/hyp_spamsites.dat');
-								foreach(explode("\x08", $regs) as $reg) {
-									if (false !== preg_match('/^'.$reg.'\n$/m', '')) {
-										$data = preg_replace('/^'.$reg.'\n$/m', '', $data);
-									}
+							$sysdat = is_file(XOOPS_TRUST_PATH.'/uploads/hyp_common/spamsites.dat')? XOOPS_TRUST_PATH.'/uploads/hyp_common/spamsites.dat' : XOOPS_TRUST_PATH.'/class/hyp_common/dat/spamsites.dat';
+							$sysdat = array_map('trim', file($sysdat));
+							$sysdat = array_flip($sysdat);
+							$_data = array();
+							foreach(explode("\n", $data) as $_entry) {
+								if ($_entry && ! isset($sysdat[$_entry])) {
+									$_data[] = $_entry;
 								}
-								$data = trim($data);
-								if ($data) {
-									$data .= "\n";
-								}
+							}
+							if ($_data) {
+								$data = join("\n", $_data) . "\n";
+							} else {
+								$data = '';
 							}
 						}
 						file_put_contents(hypconf_get_data_filename($file), $data);
