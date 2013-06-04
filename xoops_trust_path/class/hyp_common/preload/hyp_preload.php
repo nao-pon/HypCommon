@@ -601,7 +601,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			return; // ここでは処理せず chain の続きを処理する
 		} else {
 			$this->check_XpWiki();
-			$script = (method_exists('XpWiki', 'get_BBCode_switch_js'))? XpWiki::get_BBCode_switch_js($element['id'], XPWIKI_RENDERER_DIR) : '';
+			if (! preg_match('/(?:^| )(?:plain|none)(?: |$)/', $element['class'])) {
+				$script = (method_exists('XpWiki', 'get_BBCode_switch_js'))? XpWiki::get_BBCode_switch_js($element['id'], XPWIKI_RENDERER_DIR) : '';
+			} else {
+				$script = '';
+			}
 			$element['class'] = trim(preg_replace('/ +/', '
 					', str_replace('bbcode', '', $element['class'])));
 			$html = '<textarea name="'.$element['name'].'"
@@ -614,9 +618,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 	
 	function BBCode_add_switch(&$html, $element) {
-		$this->check_XpWiki();
-		$script = (method_exists('XpWiki', 'get_BBCode_switch_js'))? XpWiki::get_BBCode_switch_js($element['id'], XPWIKI_RENDERER_DIR) : '';
-		$html .= $script;
+		if (! preg_match('/(?:^| )(?:plain|none)(?: |$)/', $element['class'])) {
+			$this->check_XpWiki();
+			$script = (method_exists('XpWiki', 'get_BBCode_switch_js'))? XpWiki::get_BBCode_switch_js($element['id'], XPWIKI_RENDERER_DIR) : '';
+			$html .= $script;
+		}
 	}
 	
 	function check_XpWiki() {
