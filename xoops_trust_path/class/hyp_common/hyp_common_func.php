@@ -1310,6 +1310,9 @@ $ok = FALSE;
 $parsed = parse_url($match[0]);
 if (isset($parsed[\'host\'])) {
 	$ip = gethostbyname($parsed[\'host\']);
+	if ($ip == $parsed[\'host\'] && substr_count($parsed[\'host\'], \'.\') === 1) {
+		$ip = gethostbyname(\'www.\' . $parsed[\'host\']);
+	}
 	$ok = (preg_match(\'/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\', $ip));
 }
 return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
