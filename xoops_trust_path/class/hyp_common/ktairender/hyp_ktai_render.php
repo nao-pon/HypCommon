@@ -1423,6 +1423,9 @@ class HypKTaiRender
 							$max_size = $this->SERVER['HTTP_X_UP_DEVCAP_MAX_PDU'] / 1024 / 2;
 						}
 						$max_size = min($_sizelimit, $max_size);
+						if (preg_match('#UP\.Browser/(?:6\.2_)?(\d+\.\d+)#', $ua_agent, $_m)) {
+							$this->vars['ua']['ver'] = $_m[1];
+						}
 						$ua_ini = dirname(__FILE__) . '/au_ua.ini';
 						if (is_file($ua_ini)) {
 							$ua_array = parse_ini_file($ua_ini);
@@ -1548,7 +1551,7 @@ class HypKTaiRender
 					$this->vars['ua']['allowPNG'] = TRUE;
 					$this->vars['ua']['allowInputImage'] = FALSE;
 					$this->vars['ua']['allowCookie'] = TRUE;
-					$this->vars['ua']['allowFormData'] = FALSE;
+					$this->vars['ua']['allowFormData'] = ($this->vars['ua']['ver'] < 7.2)? FALSE : TRUE;
 					$this->vars['ua']['id2name'] = TRUE;
 					$this->vars['ua']['meta'] = '<meta http-equiv="Cache-Control" content="no-cache" />';
 					if (isset($this->SERVER['HTTP_X_UP_DEVCAP_DEVICEPIXELS'])) list($this->vars['ua']['width'], $this->vars['ua']['height']) = explode(',', $this->SERVER['HTTP_X_UP_DEVCAP_DEVICEPIXELS']);
