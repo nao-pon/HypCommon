@@ -8,7 +8,7 @@ if (defined('E_STRICT')) {
 }
 
 define('X2_ADD_SMARTYPLUGINS_DIR', XOOPS_TRUST_PATH . '/libs/smartyplugins/x2');
-define('HYP_COMMON_PRELOAD_CONF', '/uploads/hyp_common/hypconf_'.md5(XOOPS_URL . (defined('XOOPS_SALT')?XOOPS_SALT:XOOPS_DB_PASS)).'.conf');
+define('HYP_COMMON_PRELOAD_CONF', '/uploads/hyp_common/hypconf_'.md5(preg_replace('/^(http)s/i', '$1', XOOPS_URL) . (defined('XOOPS_SALT')?XOOPS_SALT:XOOPS_DB_PASS)).'.conf');
 //// mbstring ////
 if (! extension_loaded('mbstring')) {
 	include_once dirname(dirname(__FILE__)) . '/mbemulator/mb-emulator.php';
