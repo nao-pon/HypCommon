@@ -476,7 +476,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (defined('XOOPS_CUBE_LEGACY')) {
 			
 			// xoopsTpl plugins dir
-			$this->mRoot->mDelegateManager->add( 'Legacy_RenderSystem.SetupXoopsTpl' , array(& $this , '_xoopsConfig_tpl_hook' ) , XCUBE_DELEGATE_PRIORITY_FINAL) ;
+			$this->mRoot->mDelegateManager->add( 'XoopsTpl.New' , array(& $this , '_xoopsConfig_tpl_hook' ) , XCUBE_DELEGATE_PRIORITY_FIRST + 1) ;
 			
 			// Use K_TAI Render 
 			if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
@@ -519,36 +519,43 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 	
 	function _xoopsConfig_tpl_hook (&$xoopsTpl) {
+		static $plugins_dir = null;
+		static $compile_id = null;
 		
-		if (empty($this->xoopstpl_plugins_dir) || strpos($this->xoopstpl_plugins_dir, rtrim(SMARTY_DIR, '/') . '/plugins') === false) {
-			$target_dir = XOOPS_TRUST_PATH.'/libs/smartyplugins';
-			if(is_dir($target_dir)) {
-				$_1st = array_shift($xoopsTpl->plugins_dir);
-				if (defined('LEGACY_BASE_VERSION') && version_compare(LEGACY_BASE_VERSION, '2.2.1.0', '>=')) {
-			
-					// XCL >= 2.2.1 (Revision >= 982 Feature Request #3165296 - Replace resource.db.php with HD version)
-					// see http://xoopscube.svn.sourceforge.net/viewvc/xoopscube/Package_Legacy/branches/r2_2_00-branch/xoops_trust_path/libs/smarty/plugins/resource.db.php?revision=982&view=markup
-			
-					if ($_1st === $target_dir) {
-						$_1st = array_shift($xoopsTpl->plugins_dir);
-					}
-					// regist 2nd
-					array_unshift($xoopsTpl->plugins_dir, $_1st, $target_dir);
-				} else {
-					// regist first
-					if ($_1st !== $target_dir) {
-						array_unshift($xoopsTpl->plugins_dir, $target_dir, $_1st);
+		if (is_null($plugins_dir)) {
+			if (empty($this->xoopstpl_plugins_dir) || strpos($this->xoopstpl_plugins_dir, rtrim(SMARTY_DIR, '/') . '/plugins') === false) {
+				$plugins_dir = $xoopsTpl->plugins_dir;
+				$target_dir = XOOPS_TRUST_PATH.'/libs/smartyplugins';
+				if(is_dir($target_dir)) {
+					$_1st = array_shift($plugins_dir);
+					if (defined('LEGACY_BASE_VERSION') && version_compare(LEGACY_BASE_VERSION, '2.2.1.0', '>=')) {
+				
+						// XCL >= 2.2.1 (Revision >= 982 Feature Request #3165296 - Replace resource.db.php with HD version)
+						// see http://xoopscube.svn.sourceforge.net/viewvc/xoopscube/Package_Legacy/branches/r2_2_00-branch/xoops_trust_path/libs/smarty/plugins/resource.db.php?revision=982&view=markup
+				
+						if ($_1st === $target_dir) {
+							$_1st = array_shift($plugins_dir);
+						}
+						// regist 2nd
+						array_unshift($plugins_dir, $_1st, $target_dir);
 					} else {
-						array_unshift($xoopsTpl->plugins_dir, $_1st) ;
+						// regist first
+						if ($_1st !== $target_dir) {
+							array_unshift($plugins_dir, $target_dir, $_1st);
+						} else {
+							array_unshift($plugins_dir, $_1st) ;
+						}
 					}
 				}
+			} else {
+				$plugins_dir = preg_split('/\s+/', trim($this->xoopstpl_plugins_dir));
 			}
-		} else {
-			$plugins_dir = preg_split('/\s+/', trim($this->xoopstpl_plugins_dir));
-			$xoopsTpl->plugins_dir = $plugins_dir;
 		}
+		$xoopsTpl->plugins_dir = $plugins_dir;
 		
-		$compile_id = substr(XOOPS_URL, 7) . '-' . $GLOBALS['xoopsConfig']['template_set'] . '-' . $GLOBALS['xoopsConfig']['theme_set'] ;
+		if (is_null($compile_id)) {
+			$compile_id = substr(XOOPS_URL, 7) . '-' . $GLOBALS['xoopsConfig']['template_set'] . '-' . $GLOBALS['xoopsConfig']['theme_set'] ;
+		}
 		$xoopsTpl->compile_id = $compile_id ;
 		$xoopsTpl->_compile_id = $compile_id ;
 	}
