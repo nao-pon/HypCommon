@@ -605,14 +605,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			if (! preg_match('/\bbbcode\b/', $element['class'])) {
 				$element['class'] .= $element['class']? ' bbcode' : 'bbcode';
 			}
-			return; // ここでは処理せず chain の続きを処理する
-		} else {
+		} else if (! preg_match('/(?:^| )(?:plain|none|xcode)(?: |$)/', $element['class'])) {
 			$this->check_XpWiki();
-			if (! preg_match('/(?:^| )(?:plain|none)(?: |$)/', $element['class'])) {
-				$script = (method_exists('XpWiki', 'get_BBCode_switch_js'))? XpWiki::get_BBCode_switch_js($element['id'], XPWIKI_RENDERER_DIR) : '';
-			} else {
-				$script = '';
-			}
+			$script = (method_exists('XpWiki', 'get_BBCode_switch_js'))? XpWiki::get_BBCode_switch_js($element['id'], XPWIKI_RENDERER_DIR) : '';
 			$element['class'] = trim(preg_replace('/ +/', '
 					', str_replace('bbcode', '', $element['class'])));
 			$html = '<textarea name="'.$element['name'].'"
@@ -622,10 +617,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			// このあとの chain はキャンセルして 'Site.TextareaEditor.BBCode.Show' デリゲートを終了する
 			return (defined('XCUBE_DELEGATE_CHAIN_BREAK')? XCUBE_DELEGATE_CHAIN_BREAK : null);
 		}
+		return; // ここでは処理せず chain の続きを処理する
 	}
 	
 	function BBCode_add_switch(&$html, $element) {
-		if (! preg_match('/(?:^| )(?:plain|none)(?: |$)/', $element['class'])) {
+		if (! preg_match('/(?:^| )(?:plain|none|xcode)(?: |$)/', $element['class'])) {
 			$this->check_XpWiki();
 			$script = (method_exists('XpWiki', 'get_BBCode_switch_js'))? XpWiki::get_BBCode_switch_js($element['id'], XPWIKI_RENDERER_DIR) : '';
 			$html .= $script;
