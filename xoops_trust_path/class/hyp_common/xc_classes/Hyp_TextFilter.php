@@ -135,7 +135,7 @@ class Hyp_TextFilterAbstract extends Legacy_TextFilter
                 $pat[$className][$image][] = '/(\[quote[^\]]*])(?:\r\n|\r|\n)(?![<>*|,#: \t+-])/S';
                 $rep[$className][$image][] = "\n\n$1";
                 $pat[$className][$image][] = '/(?:\r\n|\r|\n)*\[\/quote\]/S';
-                $rep[$className][$image][] = '[/quote]'."\n\n";
+                $rep[$className][$image][] = "\n".'[/quote]'."\n\n";
 
                 if ($image) {
                     // BB Code image with align
