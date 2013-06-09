@@ -213,6 +213,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->k_tai_conf['themeSet'])) $this->k_tai_conf['themeSet'] = 'ktai_default';
 		if (! isset($this->k_tai_conf['templateSet'])) $this->k_tai_conf['templateSet'] = 'ktai';
 		if (! isset($this->k_tai_conf['themeSets'])) $this->k_tai_conf['themeSets'] = array();
+		if (! isset($this->k_tai_conf['themeSets']['jqm']))$this->k_tai_conf['themeSets']['jqm'] = 'ktai_smart_default';
 		if (! isset($this->k_tai_conf['templateSets'])) $this->k_tai_conf['templateSets'] = array();
 		if (! isset($this->k_tai_conf['template'])) $this->k_tai_conf['template'] = 'default';
 		if (! isset($this->k_tai_conf['templates'])) $this->k_tai_conf['templates'] = array();
@@ -2340,7 +2341,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// 携帯用XOOPSテーマセット
 		$this->k_tai_conf['themeSet'] = 'ktai_default';
 		$this->k_tai_conf['themeSets'] = array();
-		//$this->k_tai_conf['themeSets']['jqm'] = ''; // jQuery mobile 一括
+		$this->k_tai_conf['themeSets']['jqm'] = 'ktai_smart_default'; // jQuery mobile 一括
 		// carrier 別の設定 (carrier をキーにして設定)
 		//$this->k_tai_conf['themeSets']['android'] = '';
 		//$this->k_tai_conf['themeSets']['iphone'] = '';

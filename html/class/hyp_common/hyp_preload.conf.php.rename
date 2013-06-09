@@ -201,7 +201,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// 携帯用XOOPSテーマセット
 		$this->k_tai_conf['themeSet'] = 'ktai_default';
 		$this->k_tai_conf['themeSets'] = array();
-		//$this->k_tai_conf['themeSets']['jqm'] = ''; // jQuery mobile 一括
+		$this->k_tai_conf['themeSets']['jqm'] = 'ktai_smart_default'; // jQuery mobile 一括
 		// carrier 別の設定 (carrier をキーにして設定)
 		//$this->k_tai_conf['themeSets']['android'] = '';
 		//$this->k_tai_conf['themeSets']['iphone'] = '';
