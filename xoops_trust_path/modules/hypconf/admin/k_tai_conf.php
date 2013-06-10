@@ -54,7 +54,7 @@ $config[] = array(
 	'description' => $constpref.'_THEMESETS_JQM_DESC',
 	'formtype' => 'theme',
 	'valuetype' => 'text',
-	'notempty' => true
+	'notempty' => false
 );
 $config[] = array(
 	'name' => 'templateSets',

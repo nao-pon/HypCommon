@@ -70,10 +70,13 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	var $wizMobileUse = FALSE;
 	var $detect_order_org = array();
 	var $changeContentLength = false;
+	var $isXCL222 = false;
 
 	// コンストラクタ
 	function HypCommonPreLoadBase (& $controller) {
-
+		
+		$this->isXCL222 = (defined('LEGACY_BASE_VERSION') && version_compare(LEGACY_BASE_VERSION, '2.2.2.1', '>='));
+		
 		if (! isset($this->use_set_query_words)) $this->use_set_query_words = 0;
 		if (! isset($this->use_words_highlight)) $this->use_words_highlight = 0;
 		if (! isset($this->use_proxy_check )) $this->use_proxy_check = 0;
@@ -213,7 +216,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->k_tai_conf['themeSet'])) $this->k_tai_conf['themeSet'] = 'ktai_default';
 		if (! isset($this->k_tai_conf['templateSet'])) $this->k_tai_conf['templateSet'] = 'ktai';
 		if (! isset($this->k_tai_conf['themeSets'])) $this->k_tai_conf['themeSets'] = array();
-		if (! isset($this->k_tai_conf['themeSets']['jqm']))$this->k_tai_conf['themeSets']['jqm'] = 'ktai_smart_default';
+		if ($this->isXCL222 && ! isset($this->k_tai_conf['themeSets']['jqm']))$this->k_tai_conf['themeSets']['jqm'] = 'ktai_smart_default';
 		if (! isset($this->k_tai_conf['templateSets'])) $this->k_tai_conf['templateSets'] = array();
 		if (! isset($this->k_tai_conf['template'])) $this->k_tai_conf['template'] = 'default';
 		if (! isset($this->k_tai_conf['templates'])) $this->k_tai_conf['templates'] = array();
@@ -392,23 +395,23 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				define('HYP_K_TAI_RENDER', ($use_jqm? 2 : 1));
 
 				// theme & template set
-				if ($use_jqm && isset($this->k_tai_conf['themeSets']['jqm'])) {
+				if ($use_jqm && isset($this->k_tai_conf['themeSets']['jqm']) && $this->k_tai_conf['themeSets']['jqm']) {
 					$this->k_tai_conf['themeSet'] = $this->k_tai_conf['themeSets']['jqm'];
 				}
 				if (isset($this->k_tai_conf['themeSets'][$this->HypKTaiRender->vars['ua']['carrier']]) && $this->k_tai_conf['themeSets'][$this->HypKTaiRender->vars['ua']['carrier']]) {
 					$this->k_tai_conf['themeSet'] = $this->k_tai_conf['themeSets'][$this->HypKTaiRender->vars['ua']['carrier']];
 				}
-				if ($use_jqm && isset($this->k_tai_conf['templateSets']['jqm'])) {
+				if ($use_jqm && isset($this->k_tai_conf['templateSets']['jqm']) && $this->k_tai_conf['templateSets']['jqm']) {
 					$this->k_tai_conf['templateSet'] = $this->k_tai_conf['templateSets']['jqm'];
 				}
 				if (isset($this->k_tai_conf['templateSets'][$this->HypKTaiRender->vars['ua']['carrier']]) && $this->k_tai_conf['templateSets'][$this->HypKTaiRender->vars['ua']['carrier']]) {
 					$this->k_tai_conf['templateSet'] = $this->k_tai_conf['templateSets'][$this->HypKTaiRender->vars['ua']['carrier']];
 				}
-				if ($use_jqm && isset($this->k_tai_conf['templates']['jqm'])) {
+				if ($use_jqm && isset($this->k_tai_conf['templates']['jqm']) && $this->k_tai_conf['templates']['jqm']) {
 					$this->k_tai_conf['template'] = $this->k_tai_conf['templates']['jqm'];
 				}
 				// keitai render template
-				if ($use_jqm && isset($this->k_tai_conf['rebuildsEx']['jqm'])) {
+				if ($use_jqm && isset($this->k_tai_conf['rebuildsEx']['jqm']) && $this->k_tai_conf['rebuildsEx']['jqm']) {
 					$this->k_tai_conf['rebuilds'] = array_merge($this->k_tai_conf['rebuilds'], $this->k_tai_conf['rebuildsEx']['jqm']);
 				}
 
