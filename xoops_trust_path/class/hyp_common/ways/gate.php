@@ -5,9 +5,9 @@
  * $Id: gate.php,v 1.1 2008/07/29 14:35:40 nao-pon Exp $
  */
 
-$hypGateOption['nocommonAllowWays'] = array('imgconv');
-$hypGateOption['nodosAllowWays'] = array('imgconv');
-$hypGateOption['noumbAllowWays'] = array('imgconv');
+$hypGateOption['nocommonAllowWays'] = array('imgconv', 'spamdatup');
+$hypGateOption['nodosAllowWays'] = array('imgconv', 'spamdatup');
+$hypGateOption['noumbAllowWays'] = array('imgconv', 'spamdatup');
 
 $way = (isset($_GET['way']))? $_GET['way'] : ((isset($_POST['way']))? $_POST['way'] : '');
 $way = preg_replace( '/[^a-zA-Z0-9_-]/' , '' , $way);
