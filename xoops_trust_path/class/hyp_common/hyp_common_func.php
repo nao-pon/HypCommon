@@ -2062,6 +2062,9 @@ EOD;
 				if ( $use_content_encoding && HYP_X_SENDFILE_MODE === 3) {
 					header('X-Sendfile-Use-CE: Yes');
 				}
+				if (! defined('HYP_X_SENDFILE_UNESCAPE' && HYP_X_SENDFILE_UNESCAPE)) {
+					$file = dirname($file) . DIRECTORY_SEPARATOR . rawurlencode(basename($file));
+				}
 				header('X-Sendfile: ' . $file);
 				return;
 			} else if (HYP_X_SENDFILE_MODE === 1) {

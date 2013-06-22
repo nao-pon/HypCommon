@@ -7,3 +7,6 @@
 //// mod_xsendfile: http://tn123.ath.cx/mod_xsendfile/
 
 if (! defined('HYP_X_SENDFILE_MODE')) define('HYP_X_SENDFILE_MODE', 0);
+
+// for X-Sendfile >= v1.0 only
+// if (! defined('HYP_X_SENDFILE_UNESCAPE')) define('HYP_X_SENDFILE_UNESCAPE' , true);
