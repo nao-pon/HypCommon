@@ -85,6 +85,9 @@ class Hyp_TextFilterAbstract extends Legacy_TextFilter
     {
         static $pat = array();
         static $rep = array();
+        static $chkc = array();
+        static $patc = array();
+        static $repc = array();
 
         $className = get_class($this);
 
@@ -122,14 +125,17 @@ class Hyp_TextFilterAbstract extends Legacy_TextFilter
                 $rep[$className][$image][] = '$1';
 
                 // BB Code url
-                $pat[$className][$image][] = '/\[url=([\'"]?)((?:ht|f)tp[s]?:\/\/[!~*\'();\/?:\@&=+\$,%#\w.-]+)\\1\](.+)\[\/url\]/esUS';
-                $rep[$className][$image][] = '\'[[\'.Hyp_TextFilter::renderWiki_ret2br(\'$3\').\':$2]]\'';
+                $chkc[$className][$image][] = '[url';
+                $patc[$className][$image][] = '/\[url=([\'"]?)((?:ht|f)tp[s]?:\/\/[!~*\'();\/?:\@&=+\$,%#_0-9a-zA-Z.-]+)\\1\](.+)\[\/url\]/sUS';
+                $repc[$className][$image][] = create_function('$m', 'return \'[[\'.str_replace(array("\r\n", "\r", "\n"), \'&br;\', $m[3]).\':\'.$m[2].\']]\';');
 
-                $pat[$className][$image][] = '/\[url=([\'"]?)([!~*\'();\/?:\@&=+\$,%#\w.-]+)\\1\](.+)\[\/url\]/esUS';
-                $rep[$className][$image][] = '\'[[\'.Hyp_TextFilter::renderWiki_ret2br(\'$3\').\':http://$2]]\'';
+                $chkc[$className][$image][] = '[url';
+                $patc[$className][$image][] = '/\[url=([\'"]?)([!~*\'();\/?:\@&=+\$,%#_0-9a-zA-Z.-]+)\\1\](.+)\[\/url\]/sUS';
+                $repc[$className][$image][] = create_function('$m', 'return \'[[\'.str_replace(array("\r\n", "\r", "\n"), \'&br;\', $m[3]).\':http://\'.$m[2].\']]\';');
 
-                $pat[$className][$image][] = '/\[siteurl=([\'"]?)\/?([!~*\'();?:\@&=+\$,%#\w.-][!~*\'();\/?:\@&=+\$,%#\w.-]+)\\1\](.+)\[\/siteurl\]/esUS';
-                $rep[$className][$image][] = '\'[[\'.Hyp_TextFilter::renderWiki_ret2br(\'$3\').\':site://$2]]\'';
+                $chkc[$className][$image][] = '[siteurl';
+                $patc[$className][$image][] = '/\[siteurl=([\'"]?)\/?([!~*\'();?:\@&=+\$,%#_0-9a-zA-Z.-][!~*\'();\/?:\@&=+\$,%#_0-9a-zA-Z.-]+)\\1\](.+)\[\/siteurl\]/sUS';
+                $repc[$className][$image][] = create_function('$m', 'return \'[[\'.str_replace(array("\r\n", "\r", "\n"), \'&br;\', $m[3]).\':site://\'.$m[2].\']]\';');
 
                 // BB Code quote
                 $pat[$className][$image][] = '/(\[quote[^\]]*])(?:\r\n|\r|\n)(?![<>*|,#: \t+-])/S';
@@ -139,65 +145,73 @@ class Hyp_TextFilterAbstract extends Legacy_TextFilter
 
                 if ($image) {
                     // BB Code image with align
-                    $pat[$className][$image][] = '/\[img\s+align=([\'"]?)(left|center|right)\1(?:\s+title=([\'"])?((?(3)[^]]*|[^\]\s]*))(?(3)\3))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\5)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\7)?]([!~*\'();\/?:\@&=+\$,%#\w.-]+)\[\/img\]/US';
+                    $pat[$className][$image][] = '/\[img\s+align=([\'"]?)(left|center|right)\1(?:\s+title=([\'"])?((?(3)[^]]*|[^\]\s]*))(?(3)\3))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\5)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\7)?]([!~*\'();\/?:\@&=+\$,%#_0-9a-zA-Z.-]+)\[\/img\]/US';
                     $rep[$className][$image][] = '&ref($9,$2,"t:$4",mw:$6,mh:$8);';
 
                     // BB Code image normal
-                    $pat[$className][$image][] = '/\[img(?:\s+title=([\'"])?((?(1)[^]]*|[^\]\s]*))(?(1)\1))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\3)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\5)?]([!~*\'();\/?:\@&=+\$,%#\w.-]+)\[\/img\]/US';
+                    $pat[$className][$image][] = '/\[img(?:\s+title=([\'"])?((?(1)[^]]*|[^\]\s]*))(?(1)\1))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\3)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\5)?]([!~*\'();\/?:\@&=+\$,%#_0-9a-zA-Z.-]+)\[\/img\]/US';
                     $rep[$className][$image][] = '&ref($7,"t:$2",mw:$4,mh:$6);';
                 } else {
                     // BB Code image with align
-                    $pat[$className][$image][] = '/\[img\s+align=([\'"]?)(left|center|right)\1(?:\s+title=([\'"])?((?(3)[^]]*|[^\]\s]*))(?(3)\3))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\5)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\7)?]([!~*\'();\/?:\@&=+\$,%#\w.-]+)\[\/img\]/US';
+                    $pat[$className][$image][] = '/\[img\s+align=([\'"]?)(left|center|right)\1(?:\s+title=([\'"])?((?(3)[^]]*|[^\]\s]*))(?(3)\3))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\5)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\7)?]([!~*\'();\/?:\@&=+\$,%#_0-9a-zA-Z.-]+)\[\/img\]/US';
                     $rep[$className][$image][] = '&ref($9,"t:$4",noimg);';
 
                     // BB Code image normal
-                    $pat[$className][$image][] = '/\[img(?:\s+title=([\'"])?((?(1)[^]]*|[^\]\s]*))(?(1)\1))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\3)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\5)?]([!~*\'();\/?:\@&=+\$,%#\w.-]+)\[\/img\]/US';
+                    $pat[$className][$image][] = '/\[img(?:\s+title=([\'"])?((?(1)[^]]*|[^\]\s]*))(?(1)\1))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\3)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\5)?]([!~*\'();\/?:\@&=+\$,%#_0-9a-zA-Z.-]+)\[\/img\]/US';
                     $rep[$className][$image][] = '&ref($7,"t:$2",noimg);';
                 }
 
 				// BB Code siteimage with align
-				$pat[$className][$image][] = '/\[siteimg\s+align=([\'"]?)(left|center|right)\1(?:\s+title=([\'"])?((?(3)[^]]*|[^\]\s]*))(?(3)\3))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\5)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\7)?]\/?([!~*\'();?\@&=+\$,%#\w.-][!~*\'();\/?\@&=+\$,%#\w.-]+?)\[\/siteimg\]/US';
+				$pat[$className][$image][] = '/\[siteimg\s+align=([\'"]?)(left|center|right)\1(?:\s+title=([\'"])?((?(3)[^]]*|[^\]\s]*))(?(3)\3))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\5)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\7)?]\/?([!~*\'();?\@&=+\$,%#_0-9a-zA-Z.-][!~*\'();\/?\@&=+\$,%#_0-9a-zA-Z.-]+?)\[\/siteimg\]/US';
 				$rep[$className][$image][] = '&ref(site://$9,$2,"t:$4",mw:$6,mh:$8);';
 
 				// BB Code siteimage normal
-				$pat[$className][$image][] = '/\[siteimg(?:\s+title=([\'"])?((?(1)[^]]*|[^\]\s]*))(?(1)\1))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\3)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\5)?]\/?([!~*\'();?\@&=+\$,%#\w.-][!~*\'();\/?\@&=+\$,%#\w.-]+?)\[\/siteimg\]/US';
+				$pat[$className][$image][] = '/\[siteimg(?:\s+title=([\'"])?((?(1)[^]]*|[^\]\s]*))(?(1)\1))?(?:\s+w(?:idth)?=([\'"]?)([\d]+?)\3)?(?:\s+h(?:eight)?=([\'"]?)([\d]+?)\5)?]\/?([!~*\'();?\@&=+\$,%#_0-9a-zA-Z.-][!~*\'();\/?\@&=+\$,%#_0-9a-zA-Z.-]+?)\[\/siteimg\]/US';
 				$rep[$className][$image][] = '&ref(site://$7,"t:$2",mw:$4,mh:$6);';
 
 				// BB code list
-				$list_tag = '(("$1"=="1"||"$1"=="a"||"$1"=="A"||"$1"=="r"||"$1"=="R"||"$1"=="d")?"+":"-")';
+				$list_tag = '(($m[1]=="1"||$m[1]=="a"||$m[1]=="A"||$m[1]=="r"||$m[1]=="R"||$m[1]=="d")?"+":"-")';
 				/// pre convert
 				$pat[$className][$image][] = '/\[list/';
 				$rep[$className][$image][] = "\x01";
 				$pat[$className][$image][] = '/\[\/list\]/';
 				$rep[$className][$image][] = "\x02";
 				/// outer matting
-				$pat[$className][$image][] = '/\x01(?:\=([^\]]+))?\](?:\r\n|[\r\n])((?:(?>[^\x01\x02]+)|(?R))*)\x02(?:\r\n|[\r\n]|$)?/eS';
-				$rep[$className][$image][] = '"\n".preg_replace(array(\'/(?:\x01[^\]]*\]|\x02)(\r\n|[\r\n])/\',\'/\[\*\]/\'),array("\n",'.$list_tag.'), str_replace(\'\\"\',\'"\',\'$2\'))."\n\n"';
+				$chkc[$className][$image][] = "\x01";
+				$patc[$className][$image][] = '/\x01(?:\=([^\]]+))?\](?:\r\n|[\r\n])((?:(?>[^\x01\x02]+)|(?R))*)\x02(?:\r\n|[\r\n]|$)?/S';
+				$repc[$className][$image][] = create_function('$m', 'return "\n".preg_replace(array(\'/(?:\x01[^\]]*\]|\x02)(\r\n|[\r\n])/\',\'/\[\*\]/\'),array("\n",'.$list_tag.'), $m[2])."\n\n";');
 				
 				// Some BB Code Tags, Contents allows xpWiki rendering.
                 if ($_reg = join('|', $this->renderWiki_getEscTags())) {
-                    $pat[$className][$image][] = '/\[\/?(?:' . $_reg . ')(?:(?: |=)[^\]]+)?\]/eS';
-                    $rep[$className][$image][] = '\'[ b 6 4 ]\' . base64_encode(\'$0\') . \'[ / b 6 4 ]\'';
+                    $chkc[$className][$image][] = '[';
+                    $patc[$className][$image][] = '/\[\/?(?:' . $_reg . ')(?:(?: |=)[^\]]+)?\]/S';
+                    $repc[$className][$image][] = create_function('$m', 'return \'[ b 6 4 ]\' . base64_encode($m[0]) . \'[ / b 6 4 ]\';');
                 }
 
                 // Other or Unknown BB Code Tags, All part escapes.
                 if ($_reg = join('|', $this->renderWiki_getBypassTags())) {
-                    $pat[$className][$image][] = '/\[(' . $_reg . ')(?:\b[^\]]+)?].+\[\/\\1\]/esUS';
-                    $rep[$className][$image][] = '\'[ b 6 4 ]\' . base64_encode(\'$0\') . \'[ / b 6 4 ]\'';
+                    $chkc[$className][$image][] = '[';
+                    $patc[$className][$image][] = '/\[(' . $_reg . ')(?:\b[^\]]+)?].+\[\/\\1\]/sUS';
+                    $repc[$className][$image][] = create_function('$m', 'return \'[ b 6 4 ]\' . base64_encode($m[0]) . \'[ / b 6 4 ]\';');
                 }
 
             }
 
             $text = preg_replace($pat[$className][$image], $rep[$className][$image], $text);
+            foreach($patc[$className][$image] as $k => $_pat) {
+                if (strpos($text, $chkc[$className][$image][$k]) !== false) {
+                    $text = preg_replace_callback($_pat, $repc[$className][$image][$k], $text);
+                }
+            }
 
         }
 
         if ($text = $render->transform($text, XPWIKI_RENDERER_DIR)) {
-            if (isset($pat[$className])) {
+            if (isset($pat[$className]) && strpos($text, '[ b 6 4 ]') !== false) {
                 // BB Code decode
-                $text = preg_replace(
-                        '/\[ b 6 4 ](.+?)\[ \/ b 6 4 ]/eS',
-                        'Hyp_TextFilter::renderWiki_base64decode(\'$1\',\''.$render->root->word_breaker.'\')',
+                $text = preg_replace_callback(
+                        '/\[ b 6 4 ](.+?)\[ \/ b 6 4 ]/S',
+                        create_function('$m', 'return Hyp_TextFilter::renderWiki_base64decode($m[1],\''.$render->root->word_breaker.'\');'),
                         $text);
             }
 
@@ -220,7 +234,8 @@ class Hyp_TextFilterAbstract extends Legacy_TextFilter
 
     // Original function
     function renderWiki_base64decode($text, $word_breaker) {
-        return str_replace(array('<','>','\\"'),array('&lt;','&gt;','"'),base64_decode(strip_tags(str_replace($word_breaker, '', $text))));
+        //return str_replace(array('<','>','\\"'),array('&lt;','&gt;','"'),base64_decode(strip_tags(str_replace($word_breaker, '', $text))));
+        return str_replace(array('<','>'),array('&lt;','&gt;'),base64_decode(strip_tags(str_replace($word_breaker, '', $text))));
     }
 
     // Original function
