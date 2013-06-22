@@ -128,7 +128,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			),
 		);
 		if (! isset($this->post_spam_rules)) $this->post_spam_rules = array(
-			"/((?:ht|f)tps?:\/\/[!~*'();\/?:\@&=+\$,%#\w.-]+).+?\\1.+?\\1/i" => 11,
+			"/((?:ht|f)tps?:\/\/[!~*'();\/?:\@&=+\$,%#_0-9a-zA-Z.-]+).+?\\1.+?\\1/i" => 11,
 			'/[\x01-\x08\x0b-\x0c\x0e\x10-\x1a\x1c-\x1f\x7f]+/' => 31,
 			'/^\s*(?:Hi|Aloha)! (?:<a[^>]+?href=|\[url=|http:\/\/)/i' => 15,
 		);
@@ -2224,7 +2224,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// POST SPAM のポイント加算設定
 		$this->post_spam_rules = array(
 			// 同じURLが1行に3回 11pt
-			"/((?:ht|f)tps?:\/\/[!~*'();\/?:\@&=+\$,%#\w.-]+).+?\\1.+?\\1/i" => 11,
+			"/((?:ht|f)tps?:\/\/[!~*'();\/?:\@&=+\$,%#_0-9a-zA-Z.-]+).+?\\1.+?\\1/i" => 11,
 
 			// 65文字以上の英数文字のみで構成されている 15pt
 			// '/^[\x00-\x7f\s]{65,}$/' => 15,

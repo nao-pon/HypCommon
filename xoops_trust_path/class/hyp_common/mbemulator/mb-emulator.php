@@ -1660,7 +1660,7 @@ Class HypMBString
 		$s = '';
 		foreach ($lines as $line) {
 			if ($line != "") {
-				$line = preg_replace("/<[\w\-+\.]+\@[\w\-+\.]+>/","", $line); //メール・アドレス部を消す
+				$line = preg_replace("/<[_0-9a-zA-Z\-+\.]+\@[_0-9a-zA-Z\-+\.]+>/","", $line); //メール・アドレス部を消す
 				$matches = preg_split("/=\?([^?]+)\?(B|Q)\?([^?]+)\?=/", $line, -1, PREG_SPLIT_DELIM_CAPTURE);
 				for ($i = 0; $i < count($matches)-1; $i+=4) {
 					if (!preg_match("/^[ \t\r\n]*$/", $matches[$i]))

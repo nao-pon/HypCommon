@@ -327,7 +327,7 @@ function is_url(& $url)
 	check_group($url);
 
 	$url = preg_replace('/([" \x80-\xff]+)/e', 'rawurlencode("$1")', $url);
-	return (preg_match('/(?:https?|ftp|news):\/\/[!~*\'();\/?:\@&=+\$,%#\w.-]+/', $url));
+	return (preg_match('/(?:https?|ftp|news):\/\/[!~*\'();\/?:\@&=+\$,%#_0-9a-zA-Z.-]+/', $url));
 }
 
 function check_group(& $url) {
