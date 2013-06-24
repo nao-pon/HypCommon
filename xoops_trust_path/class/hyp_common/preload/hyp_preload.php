@@ -264,6 +264,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 		if (! isset($this->xpwiki_render_dirname)) $this->xpwiki_render_dirname = '';
 		if (! isset($this->xpwiki_render_use_wikihelper)) $this->xpwiki_render_use_wikihelper = 0;
+		if (! isset($this->xpwiki_render_use_wikihelper_admin)) $this->xpwiki_render_use_wikihelper_admin = 0;
 		if (! isset($this->xpwiki_render_use_wikihelper_bbcode)) $this->xpwiki_render_use_wikihelper_bbcode = 1;
 		if (! isset($this->xpwiki_render_notuse_wikihelper_modules)) $this->xpwiki_render_notuse_wikihelper_modules = array();
 		if (! isset($this->misc_head_last_tag)) $this->misc_head_last_tag = '';
@@ -1340,6 +1341,17 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				if (empty($GLOBALS['hyp_preload_head_tag']) || strpos($GLOBALS['hyp_preload_head_tag'], $js) === false) {
 					$GLOBALS['hyp_preload_head_tag'] .= "\n" . $js;
 				}
+			}
+			if ($notUseWikihelper || ($this->xpwiki_render_use_wikihelper_admin == 0 && $this->mRoot->mContext->mBaseRenderSystemName === 'Legacy_AdminRenderSystem')) {
+				$GLOBALS['hyp_preload_head_tag'] .=<<<EOD
+<script type="text/javascript">
+<!-- <![CDATA[
+if (typeof XpWiki != 'undefined' && XpWiki.UseWikihelperAtAll == 1) {
+	XpWiki.UseWikihelperAtAll = 2;
+}
+// ]]> -->
+</script>
+EOD;
 			}
 		}
 		

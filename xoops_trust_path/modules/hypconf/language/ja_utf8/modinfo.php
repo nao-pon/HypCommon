@@ -108,6 +108,8 @@ define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_0', 'いいえ');
 define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_1', 'はい (すべて)');
 define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_2', 'はい (Class 名に "wikihelper" を持つエリアのみ)');
 define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_DESC', '「はい」を選択するとテキストエリアが機能拡張され Wiki ヘルパー及びリッチエディタをサイトワイドで使用できるようになります。');
+define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_ADMIN', 'Wiki ヘルパー(管理画面)');
+define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_ADMIN_DESC', '管理画面でも Wiki ヘルパー及びリッチエディタを利用します。');
 define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_BBCODE', 'Wiki ヘルパー(BBCodeエディタ)');
 define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_BBCODE_DESC', 'XCL 2.2 以降の xoops_dhtmltarea(Smartyプラグイン) で editor=bbcode としたテキストエリアにも適用します。');
 define($constpref.'_XPWIKI_RENDER_NOTUSE_WIKIHELPER_MODULES', 'Wiki ヘルパー無効');

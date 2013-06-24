@@ -108,6 +108,8 @@ define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_0', 'No');
 define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_1', 'Yes (All)');
 define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_2', 'Yes (Only area which has "wikihelper" in ClassName)');
 define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_DESC', 'If "Yes" is chosen, will be able to uses Wiki helper & Rich editor at site-wide.');
+define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_ADMIN', 'Wiki Helper (Admin Panel)');
+define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_ADMIN_DESC', 'Uses Wiki helper & Rich editor on Admin panel too.');
 define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_BBCODE', 'Wiki Helper(BBCode Editor)');
 define($constpref.'_XPWIKI_RENDER_USE_WIKIHELPER_BBCODE_DESC', 'On XCL >= 2.2, It applies also to the text area made into "editor=bbcode" by xoops_dhtmltarea (Smarty plug-in).');
 define($constpref.'_XPWIKI_RENDER_NOTUSE_WIKIHELPER_MODULES', 'Disabled Wiki Helper');
