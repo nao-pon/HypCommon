@@ -208,8 +208,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			                          'below' => '</h1>'),
 			'easylogin'      => array( 'above' => '',
 			                          'below' => ''),
-			'blockMenu'      => array( 'above' => '<div data-role="header" style="line-height:1">',
-			                          'below' => '</div>'),
+			'blockMenu'      => array( 'above' => '',
+			                          'below' => ''),
+			'blockMenuBar'   => array( 'above' => '',
+			                          'below' => ''),
 		);
 		if (! isset($this->k_tai_conf['jqm_css'])) $this->k_tai_conf['jqm_css'] = '';
 
@@ -1646,7 +1648,28 @@ EOD;
 			if ($blockmenu) {
 				$_url = XOOPS_URL . '/';
 				$blockmenu = join('</li><li>', $blockmenu);
-				$body .= <<<EOD
+				if (isset($rebuilds['blockMenuBar'])) {
+					$body .= <<<EOD
+<!--blockMenu-->
+<div id="keitaiblockmenu" data-role="header">
+ <div data-role="navbar">
+  <ul><li>{$blockmenu}</li></ul>
+ </div>
+</div>
+<!--/blockMenu-->
+<!--blockMenuBar-->
+<div data-role="header">
+ <a href="{$_url}" data-ajax="false" data-icon="home" data-iconpos="notext">Home</a>
+ <h4>
+  <a id="keitaifixedbar_main" href="#keitaiMainContents" data-ajax="false" style="display:inline;text-decoration:none;"><pagetitle></a>
+ </h4>
+ <a id="keitaifixedbar_block" href="#" data-ajax="false" data-icon="grid" data-iconpos="notext">block</a>
+</div>
+<!--/blockMenuBar-->
+EOD;
+				} else {
+					// old way
+					$body .= <<<EOD
 <!--blockMenu-->
 <div id="keitaiblockmenu" data-role="header">
  <div data-role="navbar">
@@ -1662,7 +1685,7 @@ EOD;
 </div>
 <!--/blockMenu-->
 EOD;
-
+				}
 			}
 
 			if ($rebuilds) {
@@ -2349,8 +2372,10 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 			                          'below' => '</div>'),
 			'easylogin'      => array( 'above' => '',
 			                          'below' => ''),
-			'blockMenu'      => array( 'above' => '<div data-role="header" style="line-height:1">',
-			                          'below' => '</div>'),
+			'blockMenu'      => array( 'above' => '',
+			                          'below' => ''),
+			'blockMenuBar'   => array( 'above' => '',
+			                          'below' => ''),
 		);
 
 		// 携帯用XOOPSテーマセット
