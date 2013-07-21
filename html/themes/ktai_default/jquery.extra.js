@@ -30,7 +30,6 @@ $.extend({
 
 		var target = $('#'+id);
 		var scrTo;
-		var doc = $($.browser.safari ? 'body' : 'html');
 		var speed = 600;
 
 		if (target) {
@@ -41,7 +40,7 @@ $.extend({
 				target.trigger('expand');
 				scrTo = offset.top;
 			}
-			doc.stop().animate({ scrollTop: scrTo } , { duration : speed }, "linear", function(){$.androidDomStackEventFix.hideOverlay($('#keitaiblockmenu'));});
+			$('body,html').stop().animate({ scrollTop: scrTo } , { duration : speed }, "linear", function(){$.androidDomStackEventFix.hideOverlay($('#keitaiblockmenu'));});
 		}
 	},
 
@@ -117,7 +116,7 @@ $.extend({
 		},
 
 		hideOverlay: function() {
-			if (navigator.userAgent.indexOf('Android') > 0) {
+			if (navigator.userAgent.indexOf('Linux; U; Android 2.') > 0) {
 				setTimeout(function(){
 					var i, len, a;
 					for (i = 0, len = $.androidDomStackEventFix.touchedElements.length; i < len; i++) {
