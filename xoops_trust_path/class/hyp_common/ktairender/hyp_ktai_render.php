@@ -1658,7 +1658,7 @@ class HypKTaiRender
 					list($this->vars['ua']['width'], $this->vars['ua']['height']) = array('320', '480');
 					$this->vars['ua']['contentType'] = 'text/html';
 					$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
-					$this->vars['ua']['meta'] = '<meta name="viewport" content="width=device-width; initial-scale=1.0;" />';
+					$this->vars['ua']['meta'] = '<meta name="viewport" content="width=device-width, initial-scale=1.0" />';
 					break;
 			}
 
