@@ -153,7 +153,7 @@ function hypconfSaveConf($config) {
 	$ini_array_key = (version_compare(PHP_VERSION, '5.3.0', '>='));
 	$lines = array('['.$section.']');
 	foreach($config as $conf){
-		if (isset($_POST[$conf['name']]) || $conf['valuetype'] === 'array') {
+		if ((isset($conf['name']) && isset($_POST[$conf['name']])) || (isset($conf['valuetype']) && $conf['valuetype'] === 'array')) {
 			if (!empty($conf['notempty']) && ! $_POST[$conf['name']]) {
 				continue;
 			}
@@ -298,9 +298,14 @@ function hypconfShowForm($config) {
 				$ele = new XoopsFormSelect($title, $config[$i]['name'], $config[$i]['value'], $size);
 				$options = $config[$i]['options'];
 				$opcount = count($options);
+				//var_dump($options);
 				foreach($options as $option) {
-					$optval = defined($option['confop_value']) ? constant($option['confop_value']) : $option['confop_value'];
-					$optkey = defined($option['confop_name']) ? constant($option['confop_name']) : $option['confop_name'];
+					if (isset($option['confop_value']) && isset($option['confop_name'])) {
+						$optval = defined($option['confop_value']) ? constant($option['confop_value']) : $option['confop_value'];
+						$optkey = defined($option['confop_name']) ? constant($option['confop_name']) : $option['confop_name'];
+					} else {
+						$optval = $optkey = $option;
+					}
 					$ele->addOption($optval, $optkey);
 				}
 				break;
