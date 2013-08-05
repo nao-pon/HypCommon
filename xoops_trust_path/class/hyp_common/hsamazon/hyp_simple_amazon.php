@@ -8,7 +8,7 @@ class HypSimpleAmazon
 	var $SecretAccessKey = '';
 	var $ResponseGroup = 'ItemAttributes,Images,Offers,Variations';
 	var $SearchIndex = 'All';
-	var $Version = '2010-11-01';
+	var $Version = '2011-08-01';
 	var $batchMax = 2;
 	var $AssociateTag = '';
 	var $Operation = '';
@@ -261,6 +261,22 @@ class HypSimpleAmazon
 			case 'CA':
 				$this->restHost = 'ecs.amazonaws.ca';
 				$this->searchHost = 'www.amazon.ca';
+				break;
+			case 'CN':
+				$this->restHost = 'ecs.amazonaws.cn';
+				$this->searchHost = 'www.amazon.cn';
+				break;
+			case 'ES':
+				$this->restHost = 'ecs.amazonaws.es';
+				$this->searchHost = 'www.amazon.es';
+				break;
+			case 'IN':
+				$this->restHost = 'ecs.amazonaws.in';
+				$this->searchHost = 'www.amazon.in';
+				break;
+			case 'IT':
+				$this->restHost = 'ecs.amazonaws.it';
+				$this->searchHost = 'www.amazon.it';
 				break;
 			default :
 				$this->restHost = 'ecs.amazonaws.com';
