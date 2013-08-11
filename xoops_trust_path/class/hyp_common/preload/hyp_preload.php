@@ -714,7 +714,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 		if (! empty($_POST)) {
 			// CSRF Token check
-			if (! empty($this->use_csrf_protect)) {
+			if (! defined('DISABLE_HYP_CSRF_PROTECTION') && ! empty($this->use_csrf_protect)) {
 				if (empty($_POST['HypToken']) || empty($_SESSION['HYP_CSRF_TOKEN']) || $_POST['HypToken'] !== $_SESSION['HYP_CSRF_TOKEN']) {
 					exit('Error: HypToken not match or not found.');
 				}
