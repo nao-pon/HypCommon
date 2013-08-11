@@ -16,6 +16,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->use_words_highlight   = 0; // 検索ワードをハイライト表示
 		$this->use_proxy_check       = 0; // POST時プロキシチェックする
 		$this->use_dependence_filter = 0; // 機種依存文字フィルター
+		$this->use_csrf_protect      = 0; // CSRF プロテクション
 		$this->use_post_spam_filter  = 0; // POST SPAM フィルター
 		$this->post_spam_trap_set    = 0; // 無効フィールドのBot罠を自動で仕掛ける
 		$this->use_k_tai_render      = 0; // 携帯対応レンダーを有効にする

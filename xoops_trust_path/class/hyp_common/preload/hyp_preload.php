@@ -45,6 +45,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	var $msg_proxy_check;
 
 	var $use_dependence_filter;// 機種依存文字フィルター
+	
+	var $use_csrf_protect;     // CSRF プロテクション
 
 	var $use_post_spam_filter; // POST SPAM フィルター
 	var $use_mail_notify;      // POST SPAM メール通知
@@ -81,6 +83,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->use_words_highlight)) $this->use_words_highlight = 0;
 		if (! isset($this->use_proxy_check )) $this->use_proxy_check = 0;
 		if (! isset($this->use_dependence_filter)) $this->use_dependence_filter = 0;
+		if (! isset($this->use_csrf_protect)) $this->use_csrf_protect = 0;
 		if (! isset($this->use_post_spam_filter)) $this->use_post_spam_filter = 0;
 		if (! isset($this->post_spam_trap_set)) $this->post_spam_trap_set = 0;
 		if (! isset($this->use_k_tai_render)) $this->use_k_tai_render = 0;
@@ -710,7 +713,13 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($GLOBALS['hyp_preload_head_tag'])) $GLOBALS['hyp_preload_head_tag'] = '';
 
 		if (! empty($_POST)) {
-
+			// CSRF Token check
+			if (! empty($this->use_csrf_protect)) {
+				if (empty($_POST['HypToken']) || empty($_SESSION['HYP_CSRF_TOKEN']) || $_POST['HypToken'] !== $_SESSION['HYP_CSRF_TOKEN']) {
+					exit('Error: HypToken not match or not found.');
+				}
+			}
+			
 			// POST 文字列の文字エンコードを判定
 			$enchint = (isset($_POST[$this->encodehint_name]))? $_POST[$this->encodehint_name] : ((isset($_POST['encode_hint']))? $_POST['encode_hint'] : '');
 			if ($enchint && function_exists('mb_detect_encoding')) {
@@ -1478,6 +1487,15 @@ EOD;
 		if ($s === '' || strpos($s, '<html') === FALSE) return false;
 
 		$insert = '';
+		$insert_post = '<input type="hidden" value="" name="HypToken" />';
+
+		// CSRF 対策用
+		if (! empty($this->use_csrf_protect)) {
+			if (empty($_SESSION['HYP_CSRF_TOKEN'])) {
+				$_SESSION['HYP_CSRF_TOKEN'] = md5($_SERVER['REMOTE_ADDR'].XOOPS_DB_PASS.time());
+			}
+			$insert_post = '<input type="hidden" value="'.$_SESSION['HYP_CSRF_TOKEN'].'" name="HypToken" />';
+		}
 
 		// スパムロボット用の罠を仕掛ける
 		if (! empty($this->post_spam_trap_set)) {
@@ -1492,12 +1510,17 @@ EOD;
 			}
 			$insert .= "\n<input name=\"{$this->encodehint_name}\" type=\"hidden\" value=\"{$encodehint_word}\" />";
 		}
-		if ($insert) {
-			$insert = "\n".$insert."\n";
-			return preg_replace_callback('#(<script.+?/script>)|<form[^>]+?>#isS',
+		if ($insert || $insert_post) {
+			$insert && $insert = "\n".$insert."\n";
+			$insert_post && $insert_post = "\n".$insert_post."\n";
+			return preg_replace_callback('#(<script.+?/script>)|<form([^>]+)?>#isS',
 				create_function('$match','
 					if (!empty($match[1])) return $match[0];
-					return $match[0].\''.$insert.'\';
+					if (preg_match(\'/method=["|\\\']?post/i\', $match[2])) {
+						return $match[0].\''.$insert.$insert_post.'\';
+					} else {
+						return $match[0].\''.$insert.'\';
+					}
 				'), $s);
 		}
 		$this->changeContentLength = true;
@@ -2194,6 +2217,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->use_words_highlight   = 0; // 検索ワードをハイライト表示
 		$this->use_proxy_check       = 0; // POST時プロキシチェックする
 		$this->use_dependence_filter = 0; // 機種依存文字フィルター
+		$this->use_csrf_protect      = 0; // CSRF プロテクション
 		$this->use_post_spam_filter  = 0; // POST SPAM フィルター
 		$this->post_spam_trap_set    = 0; // 無効フィールドのBot罠を自動で仕掛ける
 		$this->use_k_tai_render      = 0; // 携帯対応レンダーを有効にする

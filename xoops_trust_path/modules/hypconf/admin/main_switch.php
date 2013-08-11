@@ -47,13 +47,21 @@ $config[] = array(
 	'default' => 0,
 	);
 $config[] = array(
+	'name' => 'use_csrf_protect',
+	'title' => $constpref.'_USE_CSRF_PROTECT',
+	'description' => $constpref.'_USE_CSRF_PROTECT_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
+	);
+$config[] = array(
 	'name' => 'use_post_spam_filter',
 	'title' => $constpref.'_USE_POST_SPAM_FILTER',
 	'description' => $constpref.'_USE_POST_SPAM_FILTER_DESC',
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
 	'default' => 0,
-	);
+);
 $config[] = array(
 	'name' => 'post_spam_trap_set',
 	'title' => $constpref.'_POST_SPAM_TRAP_SET',

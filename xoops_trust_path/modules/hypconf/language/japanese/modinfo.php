@@ -40,6 +40,8 @@ define($constpref.'_INPUT_FILTER_STRENGTH', 'GET, POST 制御文字フィルター強度');
 define($constpref.'_INPUT_FILTER_STRENGTH_DESC', '');
 define($constpref.'_USE_DEPENDENCE_FILTER', '機種依存文字フィルター');
 define($constpref.'_USE_DEPENDENCE_FILTER_DESC', '');
+define($constpref.'_USE_CSRF_PROTECT', 'CSRF プロテクション');
+define($constpref.'_USE_CSRF_PROTECT_DESC', 'すべての POST リクエストに対し、セッション毎固定トークン方式の CSRF 防御機能を有効にします。');
 define($constpref.'_USE_POST_SPAM_FILTER', 'POST SPAM フィルター');
 define($constpref.'_USE_POST_SPAM_FILTER_DESC', '');
 define($constpref.'_POST_SPAM_TRAP_SET', 'ハニーポット(無効フィールドのBot罠)を自動で仕掛ける');

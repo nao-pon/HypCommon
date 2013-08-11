@@ -40,6 +40,8 @@ define($constpref.'_INPUT_FILTER_STRENGTH', 'GET, POST control character filter 
 define($constpref.'_INPUT_FILTER_STRENGTH_DESC', '');
 define($constpref.'_USE_DEPENDENCE_FILTER', 'Environment-dependent character filter.');
 define($constpref.'_USE_DEPENDENCE_FILTER_DESC', 'This is a feature of the Japanese environment.');
+define($constpref.'_USE_CSRF_PROTECT', 'CSRF Protection');
+define($constpref.'_USE_CSRF_PROTECT_DESC', 'CSRF defense function of a fixed token method is validated the whole session at all the POST requests.');
 define($constpref.'_USE_POST_SPAM_FILTER', 'SPAM Filter.');
 define($constpref.'_USE_POST_SPAM_FILTER_DESC', '');
 define($constpref.'_POST_SPAM_TRAP_SET', 'Honeypots (traps for Bot) to automatically insert.');
