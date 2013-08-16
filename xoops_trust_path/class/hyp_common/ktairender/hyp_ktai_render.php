@@ -506,7 +506,15 @@ class HypKTaiRender
 		if ($this->Config_jquery_resolve_table) {
 			$this->resolve_table($body, false);
 		}
-
+		
+		// Hint character for encoding judgment
+		if (! empty($this->Config_encodeHintWord)) {
+			$body = preg_replace('/<form[^>]+?>/isS',
+					'$0' .
+					'<input name="' . $this->Config_encodeHintName . '" type="hidden" value="' . $this->Config_encodeHintWord . '"/>',
+					$body);
+		}
+		
 		// "on*" 属性のあるフォームエレメントは jqm で装飾しない
 		$body = preg_replace('#(<(?:input|select|textarea))([^>]+? on[^>]+>)#iS', '$1 data-role="none"$2', $body);
 
