@@ -716,7 +716,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			// CSRF Token check
 			if (! defined('DISABLE_HYP_CSRF_PROTECTION') && ! empty($this->use_csrf_protect)) {
 				if (empty($_POST['HypToken']) || empty($_SESSION['HYP_CSRF_TOKEN']) || $_POST['HypToken'] !== $_SESSION['HYP_CSRF_TOKEN']) {
-					exit('Error: HypToken not match or not found.');
+					$this->_rePost();
+					exit();
 				}
 			}
 			
@@ -1074,6 +1075,74 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			mb_detect_order($this->detect_order_org);
 		}
 	}
+	
+	function _rePost() {
+		error_reporting( 0 );
+		
+		global $xoopsConfig;
+		// load msg
+		if (! @ include(dirname(dirname(__FILE__)).'/language/'.$xoopsConfig['language'].'/repost.lng.php')) {
+			include(dirname(dirname(__FILE__)).'/language/english/repost.lng.php');
+		}
+		
+		$inSite = (strpos($_SERVER['HTTP_REFERER'], XOOPS_URL) === 0);
+		
+		while( ob_get_level() ) ob_end_clean() ;
+		
+		$table = '<table>' ;
+		$form = '<form action="?'.htmlspecialchars(@$_SERVER['QUERY_STRING'],ENT_QUOTES).'" method="post" >' ;
+		foreach( $_POST as $key => $val ) {
+			if( $key === 'HypToken' ) continue ;
+			if( get_magic_quotes_gpc() ) {
+				$key = stripslashes( $key ) ;
+			}
+			if( is_array( $val ) ) {
+				list( $tmp_table , $tmp_form ) = $this->_extract_post_recursive( htmlspecialchars($key,ENT_QUOTES) , $val ) ;
+				$table .= $tmp_table ;
+				$form .= $tmp_form ;
+			} else {
+				if( get_magic_quotes_gpc() ) {
+					$val = stripslashes( $val ) ;
+				}
+				$table .= '<tr><th>'.htmlspecialchars($key,ENT_QUOTES).'</th><td>'.htmlspecialchars($val,ENT_QUOTES).'</td></tr>'."\n" ;
+				$form .= '<input type="hidden" name="'.htmlspecialchars($key,ENT_QUOTES).'" value="'.htmlspecialchars($val,ENT_QUOTES).'" />'."\n" ;
+			}
+		}
+		$table .= '</table>' ;
+		if (empty($_SESSION['HYP_CSRF_TOKEN'])) {
+			$_SESSION['HYP_CSRF_TOKEN'] = md5($_SERVER['REMOTE_ADDR'].XOOPS_DB_PASS.time());
+		}
+		if ($inSite) {
+			$form .= '<input type="hidden" value="'.$_SESSION['HYP_CSRF_TOKEN'].'" name="HypToken" />';
+			$form .= '<input type="submit" value="'.$msg['btn_repost'].'" /></form>';
+		}
+		
+		$action = ($inSite)? $msg['csrf_repost'] : $msg['do_not_repost'];
+		echo '<html><head><title>'.$msg['csrf_title'].'</title><style>table,td,th {border:solid black 1px; border-collapse:collapse;}</style></head><body><div>' . $msg['csrf_message']  . '<br />' . $action . '</div>' . $table . $form . '</body></html>' ;
+	}
+	
+	function _extract_post_recursive( $key_name , $tmp_array ) {
+		$table = '' ;
+		$form = '' ;
+		foreach( $tmp_array as $key => $val ) {
+			if( get_magic_quotes_gpc() ) {
+				$key = stripslashes( $key ) ;
+			}
+			if( is_array( $val ) ) {
+				list( $tmp_table , $tmp_form ) = $this->_extract_post_recursive( $key_name.'['.htmlspecialchars($key,ENT_QUOTES).']' , $val ) ;
+				$table .= $tmp_table ;
+				$form .= $tmp_form ;
+			} else {
+				if( get_magic_quotes_gpc() ) {
+					$val = stripslashes( $val ) ;
+				}
+				$table .= '<tr><th>'.$key_name.'['.htmlspecialchars($key,ENT_QUOTES).']</th><td>'.htmlspecialchars($val,ENT_QUOTES).'</td></tr>'."\n" ;
+				$form .= '<input type="hidden" name="'.$key_name.'['.htmlspecialchars($key,ENT_QUOTES).']" value="'.htmlspecialchars($val,ENT_QUOTES).'" />'."\n" ;
+			}
+		}
+		return array( $table , $form ) ;
+	}
+
 
 	function _onShutdownKtai() {
 		if (! $this->HypKTaiRender->vars['ua']['allowCookie']) {

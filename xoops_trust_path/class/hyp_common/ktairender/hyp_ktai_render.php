@@ -471,6 +471,9 @@ class HypKTaiRender
 
 	function html_reduce_smart($body) {
 
+		// remove empty script tag
+		$body = preg_replace('#<script[^>]*?>\s*?<!--\s*?//-->\s*?</script>#is', '', $body);
+		
 		// Flash ½üµî
 		if ($this->Config_jquery_remove_flash) {
 			$ua_arr = explode(',', $this->Config_jquery_remove_flash);
