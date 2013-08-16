@@ -1012,17 +1012,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					$GLOBALS['icmsConfig']['template_set'] = $this->k_tai_conf['templateSet'];
 				}
 			}
-			// Hint character for encoding judgment
-			if (! empty($this->encodehint_word)) {
-				if (function_exists('mb_convert_encoding') && $this->configEncoding && $this->encode !== $this->configEncoding) {
-					$encodehint_word = mb_convert_encoding($this->encodehint_word, $this->encode, $this->configEncoding);
-				} else {
-					$encodehint_word = $this->encodehint_word;
-				}
-				$this->HypKTaiRender->Config_encodeHintWord = $encodehint_word;
-				$this->HypKTaiRender->Config_encodeHintName = $this->encodehint_name;
-				$this->encodehint_word = '';
-			}
+			// Hint character for encoding judgment (use preload side function)
+			$this->HypKTaiRender->Config_encodeHintWord = '';
 			// google AdSense
 			if ($this->k_tai_conf['googleAdsense']['config']) {
 				$this->HypKTaiRender->Config_googleAdSenseConfig = $this->k_tai_conf['googleAdsense']['config'];
@@ -1031,6 +1022,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 			// keitai Filter
 			ob_start(array(& $this, 'keitaiFilter'));
+			
+			// <from> Filter
+			ob_start(array(& $this, 'formFilter'));
 
 			// smart redirection for smartphone
 			if (HYP_K_TAI_RENDER > 1) {
@@ -1040,9 +1034,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			register_shutdown_function(array(& $this, '_onShutdownKtai'));
 		} else {
 			// <from> Filter
-			if (! $this->wizMobileUse) {
-				ob_start(array(& $this, 'formFilter'));
-			}
+			ob_start(array(& $this, 'formFilter'));
+
 			// emoji Filter
 			if (! empty($this->use_k_tai_render)) {
 				ob_start(array(& $this, 'emojiFilter'));
@@ -1556,7 +1549,7 @@ EOD;
 		if ($s === '' || strpos($s, '<html') === FALSE) return false;
 
 		$insert = '';
-		$insert_post = '<input type="hidden" value="" name="HypToken" />';
+		$insert_post = '';
 
 		// CSRF 対策用
 		if (! empty($this->use_csrf_protect)) {
@@ -1565,13 +1558,9 @@ EOD;
 			}
 			$insert_post = '<input type="hidden" value="'.$_SESSION['HYP_CSRF_TOKEN'].'" name="HypToken" />';
 		}
-
-		// スパムロボット用の罠を仕掛ける
-		if (! empty($this->post_spam_trap_set)) {
-			$insert .= "\n<input name=\"{$this->post_spam_trap}\" type=\"text\" size=\"1\" style=\"display:none;speak:none;\" autocomplete=\"off\" />";
-		}
+		
 		// エンコーディング判定用ヒント文字
-		if (! empty($this->encodehint_word)) {
+		if (! empty($this->encodehint_word) && ! $this->wizMobileUse) {
 			if (function_exists('mb_convert_encoding') && $this->configEncoding && $this->encode !== $this->configEncoding) {
 				$encodehint_word = mb_convert_encoding($this->encodehint_word, $this->encode, $this->configEncoding);
 			} else {
@@ -1579,9 +1568,18 @@ EOD;
 			}
 			$insert .= "\n<input name=\"{$this->encodehint_name}\" type=\"hidden\" value=\"{$encodehint_word}\" />";
 		}
+		
+		if ((! defined('HYP_K_TAI_RENDER') || HYP_K_TAI_RENDER !== 1) && ! $this->wizMobileUse) {
+			// スパムロボット用の罠を仕掛ける
+			if (! empty($this->post_spam_trap_set)) {
+				$insert .= "\n<input name=\"{$this->post_spam_trap}\" type=\"text\" size=\"1\" style=\"display:none;speak:none;\" autocomplete=\"off\" />";
+			}
+		}
+		
 		if ($insert || $insert_post) {
 			$insert && $insert = "\n".$insert."\n";
 			$insert_post && $insert_post = "\n".$insert_post."\n";
+			$this->changeContentLength = true;
 			return preg_replace_callback('#(<script.+?/script>)|<form([^>]+)?>#isS',
 				create_function('$match','
 					if (!empty($match[1])) return $match[0];
@@ -1592,7 +1590,6 @@ EOD;
 					}
 				'), $s);
 		}
-		$this->changeContentLength = true;
 		return $s;
 	}
 
@@ -2002,6 +1999,12 @@ EOD;
 			$footer = str_replace('<rssLink>', $rss, $footer);
 
 			if ($use_jquery) {
+				// remove empty script tag from <head>
+				$head = preg_replace('#<script[^>]*?>\s*?<!--\s*?//-->\s*?</script>[\r\n]?#is', '', $head);
+				// remove jquery tag  from <head>
+				$head = preg_replace('#google\.load\("jquery(?:ui)?",\s*"[^"]+?"\);[\r\n]?#', '', $head);
+				$head = preg_replace('#<script[^>]+?src=[^>]*?jquery(?:-ui)?\.min\.js[^>]*?></script>#i', '', $head);
+				
 				$_head .= '<link href="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.mobile.min.css" rel="stylesheet" type="text/css" />';
 				if ($this->k_tai_conf['jqm_css']) {
 					$_head .= '<link href="'.$this->k_tai_conf['jqm_css'].'" rel="stylesheet" type="text/css" />';
