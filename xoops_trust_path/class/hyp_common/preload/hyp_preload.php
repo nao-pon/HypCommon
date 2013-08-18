@@ -1953,7 +1953,11 @@ EOD;
 			$_css_type = ($use_jquery && $this->k_tai_conf['jquery_no_reduce'])? 'all|screen|handheld' : 'handheld';
 			$rss = array();
 			$jquery_script = array();
-
+			
+			if ($use_jquery) {
+				// remove jquery-ui css
+				$head = preg_replace('#<link[^>]+?href=[^>]*?jquery-ui(?:\.min)?\.css[^>]*?>\r?\n?#i', '', $head);
+			}
 			if (preg_match_all('#<link([^>]+?)>#iS', $head, $match)) {
 				foreach($match[1] as $key => $attrs) {
 					if (preg_match('#type=("|\')application/(?:atom|rss)\+xml\\1#iS', $attrs)) {
@@ -2000,10 +2004,10 @@ EOD;
 
 			if ($use_jquery) {
 				// remove empty script tag from <head>
-				$head = preg_replace('#<script[^>]*?>\s*?<!--\s*?//-->\s*?</script>[\r\n]?#is', '', $head);
+				$head = preg_replace('#<script[^>]*?>\s*?<!--\s*?//-->\s*?</script>\r?\n?#is', '', $head);
 				// remove jquery tag  from <head>
-				$head = preg_replace('#google\.load\("jquery(?:ui)?",\s*"[^"]+?"\);[\r\n]?#', '', $head);
-				$head = preg_replace('#<script[^>]+?src=[^>]*?jquery(?:-ui)?\.min\.js[^>]*?></script>#i', '', $head);
+				$head = preg_replace('#google\.load\("jqueryui",\s*"[^"]+?"\);\r?\n?#', '', $head);
+				$head = preg_replace('#<script[^>]+?src=[^>]*?jquery-?ui(?:\.min)?\.js[^>]*?></script>\r?\n?#i', '', $head);
 				
 				$_head .= '<link href="'.XOOPS_THEME_URL.'/'.$this->k_tai_conf['themeSet'].'/jquery.mobile.min.css" rel="stylesheet" type="text/css" />';
 				if ($this->k_tai_conf['jqm_css']) {
@@ -2103,8 +2107,12 @@ EOD;
 		unset($r);
 
 		header('Content-Type: ' . $ctype . '; charset=' . $charset);
-		header('Content-Length: ' . strlen($s));
-		header('Cache-Control: no-cache');
+		if (! $use_jquery) {
+			header('Cache-Control: no-cache');
+			if (function_exists('headers_list')) {
+				header('Content-Length: ' . strlen($s));
+			}
+		}
 		
 		$this->changeContentLength = true;
 		
