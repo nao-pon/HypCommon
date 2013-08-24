@@ -29,9 +29,11 @@ if (! defined('PATH_SEPARATOR')) {
 	}
 }
 
+//error_reporting(error_reporting() & ~E_STRICT);
+
 class HypCommonFunc
 {
-	function get_version() {
+	public static function get_version() {
 		static $version = FALSE;
 		if (! $version) {
 			include (HYP_COMMON_ROOT_PATH . '/version.php');
@@ -39,7 +41,7 @@ class HypCommonFunc
 		return $version;
 	}
 
-	function loadClass($name) {
+	public static function loadClass($name) {
 		if (XC_CLASS_EXISTS($name)) return TRUE;
 
 		$ret = FALSE;
@@ -98,7 +100,7 @@ class HypCommonFunc
 	}
 	
 	// 1バイト文字をエンティティ化
-	function str_to_entity(&$str)
+	public static function str_to_entity(&$str)
 	{
 		$e_mail = "";
 		$i = 0;
@@ -112,7 +114,7 @@ class HypCommonFunc
 	}
 
 	// ",' で括ったフレーズ対応スプリット
-	function phrase_split($str)
+	public static function phrase_split($str)
 	{
 		$words = array();
 		$str = preg_replace("/(\"|')(.+?)(?:\\1)/e","str_replace(' ','\x08','$2')",$str);
@@ -122,7 +124,7 @@ class HypCommonFunc
 	}
 
 	// 配列対応 & gpc 対応のstripslashes
-	function stripslashes_gpc(&$v, $check = false)
+	public static function stripslashes_gpc(&$v, $check = false)
 	{
 		if ($check || get_magic_quotes_gpc()) 
 		{
@@ -144,7 +146,7 @@ class HypCommonFunc
 	}
 
 	// RSS関連のキャッシュを削除する
-	function clear_rss_cache($files=array())
+	public static function clear_rss_cache($files=array())
 	{
 		include_once XOOPS_ROOT_PATH.'/class/template.php';
 
@@ -171,7 +173,7 @@ class HypCommonFunc
 	}
 
 	// RPC Update Ping を打つ
-	function update_rpc_ping($to = '')
+	public static function update_rpc_ping($to = '')
 	{
 		global $xoopsConfig;
 
@@ -207,7 +209,7 @@ class HypCommonFunc
 		unset($p);
 	}
 
-	function make_context($text, $words=array(), $l=255, $parts=3, $delimiter='...', $caseInsensitive = TRUE, $whitespaceCompress = TRUE, $encode = null)
+	public static function make_context($text, $words=array(), $l=255, $parts=3, $delimiter='...', $caseInsensitive = TRUE, $whitespaceCompress = TRUE, $encode = null)
 	{
 		if (! $encode) {
 			if (defined(_CHARSET)) {
@@ -316,7 +318,7 @@ class HypCommonFunc
 		return $ret;
 	}
 
-	function set_need_refresh($mode)
+	public static function set_need_refresh($mode)
 	{
 		if ($mode)
 		{
@@ -329,7 +331,7 @@ class HypCommonFunc
 	}
 
 	// HTML の meta タグから文字エンコーディングを取得する
-	function get_encoding_by_meta($html, $ret_empty = FALSE)
+	public static function get_encoding_by_meta($html, $ret_empty = FALSE)
 	{
 		$ret = $ret_empty? '' : 'EUC-JP,UTF-8,Shift_JIS,JIS';
 		$codesets = array(
@@ -362,7 +364,7 @@ class HypCommonFunc
 	}
 
 	// 携帯用に画像を(リサイズして)変換する
-	function img4ktai($file, $maxsize = 128, $allowpng = FALSE, $allconvert = FALSE, $quality = 50) {
+	public static function img4ktai($file, $maxsize = 128, $allowpng = FALSE, $allconvert = FALSE, $quality = 50) {
 		//GD のバージョンを取得
 		static $gd_ver = null;
 		if (is_null($gd_ver)) {
@@ -451,7 +453,7 @@ class HypCommonFunc
 	}
 
 	// 携帯用にリサイズした画像のサイズを得る
-	function get_imagesize4ktai($url, $maxsize, $allowpng) {
+	public static function get_imagesize4ktai($url, $maxsize, $allowpng) {
 		$cachepath = XOOPS_ROOT_PATH . '/class/hyp_common/cache';
 		$png = ($allowpng)? 1 : 0;
 		$basename = md5(join("\t", array($url, $maxsize, $png))) . '.i4ks';
@@ -465,7 +467,7 @@ class HypCommonFunc
 	}
 
 	// 携帯用にリサイズした画像のファイルサイズを得る
-	function get_imagefilesize4ktai($url, $maxsize, $allowpng) {
+	public static function get_imagefilesize4ktai($url, $maxsize, $allowpng) {
 		$cachepath = XOOPS_ROOT_PATH . '/class/hyp_common/cache';
 		$png = ($allowpng)? 1 : 0;
 		$basename = md5(join("\t", array($url, $maxsize, $png))) . '.i4k';
@@ -479,7 +481,7 @@ class HypCommonFunc
 
 	// サムネイル画像を作成。
 	// 成功ならサムネイルのファイルのパス、不成功なら元ファイルパスを返す
-	function make_thumb($o_file, $s_file, $max_width, $max_height, $zoom_limit="1,95", $refresh=FALSE, $quality=75)
+	public static function make_thumb($o_file, $s_file, $max_width, $max_height, $zoom_limit="1,95", $refresh=FALSE, $quality=75)
 	{
 		// すでに作成済み
 		if (! $refresh && is_file($s_file)) {
@@ -522,7 +524,7 @@ class HypCommonFunc
 		}
 	}
 
-	function make_thumb_gd($o_file, $s_file, $zoom, $quality, $type ,$org_w, $org_h)
+	public static function make_thumb_gd($o_file, $s_file, $zoom, $quality, $type ,$org_w, $org_h)
 	{
 		//GD のバージョンを取得
 		static $gd_ver = null;
@@ -650,7 +652,7 @@ class HypCommonFunc
 		return $o_file;
 	}
 
-	function gd_resizer($func, $gd_ver, $dst_im, $src_im, $width, $height, $org_w, $org_h) {
+	public static function gd_resizer($func, $gd_ver, $dst_im, $src_im, $width, $height, $org_w, $org_h) {
 		$func($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
 		if ($gd_ver >= 2) {
 			list($amount, $radius, $threshold) = HypCommonFunc::get_unsharp_mask_params();
@@ -658,7 +660,7 @@ class HypCommonFunc
 		}
 	}
 
-	function get_unsharp_mask_params() {
+	public static function get_unsharp_mask_params() {
 		list($amount, $radius, $threshold) = array_pad(explode('|', HYP_IMAGEMAGICK_UNSHARP), 3, '');
 		$amount    = ($amount            ? $amount    : 80);
 		$radius    = ($radius            ? $radius    : 0.5);
@@ -666,7 +668,7 @@ class HypCommonFunc
 		return array($amount, $radius, $threshold);
 	}
 
-	function UnsharpMask ( $img , $amount , $radius , $threshold )    {
+	public static function UnsharpMask ( $img , $amount , $radius , $threshold )    {
 
 		////////////////////////////////////////////////////////////////////////////////////////////////
 		////
@@ -807,7 +809,7 @@ class HypCommonFunc
 
 	}
 
-	function make_thumb_imagemagick($o_file, $s_file, $zoom, $quality, $type ,$org_w, $org_h)
+	public static function make_thumb_imagemagick($o_file, $s_file, $zoom, $quality, $type ,$org_w, $org_h)
 	{
 		$zoom = intval($zoom * 100);
 		$quality = intval($quality);
@@ -849,7 +851,7 @@ class HypCommonFunc
 	}
 
 	// 画像をリサイズする
-	function ImageResize($img, $isize='', $quality=75) {
+	public static function ImageResize($img, $isize='', $quality=75) {
 
 		$size = @getimagesize($img);
 		if (!$size) return false;//画像ファイルではない
@@ -887,7 +889,7 @@ class HypCommonFunc
 	}
 
 	// 画像を角丸にする
-	function ImageMagickRoundCorner($o_file, $s_file = '', $corner = 10, $edge = 0, $refresh = FALSE) {
+	public static function ImageMagickRoundCorner($o_file, $s_file = '', $corner = 10, $edge = 0, $refresh = FALSE) {
 
 		if (!defined('HYP_IMAGEMAGICK_PATH') || !HYP_IMAGEMAGICK_PATH) return $o_file;
 
@@ -963,15 +965,15 @@ class HypCommonFunc
 
 	// GD のバージョンを取得
 	// RETURN 0:GDなし, 1:Ver 1, 2:Ver 2
-	function gdVersion($user_ver = 0)
+	public static function gdVersion($user_ver = 0)
 	{
 		if (! extension_loaded('gd')) { return 0; }
 		static $gd_ver = 0;
 		// Just accept the specified setting if it's 1.
 		if ($user_ver == 1) { $gd_ver = 1; return 1; }
-		// Use the static variable if function was called previously.
+		// Use the static variable if public static function was called previously.
 		if ($user_ver !=2 && $gd_ver > 0 ) { return $gd_ver; }
-		// Use the gd_info() function if possible.
+		// Use the gd_info() public static function if possible.
 		if (function_exists('gd_info')) {
 			$ver_info = gd_info();
 			$match = array();
@@ -1000,7 +1002,7 @@ class HypCommonFunc
 		return $match[0];
 	}
 
-	function check_memory4gd($w,$h,$zoom = 1)
+	public static function check_memory4gd($w,$h,$zoom = 1)
 	{
 		// GDで処理可能なメモリーサイズ
 		static $memory_limit = NULL;
@@ -1031,7 +1033,7 @@ class HypCommonFunc
 	}
 
 	// イメージを回転
-	function rotateImage($src, $count = 1, $quality = 95)
+	public static function rotateImage($src, $count = 1, $quality = 95)
 	{
 		$src = realpath($src);
 
@@ -1158,7 +1160,7 @@ class HypCommonFunc
 	}
 
 	// image_magick.cgi へアクセス
-	function exec_image_magick_cgi($cmds)
+	public static function exec_image_magick_cgi($cmds)
 	{
 		if (defined('HYP_IMAGE_MAGICK_URL'))
 		{
@@ -1189,7 +1191,7 @@ class HypCommonFunc
 	}
 
 	// 外部実行コマンドのパスを設定
-	function set_exec_path($dir)
+	public static function set_exec_path($dir)
 	{
 		HypCommonFunc::set_jpegtran_path($dir);
 		HypCommonFunc::set_imagemagick_path($dir);
@@ -1197,7 +1199,7 @@ class HypCommonFunc
 	}
 
 	// Image Magick のパスを設定(定数化)
-	function set_imagemagick_path($dir)
+	public static function set_imagemagick_path($dir)
 	{
 		// すでに設定済み
 		if (defined('HYP_IMAGEMAGICK_PATH')) return;
@@ -1211,7 +1213,7 @@ class HypCommonFunc
 	}
 
 	// jpegtran のパスを設定(定数化)
-	function set_jpegtran_path($dir)
+	public static function set_jpegtran_path($dir)
 	{
 		// すでに設定済み
 		if (defined('HYP_JPEGTRAN_PATH')) return;
@@ -1224,7 +1226,7 @@ class HypCommonFunc
 	}
 
 
-	function set_hyp_image_magic_url($url='')
+	public static function set_hyp_image_magic_url($url='')
 	{
 		// すでに設定済み
 		if (defined('HYP_IMAGE_MAGICK_URL')) return;
@@ -1271,7 +1273,7 @@ class HypCommonFunc
 	}
 
 	// 2ch BBQ あらしお断りシステム にリスティングされているかチェック
-	function IsBBQListed($safe_reg = '/^$/', $msg = true, $ip = NULL, $checker = array('list.dsbl.org', 'niku.2ch.net'))
+	public static function IsBBQListed($safe_reg = '/^$/', $msg = true, $ip = NULL, $checker = array('list.dsbl.org', 'niku.2ch.net'))
 	{
 		if (is_null($ip)) $ip = $_SERVER['REMOTE_ADDR'];
 		if(! preg_match($safe_reg, $ip))
@@ -1295,7 +1297,7 @@ class HypCommonFunc
 	}
 
 	// 2ch BBQ チェック用汎用関数
-	function BBQ_Check($safe_reg = "/^(127\.0\.0\.1)/", $msg = true, $ip = NULL, $checker = array('list.dsbl.org', 'niku.2ch.net'))
+	public static function BBQ_Check($safe_reg = "/^(127\.0\.0\.1)/", $msg = true, $ip = NULL, $checker = array('list.dsbl.org', 'niku.2ch.net'))
 	{
 		if ($_SERVER['REQUEST_METHOD'] == 'POST')
 		{
@@ -1309,7 +1311,7 @@ class HypCommonFunc
 	}
 
 	// URL Check
-	function URL_Check(& $post) {
+	public static function URL_Check(& $post) {
 		static $func = NULL;
 		$counter = 0;
 		if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -1341,7 +1343,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 
 
 	// POST SPAM Check
-	function PostSpam_Check($post, $encode = '', $encodehint = '')
+	public static function PostSpam_Check($post, $encode = '', $encodehint = '')
 	{
 		if (function_exists('mb_convert_variables') && $encode) {
 			// 文字エンコード変換
@@ -1432,7 +1434,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 	}
 
 	// POST SPAM フィルター
-	function PostSpam_filter($reg="", $point=1)
+	public static function PostSpam_filter($reg="", $point=1)
 	{
 		static $regs = array();
 		if (empty($reg)) {return $regs;}
@@ -1440,7 +1442,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 	}
 
 	// POST SPAM Check 汎用関数
-	function get_postspam_avr($alink=1,$bb=1,$url=1,$encode='EUC-JP',$encodehint='')
+	public static function get_postspam_avr($alink=1,$bb=1,$url=1,$encode='EUC-JP',$encodehint='')
 	{
 		if ($_SERVER['REQUEST_METHOD'] == 'POST')
 		{
@@ -1454,7 +1456,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 	}
 	
 	// xoops_trust_path/uploads/hyp_common の spamdat を自動更新
-	function spamdat_auto_update($trustpath = '') {
+	public static function spamdat_auto_update($trustpath = '') {
 		if (! defined('XOOPS_TRUST_PATH') && $trustpath) {
 			define('XOOPS_TRUST_PATH', $trustpath);
 		}
@@ -1480,7 +1482,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 
 	// Input フィルター
 	// $strength - 0: null 以外許可, 1: SoftBankの絵文字と\t,\r,\n は許可, 2: \t,\r,\n のみ許可
-	function input_filter($param, $strength = 2, $encode = null) {
+	public static function input_filter($param, $strength = 2, $encode = null) {
 
 		static $done = array('POST' => 0, 'GET' => 0);
 
@@ -1528,7 +1530,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 	}
 
 	// 機種依存文字フィルター
-	function dependence_filter($post)
+	public static function dependence_filter($post)
 	{
 		if (!isset($post) || !function_exists("mb_ereg_replace")) {return $post;}
 
@@ -1586,7 +1588,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 	}
 
 	// 文字エンコード変換前に範囲外の文字を実体参照値に変換する
-	function encode_numericentity(& $arg, $toencode, $fromencode, $keys = array()) {
+	public static function encode_numericentity(& $arg, $toencode, $fromencode, $keys = array()) {
 		$fromencode = strtoupper($fromencode);
 		$toencode = strtoupper($toencode);
 		if ($fromencode === $toencode || $toencode === 'UTF-8') return;
@@ -1630,7 +1632,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 	}
 
 	// リファラーから検索語と検索エンジンを取得し定数に定義する
-	function set_query_words($qw="HYP_QUERY_WORD",$qw2="HYP_QUERY_WORD2",$en="HYP_SEARCH_ENGINE_NAME",$tmpdir="",$enc='EUC-JP',$use_kakasi=TRUE)
+	public static function set_query_words($qw="HYP_QUERY_WORD",$qw2="HYP_QUERY_WORD2",$en="HYP_SEARCH_ENGINE_NAME",$tmpdir="",$enc='EUC-JP',$use_kakasi=TRUE)
 	{
 		if (!defined($qw))
 		{
@@ -1652,7 +1654,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 	}
 
 	// php.ini のサイズ記述をバイト値に変換
-	function return_bytes($val) {
+	public static function return_bytes($val) {
 		$val = trim(strval($val));
 		if ($val === '-1') $val = 0;
 		if ($val) {
@@ -1674,12 +1676,12 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 	}
 
 	// 配列から正規表現を得る
-	function get_reg_pattern($words)
+	public static function get_reg_pattern($words)
 	{
 		return HypCommonFunc::get_matcher_regex_safe($words);
 	}
 
-	function get_matcher_regex_safe ($pages, $spliter = "\t", $array_fix = true, $nest = 0, $ci = 1) {
+	public static function get_matcher_regex_safe ($pages, $spliter = "\t", $array_fix = true, $nest = 0, $ci = 1) {
 		if ($array_fix) {
 			$pages = array_map('trim', $pages);
 			if ($ci) $pages = array_map('strtolower', $pages);
@@ -1716,7 +1718,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 		return join($spliter, $pats);
 	}
 
-	function get_matcher_regex_safe_sub (& $array, $offset = 0, $sentry = NULL, $pos = 0, $nest = 0)
+	public static function get_matcher_regex_safe_sub (& $array, $offset = 0, $sentry = NULL, $pos = 0, $nest = 0)
 	{
 		++$nest;
 		$limit = 1024 * 30;
@@ -1772,7 +1774,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 		return $regex;
 	}
 
-	function register_bad_ips( $ip = null, $protectorTTL = null )
+	public static function register_bad_ips( $ip = null, $protectorTTL = null )
 	{
 		if( empty( $ip ) ) $ip = $_SERVER['REMOTE_ADDR'] ;
 		if( empty( $ip ) ) return false ;
@@ -1808,7 +1810,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 		return true ;
 	}
 
-	function html_wordwrap(& $html, $num = 36, $sep = '&#8203;') {
+	public static function html_wordwrap(& $html, $num = 36, $sep = '&#8203;') {
 		$ret = preg_replace_callback('/(<(script|textarea|style|option|pre).+?<\/\\2>|<[^>]+?>)|((?>&#?[a-z0-9]+?;|\(\([eisv]:[0-9a-f]{4}\)\)|\[emj:\d{1,4}(?::(?:im|ez|sb))?\]|[!=\x23-\x3b\x3f-\x7e]){'.$num.'})/isS',
 		create_function('$arg',
 			'if ($arg[1]) { return $arg[1]; } else { return $arg[3] . "'.$sep.'";}'
@@ -1819,7 +1821,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 	}
 
 	// $var が多元配列かを検査
-	function is_multi_array($var) {
+	public static function is_multi_array($var) {
 		if (!is_array($var)) return FALSE;
 		$ret = FALSE;
 		foreach($var as $chk) {
@@ -1832,7 +1834,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 	}
 
 	// IDN ( Internationalized Domain Name ) encoder & decoder
-	function convertIDN ($host, $mode = 'auto', $encode = '') {
+	public static function convertIDN ($host, $mode = 'auto', $encode = '') {
 		static $converted = array(); // For convert cache
 		static $idn; // idna_convert object
 
@@ -1897,7 +1899,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 	}
 
 	// parse_url for IDN (simple version)
-	function i18n_parse_url ($url) {
+	public static function i18n_parse_url ($url) {
 		$reg = '#^([A-Za-z0-9]+)://(?:([A-Za-z0-9_-]+):([A-Za-z0-9_-]+)@)?([^/"<>:]+):?([\d]*)([^?]*)\??([^\#]*)\#?(.*)$#';
 		if (preg_match($reg, $url, $match)) {
 			$ret = array();
@@ -1924,7 +1926,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 	}
 
 	// Make Emoji pad
-	function make_emoji_pad ($id, $checkmsg = '', $clearDisplayId = '', $emojiurl = '', $writeJS = TRUE, $emj_list = NULL) {
+	public static function make_emoji_pad ($id, $checkmsg = '', $clearDisplayId = '', $emojiurl = '', $writeJS = TRUE, $emj_list = NULL) {
 		$useList = ($emj_list !== 'all');
 
 		if ($useList && ! is_array($emj_list)) {
@@ -2019,7 +2021,7 @@ EOD;
 	}
 
 	// flock safty file_get_contents()
-	function flock_get_contents ($filename, $maxRetry = 10) {
+	public static function flock_get_contents ($filename, $maxRetry = 10) {
 		$return = FALSE;
 		if (is_string($filename) && !empty($filename)) {
 			if (is_readable($filename)) {
@@ -2040,7 +2042,7 @@ EOD;
 		return $return;
 	}
 
-	function flock_put_contents ($filename, $src, $mode = 'wb', $maxRetry = 10) {
+	public static function flock_put_contents ($filename, $src, $mode = 'wb', $maxRetry = 10) {
 		$return = FALSE;
 		if (is_string($filename) && ! empty($filename)) {
 			// rename を使用する方法を試みる touch() が可能なら rename() も、たぶん可
@@ -2065,7 +2067,7 @@ EOD;
 		return $return;
 	}
 
-	function readfile($file, $use_content_encoding = FALSE) {
+	public static function readfile($file, $use_content_encoding = FALSE) {
 		if (defined('HYP_X_SENDFILE_MODE')) {
 			if (HYP_X_SENDFILE_MODE === 3 || (! $use_content_encoding && HYP_X_SENDFILE_MODE === 2)) {
 				if ( $use_content_encoding && HYP_X_SENDFILE_MODE === 3) {
@@ -2100,7 +2102,7 @@ EOD;
 		@readfile($file);
 	}
 
-	function file_get_contents($filename, $incpath = false, $resource_context = null, $offset = -1, $maxlen = -1) {
+	public static function file_get_contents($filename, $incpath = false, $resource_context = null, $offset = -1, $maxlen = -1) {
 		if (version_compare(PHP_VERSION, '5.1.0', '<')) {
 			if (false === $fh = fopen($filename, 'rb', $incpath)) {
 				trigger_error('file_get_contents() failed to open stream: No such file or directory', E_USER_WARNING);
@@ -2138,7 +2140,7 @@ EOD;
 		}
 	}
 
-	function chown($filename, $preserve_time = TRUE) {
+	public static function chown($filename, $preserve_time = TRUE) {
 		static $php_uid; // PHP's UID
 
 		if (! isset($php_uid)) {
@@ -2210,7 +2212,7 @@ EOD;
 		return $result;
 	}
 
-	function touch($filename, $time = FALSE, $atime = FALSE) {
+	public static function touch($filename, $time = FALSE, $atime = FALSE) {
 		// Is the owner incorrected and unable to correct?
 		if (! is_file($filename) || HypCommonFunc::chown($filename)) {
 			if ($time === FALSE) {
@@ -2228,7 +2230,7 @@ EOD;
 	}
 
 	// 検索語を展開する
-	function get_search_words($words, $special=false, $enc='EUC-JP')
+	public static function get_search_words($words, $special=false, $enc='EUC-JP')
 	{
 		$retval = array();
 
