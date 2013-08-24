@@ -12,7 +12,7 @@ if( ! XC_CLASS_EXISTS( 'HypGetQueryWord' ) )
 
 class HypGetQueryWord
 {
-	function set_constants($qw='HYP_QUERY_WORD',$qw2='HYP_QUERY_WORD2',$en='HYP_SEARCH_ENGINE_NAME',$tmpdir='',$enc='EUC-JP')
+	public static function set_constants($qw='HYP_QUERY_WORD',$qw2='HYP_QUERY_WORD2',$en='HYP_SEARCH_ENGINE_NAME',$tmpdir='',$enc='EUC-JP')
 	{
 		$use_kakasi = ($qw2);
 		$enc = strtoupper($enc);
@@ -22,7 +22,7 @@ class HypGetQueryWord
 		define($en , $getengine_name);
 	}
 
-	function se_getengine($tmpdir,$enc,$use_kakasi)
+	public static function se_getengine($tmpdir,$enc,$use_kakasi)
 	{
 		$_query = array_merge($_POST, $_GET);
 		$_query = HypCommonFunc::stripslashes_gpc($_query);
@@ -110,7 +110,7 @@ class HypGetQueryWord
 		return array($se_name,$query,$query2);
 	}
 
-	function se_search($string,$mask){
+	public static function se_search($string,$mask){
 		static $in=array('.', '^', '$', '{', '}', '(', ')', '[', ']', '+', '*', '?', '/');
 		static $out=array('\\.', '\\^', '\\$', '\\{', '\\}', '\\(', '\\)', '\\[', '\\]', '\\+', '.*', '.', '\\/');
 		$mask='^'.str_replace($in,$out,$mask).'$';
@@ -123,7 +123,7 @@ class HypGetQueryWord
 
 	// convert "single IE escaped unicode" to "UTF-8"
 	// uni2utf8("%u65E5") returns "\xE5\xB1\x80"
-	function uni2utf8($uniescape)
+	public static function uni2utf8($uniescape)
 	{
 		$c = "";
 
@@ -143,7 +143,7 @@ class HypGetQueryWord
 
 	// Convert "IE escaped Unicode" to $enc
 	// escuni2euc("%u65E5%u672C%u8A9E123") returns "日本語"
-	function se_escuni2euc($escunistr, $enc)
+	public static function se_escuni2euc($escunistr, $enc)
 	{
 		$str = '';
 
@@ -155,7 +155,7 @@ class HypGetQueryWord
 	}
 
 	// 日本語対応のurldecode by nao-pon
-	function se_urldecode_euc($str,$enc,$encfrom){
+	public static function se_urldecode_euc($str,$enc,$encfrom){
 		if (function_exists('mb_convert_encoding') && $encfrom) {
 			if (preg_match('/%u[0-9A-F][0-9A-F][0-9A-F][0-9A-F]/i',$str)){
 				$query = HypGetQueryWord::se_escuni2euc(urldecode($str), $enc);//for IE unicode+urlencoding
@@ -169,7 +169,7 @@ class HypGetQueryWord
 		return $query;
 	}
 
-	function word_highlight($body, $q_word, $enc = null, $msg = '', $extlink_class_name = 'ext', $word_max_len = 20) {
+	public static function word_highlight($body, $q_word, $enc = null, $msg = '', $extlink_class_name = 'ext', $word_max_len = 20) {
 		if (is_null($enc)) {
 			if (function_exists('mb_internal_encoding')) {
 				$enc = mb_internal_encoding();
@@ -251,7 +251,7 @@ class HypGetQueryWord
 		return $body;
 	}
 	// 検索語を展開する
-	function get_search_words($words, $special=false, $enc='EUC-JP')
+	public static function get_search_words($words, $special=false, $enc='EUC-JP')
 	{
 		$retval = array();
 
