@@ -59,7 +59,7 @@ if ($xoopsConfig['theme_set'] != 'default' && file_exists(XOOPS_THEME_PATH.'/'.$
     if ($xoopsUser != '') {
         $xoopsTpl->assign(array('xoops_isuser' => true, 'xoops_userid' => $xoopsUser->getVar('uid'), 'xoops_uname' => $xoopsUser->getVar('uname'), 'xoops_isadmin' => $xoopsUserIsAdmin));
     }
-    $xoopsTpl->assign('xoops_requesturi', htmlspecialchars($GLOBALS['xoopsRequestUri'], ENT_QUOTES));
+    $xoopsTpl->assign('xoops_requesturi', htmlspecialchars($GLOBALS['xoopsRequestUri'], ENT_QUOTES, _CHARSET));
     include XOOPS_ROOT_PATH.'/include/old_functions.php';
 
     if ($xoopsOption['show_cblock'] || (!empty($xoopsModule) && preg_match("/index\.php$/i", xoops_getenv('PHP_SELF')) && $xoopsConfig['startpage'] == $xoopsModule->getVar('dirname'))) {
@@ -76,7 +76,7 @@ if ($xoopsConfig['theme_set'] != 'default' && file_exists(XOOPS_THEME_PATH.'/'.$
     if ($xoopsConfig['debug_mode'] == 3) {
         $xoopsTpl->xoops_setDebugging(true);
     }
-    $xoopsTpl->assign(array('xoops_theme' => $xoopsConfig['theme_set'], 'xoops_imageurl' => XOOPS_THEME_URL.'/'.$xoopsConfig['theme_set'].'/', 'xoops_themecss'=> xoops_getcss($xoopsConfig['theme_set']), 'xoops_requesturi' => htmlspecialchars($GLOBALS['xoopsRequestUri'], ENT_QUOTES), 'xoops_sitename' => htmlspecialchars($xoopsConfig['sitename'], ENT_QUOTES), 'xoops_slogan' => htmlspecialchars($xoopsConfig['slogan'], ENT_QUOTES)));
+    $xoopsTpl->assign(array('xoops_theme' => $xoopsConfig['theme_set'], 'xoops_imageurl' => XOOPS_THEME_URL.'/'.$xoopsConfig['theme_set'].'/', 'xoops_themecss'=> xoops_getcss($xoopsConfig['theme_set']), 'xoops_requesturi' => htmlspecialchars($GLOBALS['xoopsRequestUri'], ENT_QUOTES, _CHARSET), 'xoops_sitename' => htmlspecialchars($xoopsConfig['sitename'], ENT_QUOTES, _CHARSET), 'xoops_slogan' => htmlspecialchars($xoopsConfig['slogan'], ENT_QUOTES, _CHARSET)));
     // Meta tags
     $config_handler =& xoops_gethandler('config');
     $criteria = new CriteriaCompo(new Criteria('conf_modid', 0));
@@ -109,7 +109,7 @@ if ($xoopsConfig['theme_set'] != 'default' && file_exists(XOOPS_THEME_PATH.'/'.$
                 $block_arr =& $xoopsblock->getAllByGroupModule($xoopsUser->getGroups(), $xoopsModule->getVar('mid'), false, XOOPS_BLOCK_VISIBLE);
             }
         } else {
-            $xoopsTpl->assign('xoops_pagetitle', htmlspecialchars($xoopsConfig['slogan'], ENT_QUOTES));
+            $xoopsTpl->assign('xoops_pagetitle', htmlspecialchars($xoopsConfig['slogan'], ENT_QUOTES, _CHARSET));
             if (!empty($xoopsOption['show_cblock'])) {
                 $block_arr =& $xoopsblock->getAllByGroupModule($xoopsUser->getGroups(), 0, true, XOOPS_BLOCK_VISIBLE);
             } else {
@@ -127,7 +127,7 @@ if ($xoopsConfig['theme_set'] != 'default' && file_exists(XOOPS_THEME_PATH.'/'.$
                 $block_arr =& $xoopsblock->getAllByGroupModule(XOOPS_GROUP_ANONYMOUS, $xoopsModule->getVar('mid'), false, XOOPS_BLOCK_VISIBLE);
             }
         } else {
-            $xoopsTpl->assign('xoops_pagetitle', htmlspecialchars($xoopsConfig['slogan'], ENT_QUOTES));
+            $xoopsTpl->assign('xoops_pagetitle', htmlspecialchars($xoopsConfig['slogan'], ENT_QUOTES, _CHARSET));
             if (!empty($xoopsOption['show_cblock'])) {
                 $block_arr =& $xoopsblock->getAllByGroupModule(XOOPS_GROUP_ANONYMOUS, 0, true, XOOPS_BLOCK_VISIBLE);
             } else {
@@ -254,7 +254,7 @@ if ($xoopsConfig['theme_set'] != 'default' && file_exists(XOOPS_THEME_PATH.'/'.$
                 <!--//
                 debug_window = openWithSelfMain("", "xoops_debug", 680, 600, true);
                 ';
-                $content = '<html><head><meta http-equiv="content-type" content="text/html; charset='._CHARSET.'" /><meta http-equiv="content-language" content="'._LANGCODE.'" /><title>'.htmlspecialchars($xoopsConfig['sitename']).'</title><link rel="stylesheet" type="text/css" media="all" href="'.getcss($xoopsConfig['theme_set']).'" /></head><body>'.$xoopsLogger->dumpAll().'<div style="text-align:center;"><input class="formButton" value="'._CLOSE.'" type="button" onclick="javascript:window.close();" /></div></body></html>';
+                $content = '<html><head><meta http-equiv="content-type" content="text/html; charset='._CHARSET.'" /><meta http-equiv="content-language" content="'._LANGCODE.'" /><title>'.htmlspecialchars($xoopsConfig['sitename'], ENT_COMPAT, _CHARSET).'</title><link rel="stylesheet" type="text/css" media="all" href="'.getcss($xoopsConfig['theme_set']).'" /></head><body>'.$xoopsLogger->dumpAll().'<div style="text-align:center;"><input class="formButton" value="'._CLOSE.'" type="button" onclick="javascript:window.close();" /></div></body></html>';
                 $lines = preg_split("/(\r\n|\r|\n)( *)/", $content);
                 foreach ($lines as $line) {
                     echo 'debug_window.document.writeln("'.str_replace('"', '\"', $line).'");';

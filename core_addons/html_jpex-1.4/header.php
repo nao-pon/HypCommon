@@ -65,7 +65,7 @@ if ($xoopsConfig['theme_set'] != 'default' && file_exists(XOOPS_THEME_PATH.'/'.$
 
         $xoopsTpl->assign(array('xoops_isuser' => true, 'xoops_userid' => $xoopsUser->getVar('uid'), 'xoops_uname' => $xoopsUser->getVar('uname'), 'xoops_isadmin' => $xoopsUserIsAdmin, 'xoops_pm_num' => $pm_num));
     }
-    $xoopsTpl->assign('xoops_requesturi', htmlspecialchars($GLOBALS['xoopsRequestUri'], ENT_QUOTES));
+    $xoopsTpl->assign('xoops_requesturi', htmlspecialchars($GLOBALS['xoopsRequestUri'], ENT_QUOTES, _CHARSET));
     include XOOPS_ROOT_PATH.'/include/old_functions.php';
 
     if ($xoopsOption['show_cblock'] || (!empty($xoopsModule) && preg_match("/index\.php$/i", xoops_getenv('PHP_SELF')) && $xoopsConfig['startpage'] == $xoopsModule->getVar('dirname'))) {
@@ -82,7 +82,7 @@ if ($xoopsConfig['theme_set'] != 'default' && file_exists(XOOPS_THEME_PATH.'/'.$
     if (checkDebugGroup() && in_array(3, $xoopsConfig['debug_mode'])) {
         $xoopsTpl->xoops_setDebugging(true);
     }
-    $xoopsTpl->assign(array('xoops_theme' => $xoopsConfig['theme_set'], 'xoops_imageurl' => XOOPS_THEME_URL.'/'.$xoopsConfig['theme_set'].'/', 'xoops_themecss'=> xoops_getcss($xoopsConfig['theme_set']), 'xoops_requesturi' => htmlspecialchars($GLOBALS['xoopsRequestUri'], ENT_QUOTES), 'xoops_sitename' => htmlspecialchars($xoopsConfig['sitename'], ENT_QUOTES), 'xoops_slogan' => htmlspecialchars($xoopsConfig['slogan'], ENT_QUOTES), 'emaillogin' => $xoopsConfig['emaillogin'], 'autologin' => $xoopsConfig['autologin']));
+    $xoopsTpl->assign(array('xoops_theme' => $xoopsConfig['theme_set'], 'xoops_imageurl' => XOOPS_THEME_URL.'/'.$xoopsConfig['theme_set'].'/', 'xoops_themecss'=> xoops_getcss($xoopsConfig['theme_set']), 'xoops_requesturi' => htmlspecialchars($GLOBALS['xoopsRequestUri'], ENT_QUOTES, _CHARSET), 'xoops_sitename' => htmlspecialchars($xoopsConfig['sitename'], ENT_QUOTES, _CHARSET), 'xoops_slogan' => htmlspecialchars($xoopsConfig['slogan'], ENT_QUOTES, _CHARSET), 'emaillogin' => $xoopsConfig['emaillogin'], 'autologin' => $xoopsConfig['autologin']));
     // Meta tags
     $config_handler =& xoops_gethandler('config');
     $criteria = new CriteriaCompo(new Criteria('conf_modid', 0));
@@ -121,7 +121,7 @@ if ($xoopsConfig['theme_set'] != 'default' && file_exists(XOOPS_THEME_PATH.'/'.$
                 $block_arr =& $xoopsblock->getAllByGroupModule($xoopsUser->getGroups(), $xoopsModule->getVar('mid'), false, XOOPS_BLOCK_VISIBLE);
             }
         } else {
-            $xoopsTpl->assign('xoops_pagetitle', htmlspecialchars($xoopsConfig['slogan'], ENT_QUOTES));
+            $xoopsTpl->assign('xoops_pagetitle', htmlspecialchars($xoopsConfig['slogan'], ENT_QUOTES, _CHARSET));
             if (!empty($xoopsOption['show_cblock'])) {
                 $block_arr =& $xoopsblock->getAllByGroupModule($xoopsUser->getGroups(), 0, true, XOOPS_BLOCK_VISIBLE);
             } else {
@@ -139,7 +139,7 @@ if ($xoopsConfig['theme_set'] != 'default' && file_exists(XOOPS_THEME_PATH.'/'.$
                 $block_arr =& $xoopsblock->getAllByGroupModule(XOOPS_GROUP_ANONYMOUS, $xoopsModule->getVar('mid'), false, XOOPS_BLOCK_VISIBLE);
             }
         } else {
-            $xoopsTpl->assign('xoops_pagetitle', htmlspecialchars($xoopsConfig['slogan'], ENT_QUOTES));
+            $xoopsTpl->assign('xoops_pagetitle', htmlspecialchars($xoopsConfig['slogan'], ENT_QUOTES, _CHARSET));
             if (!empty($xoopsOption['show_cblock'])) {
                 $block_arr =& $xoopsblock->getAllByGroupModule(XOOPS_GROUP_ANONYMOUS, 0, true, XOOPS_BLOCK_VISIBLE);
             } else {

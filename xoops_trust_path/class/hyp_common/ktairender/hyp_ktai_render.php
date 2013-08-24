@@ -1916,7 +1916,7 @@ class HypKTaiRender
 					if (! isset($match[6])) {
 						return "\x08" . ' href="' . $url . '">[PIC]</a>';
 					} else {
-						return htmlspecialchars($parsed_url['host']) . $match[6];
+						return htmlspecialchars($parsed_url['host'], ENT_COMPAT, $this->inputEncode) . $match[6];
 					}
 				}
 			}

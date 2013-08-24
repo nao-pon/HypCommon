@@ -76,7 +76,7 @@ class IXR_Value {
                 return '<double>'.$this->data.'</double>';
                 break;
             case 'string':
-                return '<string>'.htmlspecialchars($this->data).'</string>';
+                return '<string>'.htmlspecialchars($this->data, ENT_COMPAT, 'UTF-8').'</string>';
                 break;
             case 'array':
                 $return = '<array><data>'."\n";
@@ -501,7 +501,7 @@ class IXR_Client {
         $request .= $xml;
         // Now send the request
         if ($this->debug) {
-            echo '<pre>'.htmlspecialchars($request)."\n</pre>\n\n";
+            echo '<pre>'.htmlspecialchars($request, ENT_COMPAT, 'UTF-8')."\n</pre>\n\n";
         }
         $fp = @fsockopen($this->server, $this->port);
         if (!$fp) {
@@ -530,7 +530,7 @@ class IXR_Client {
             }
         }
         if ($this->debug) {
-            echo '<pre>'.htmlspecialchars($contents)."\n</pre>\n\n";
+            echo '<pre>'.htmlspecialchars($contents, ENT_COMPAT, 'UTF-8')."\n</pre>\n\n";
         }
         // Now parse what we've got back
         $this->message = new IXR_Message($contents);

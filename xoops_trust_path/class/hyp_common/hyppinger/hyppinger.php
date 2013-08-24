@@ -21,11 +21,11 @@ class HypPinger {
 	var $debug = FALSE;
 	
 	function HypPinger ($name, $url, $changesurl=NULL, $rssurl=NULL, $tag=NULL) {
-		$this->name = htmlspecialchars($name);
+		$this->name = $name;
 		$this->url = $url;
 		$this->changesurl = $changesurl? $changesurl : '';
 		$this->rssurl = $rssurl? $rssurl : '';
-		$this->tag = $tag? htmlspecialchars($tag) : '';
+		$this->tag = $tag? $tag : '';
 		// a name (or "tag") categorizing your site content (string, limited to 1024 characters. You may delimit multiple values by using the '|' character.)
 	}
 	
@@ -70,8 +70,8 @@ class HypPinger {
 			if (! extension_loaded('mbstring') && ! XC_CLASS_EXISTS('HypMBString')) {
 				require_once(dirname(dirname(__FILE__)) . '/mbemulator/mb-emulator.php');
 			}
-			$this->name = mb_convert_encoding($this->name, 'UTF-8', $this->encording);
-			$this->tag  = mb_convert_encoding($this->tag, 'UTF-8', $this->encording);
+			$this->name = htmlspecialchars(mb_convert_encoding($this->name, 'UTF-8', $this->encording), ENT_COMPAT, 'UTF-8');
+			$this->tag  = htmlspecialchars(mb_convert_encoding($this->tag, 'UTF-8', $this->encording), ENT_COMPAT, 'UTF-8');
 		}
 		$tag = $changesurl = '';
 		if ($this->changesurl) {

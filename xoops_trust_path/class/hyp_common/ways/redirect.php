@@ -21,7 +21,7 @@ if (isset($_GET['l'])) {
 	$lasturl = $type = $size = '';
 	if ($info['header']) {
 		if (preg_match('/^Content-Type:\s*(.+)$/mi', $info['header'], $match)) {
-			$type = '<p>Content type: ' . htmlspecialchars($match[1]) . '</p>';
+			$type = '<p>Content type: ' . htmlspecialchars($match[1], ENT_COMPAT, 'UTF-8') . '</p>';
 		}
 		if (preg_match('/^Content-Length:\s*([\d]+)/mi', $info['header'], $match)) {
 			$size = '<p>Content size: ' . floor($match[1] / 1024) . 'KB' . '</p>';
@@ -29,11 +29,11 @@ if (isset($_GET['l'])) {
 	}
 
 	if ($info['lasturl']) {
-		$lasturl = '<br />(' .  htmlspecialchars($info['lasturl']) . ')';
+		$lasturl = '<br />(' .  htmlspecialchars($info['lasturl'], ENT_COMPAT, 'UTF-8') . ')';
 	}
 
 	$google = 'http://www.google.co.jp/gwt/n?u=' . rawurlencode($url);
-	$url = str_replace('&amp;', '&',htmlspecialchars($_GET['l']));
+	$url = str_replace('&amp;', '&',htmlspecialchars($_GET['l'], ENT_COMPAT, 'UTF-8'));
 
 	$lang = XOOPS_TRUST_PATH . '/class/hyp_common/language/' . $xoopsConfig['language'] . '/redirect.lng.php';
 	if (!is_file($lang)) {

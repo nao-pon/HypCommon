@@ -88,6 +88,15 @@ class HypCommonFunc
 		return $ret;
 	}
 
+	// htmlspecialchars compat PHP <= 5.3
+	public static function htmlspecialchars ($str, $flags = ENT_COMPAT, $encoding = null, $double_encode = true)
+	{
+		if (is_null($encoding)) {
+			$encoding = (defined('_CHARSET'))? _CHARSET : '';
+		}
+		return htmlspecialchars($str, $flags, $encoding, $double_encode);
+	}
+	
 	// 1バイト文字をエンティティ化
 	function str_to_entity(&$str)
 	{
@@ -218,7 +227,7 @@ class HypCommonFunc
 		$ret = str_replace(array('&lt;','&gt;','&quot;','&#039;','&amp;'),array('<','>','"',"'",'&'), $text);
 
 		// short text
-		if ($strlen($ret) <= $l) return htmlspecialchars($ret);
+		if ($strlen($ret) <= $l) return htmlspecialchars($ret, ENT_COMPAT, _CHARSET);
 
 		if (is_array($words)) {
 			$words = join(' ', $words);
@@ -301,7 +310,7 @@ class HypCommonFunc
 			$ret .= $delimiter;
 		}
 
-		$ret = htmlspecialchars($ret);
+		$ret = htmlspecialchars($ret, ENT_COMPAT, _CHARSET);
 		$ret = preg_replace('/&amp;(#?[A-Za-z0-9]{2,6}?;)/', '&$1', $ret);
 
 		return $ret;
@@ -2142,7 +2151,7 @@ EOD;
 
 		// Check owner
 		$stat = stat($filename) or
-			die('HypCommonFunc::chown(): stat() failed for: '  . basename(htmlspecialchars($filename)));
+			die('HypCommonFunc::chown(): stat() failed for: '  . basename(htmlspecialchars($filename, ENT_COMPAT, _CHARSET)));
 		if ($stat[4] === $php_uid) {
 			// NOTE: Windows always here
 			$result = TRUE; // Seems the same UID. Nothing to do
@@ -2159,10 +2168,10 @@ EOD;
 			if ($donot) {
 				if (filemtime($tmp) + 30 < time()) {
 					if (! @ unlink($tmp)) {
-						die('HypCommonFunc::chown(): failed. Not writable a flie. "'.basename(htmlspecialchars($tmp)).'"');
+						die('HypCommonFunc::chown(): failed. Not writable a flie. "'.basename(htmlspecialchars($tmp, ENT_COMPAT, _CHARSET)).'"');
 					}
 				} else {
-					die('HypCommonFunc::chown(): failed. Already exists "'.basename(htmlspecialchars($tmp)).'"');
+					die('HypCommonFunc::chown(): failed. Already exists "'.basename(htmlspecialchars($tmp, ENT_COMPAT, _CHARSET)).'"');
 				}
 			}
 
@@ -2171,7 +2180,7 @@ EOD;
 			// NOTE: Not 'r+'. Don't check write permission here
 			$ffile = fopen($filename, 'r') or
 				die('HypCommonFunc::chown(): fopen() failed for: ' .
-					basename(htmlspecialchars($filename)));
+					basename(htmlspecialchars($filename, ENT_COMPAT, _CHARSET)));
 
 			// Try to chown by re-creating files
 			// NOTE:
@@ -2194,7 +2203,7 @@ EOD;
 				fclose($ffile);
 				@unlink($tmp);
 				die('HypCommonFunc::chown(): flock() failed for: ' .
-					basename(htmlspecialchars($filename)));
+					basename(htmlspecialchars($filename, ENT_COMPAT, _CHARSET)));
 			}
 		}
 
@@ -2214,7 +2223,7 @@ EOD;
 			return $result;
 		} else {
 			die('HypCommonFunc::touch(): Invalid UID and (not writable for the directory or not a flie): ' .
-				htmlspecialchars(basename($filename)));
+				htmlspecialchars(basename($filename, ENT_COMPAT, _CHARSET)));
 		}
 	}
 
@@ -2241,7 +2250,7 @@ EOD;
 		// $special : htmlspecialchars()を通すか
 		$quote_func = create_function('$str',$special ?
 			'return preg_quote($str,"/");' :
-			'return preg_quote(htmlspecialchars($str),"/");'
+			'return preg_quote(htmlspecialchars($str, ENT_COMPAT, $enc),"/");'
 		);
 		// LANG=='ja'で、mb_convert_kanaが使える場合はmb_convert_kanaを使用
 		$convert_kana_exists = function_exists('mb_convert_kana');

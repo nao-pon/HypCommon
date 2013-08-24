@@ -232,7 +232,7 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
         if (!$allowed) {
             include_once XOOPS_ROOT_PATH.'/class/template.php';
             $xoopsTpl = new XoopsTpl();
-            $xoopsTpl->assign(array('xoops_sitename' => htmlspecialchars($xoopsConfig['sitename']), 'xoops_themecss' => xoops_getcss(), 'xoops_imageurl' => XOOPS_THEME_URL.'/'.$xoopsConfig['theme_set'].'/', 'lang_login' => _LOGIN, 'lang_username' => _USERNAME, 'lang_password' => _PASSWORD, 'lang_siteclosemsg' => $xoopsConfig['closesite_text']));
+            $xoopsTpl->assign(array('xoops_sitename' => htmlspecialchars($xoopsConfig['sitename'], ENT_COMPAT, _CHARSET), 'xoops_themecss' => xoops_getcss(), 'xoops_imageurl' => XOOPS_THEME_URL.'/'.$xoopsConfig['theme_set'].'/', 'lang_login' => _LOGIN, 'lang_username' => _USERNAME, 'lang_password' => _PASSWORD, 'lang_siteclosemsg' => $xoopsConfig['closesite_text']));
             $xoopsTpl->xoops_setCaching(1);
             $xoopsTpl->display('db:system_siteclosed.html');
             exit();

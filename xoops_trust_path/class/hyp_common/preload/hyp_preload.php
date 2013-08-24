@@ -1083,22 +1083,22 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		while( ob_get_level() ) ob_end_clean() ;
 		
 		$table = '<table>' ;
-		$form = '<form action="?'.htmlspecialchars(@$_SERVER['QUERY_STRING'],ENT_QUOTES).'" method="post" >' ;
+		$form = '<form action="?'.htmlspecialchars(@$_SERVER['QUERY_STRING'],ENT_QUOTES, _CHARSET).'" method="post" >' ;
 		foreach( $_POST as $key => $val ) {
 			if( $key === 'HypToken' ) continue ;
 			if( get_magic_quotes_gpc() ) {
 				$key = stripslashes( $key ) ;
 			}
 			if( is_array( $val ) ) {
-				list( $tmp_table , $tmp_form ) = $this->_extract_post_recursive( htmlspecialchars($key,ENT_QUOTES) , $val ) ;
+				list( $tmp_table , $tmp_form ) = $this->_extract_post_recursive( htmlspecialchars($key,ENT_QUOTES, _CHARSET) , $val ) ;
 				$table .= $tmp_table ;
 				$form .= $tmp_form ;
 			} else {
 				if( get_magic_quotes_gpc() ) {
 					$val = stripslashes( $val ) ;
 				}
-				$table .= '<tr><th>'.htmlspecialchars($key,ENT_QUOTES).'</th><td>'.htmlspecialchars($val,ENT_QUOTES).'</td></tr>'."\n" ;
-				$form .= '<input type="hidden" name="'.htmlspecialchars($key,ENT_QUOTES).'" value="'.htmlspecialchars($val,ENT_QUOTES).'" />'."\n" ;
+				$table .= '<tr><th>'.htmlspecialchars($key,ENT_QUOTES, _CHARSET).'</th><td>'.htmlspecialchars($val,ENT_QUOTES, _CHARSET).'</td></tr>'."\n" ;
+				$form .= '<input type="hidden" name="'.htmlspecialchars($key,ENT_QUOTES, _CHARSET).'" value="'.htmlspecialchars($val,ENT_QUOTES, _CHARSET).'" />'."\n" ;
 			}
 		}
 		$table .= '</table>' ;
@@ -1122,15 +1122,15 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				$key = stripslashes( $key ) ;
 			}
 			if( is_array( $val ) ) {
-				list( $tmp_table , $tmp_form ) = $this->_extract_post_recursive( $key_name.'['.htmlspecialchars($key,ENT_QUOTES).']' , $val ) ;
+				list( $tmp_table , $tmp_form ) = $this->_extract_post_recursive( $key_name.'['.htmlspecialchars($key,ENT_QUOTES, _CHARSET).']' , $val ) ;
 				$table .= $tmp_table ;
 				$form .= $tmp_form ;
 			} else {
 				if( get_magic_quotes_gpc() ) {
 					$val = stripslashes( $val ) ;
 				}
-				$table .= '<tr><th>'.$key_name.'['.htmlspecialchars($key,ENT_QUOTES).']</th><td>'.htmlspecialchars($val,ENT_QUOTES).'</td></tr>'."\n" ;
-				$form .= '<input type="hidden" name="'.$key_name.'['.htmlspecialchars($key,ENT_QUOTES).']" value="'.htmlspecialchars($val,ENT_QUOTES).'" />'."\n" ;
+				$table .= '<tr><th>'.$key_name.'['.htmlspecialchars($key,ENT_QUOTES, _CHARSET).']</th><td>'.htmlspecialchars($val,ENT_QUOTES, _CHARSET).'</td></tr>'."\n" ;
+				$form .= '<input type="hidden" name="'.$key_name.'['.htmlspecialchars($key,ENT_QUOTES, _CHARSET).']" value="'.htmlspecialchars($val,ENT_QUOTES, _CHARSET).'" />'."\n" ;
 			}
 		}
 		return array( $table , $form ) ;
@@ -1856,7 +1856,7 @@ EOD;
 								unset($_SESSION['hyp_redirect_uname']);
 							}
 							if ($uname) {
-								$uname = htmlspecialchars($uname);
+								$uname = htmlspecialchars($uname, ENT_COMPAT, _CHARSET);
 								$guid = ($r->vars['ua']['carrier'] === 'docomo')? '&amp;guid=on' : '';
 								$uname = '<a href="' . XOOPS_URL . '/userinfo.php?uid=' . $this->HypKTaiRender->vars['ua']['xoopsUid'] . $guid . '">' . $uname . '</a>';
 							}

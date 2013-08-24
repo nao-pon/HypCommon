@@ -196,22 +196,22 @@ class XoopsGTicket {
 		while( ob_get_level() ) ob_end_clean() ;
 
 		$table = '<table>' ;
-		$form = '<form action="?'.htmlspecialchars(@$_SERVER['QUERY_STRING'],ENT_QUOTES).'" method="post" >' ;
+		$form = '<form action="?'.htmlspecialchars(@$_SERVER['QUERY_STRING'],ENT_QUOTES, _CHARSET).'" method="post" >' ;
 		foreach( $_POST as $key => $val ) {
 			if( $key == 'XOOPS_G_TICKET' ) continue ;
 			if( get_magic_quotes_gpc() ) {
 				$key = stripslashes( $key ) ;
 			}
 			if( is_array( $val ) ) {
-				list( $tmp_table , $tmp_form ) = $this->extract_post_recursive( htmlspecialchars($key,ENT_QUOTES) , $val ) ;
+				list( $tmp_table , $tmp_form ) = $this->extract_post_recursive( htmlspecialchars($key,ENT_QUOTES, _CHARSET) , $val ) ;
 				$table .= $tmp_table ;
 				$form .= $tmp_form ;
 			} else {
 				if( get_magic_quotes_gpc() ) {
 					$val = stripslashes( $val ) ;
 				}
-				$table .= '<tr><th>'.htmlspecialchars($key,ENT_QUOTES).'</th><td>'.htmlspecialchars($val,ENT_QUOTES).'</td></tr>'."\n" ;
-				$form .= '<input type="hidden" name="'.htmlspecialchars($key,ENT_QUOTES).'" value="'.htmlspecialchars($val,ENT_QUOTES).'" />'."\n" ;
+				$table .= '<tr><th>'.htmlspecialchars($key,ENT_QUOTES, _CHARSET).'</th><td>'.htmlspecialchars($val,ENT_QUOTES, _CHARSET).'</td></tr>'."\n" ;
+				$form .= '<input type="hidden" name="'.htmlspecialchars($key,ENT_QUOTES, _CHARSET).'" value="'.htmlspecialchars($val,ENT_QUOTES, _CHARSET).'" />'."\n" ;
 			}
 		}
 		$table .= '</table>' ;
@@ -228,15 +228,15 @@ class XoopsGTicket {
 				$key = stripslashes( $key ) ;
 			}
 			if( is_array( $val ) ) {
-				list( $tmp_table , $tmp_form ) = $this->extract_post_recursive( $key_name.'['.htmlspecialchars($key,ENT_QUOTES).']' , $val ) ;
+				list( $tmp_table , $tmp_form ) = $this->extract_post_recursive( $key_name.'['.htmlspecialchars($key,ENT_QUOTES, _CHARSET).']' , $val ) ;
 				$table .= $tmp_table ;
 				$form .= $tmp_form ;
 			} else {
 				if( get_magic_quotes_gpc() ) {
 					$val = stripslashes( $val ) ;
 				}
-				$table .= '<tr><th>'.$key_name.'['.htmlspecialchars($key,ENT_QUOTES).']</th><td>'.htmlspecialchars($val,ENT_QUOTES).'</td></tr>'."\n" ;
-				$form .= '<input type="hidden" name="'.$key_name.'['.htmlspecialchars($key,ENT_QUOTES).']" value="'.htmlspecialchars($val,ENT_QUOTES).'" />'."\n" ;
+				$table .= '<tr><th>'.$key_name.'['.htmlspecialchars($key,ENT_QUOTES, _CHARSET).']</th><td>'.htmlspecialchars($val,ENT_QUOTES, _CHARSET).'</td></tr>'."\n" ;
+				$form .= '<input type="hidden" name="'.$key_name.'['.htmlspecialchars($key,ENT_QUOTES, _CHARSET).']" value="'.htmlspecialchars($val,ENT_QUOTES, _CHARSET).'" />'."\n" ;
 			}
 		}
 		return array( $table , $form ) ;
@@ -278,7 +278,7 @@ class XoopsGTicket {
 	function errorHandler4FindOutput($errNo, $errStr, $errFile, $errLine)
 	{
 		if( preg_match( '?'.preg_quote(XOOPS_ROOT_PATH).'([^:]+)\:(\d+)?' , $errStr , $regs ) ) {
-			echo "Irregular output! check the file ".htmlspecialchars($regs[1])." line ".htmlspecialchars($regs[2]) ;
+			echo "Irregular output! check the file ".htmlspecialchars($regs[1], ENT_COMPAT, _CHARSET)." line ".htmlspecialchars($regs[2], ENT_COMPAT, _CHARSET) ;
 		} else {
 			echo "Irregular output! check language files etc." ;
 		}

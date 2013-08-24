@@ -78,7 +78,7 @@ class HypRss2Html
 		// Unescape already-escaped chars (&lt;, &gt;, &amp;, ...) in RSS body before htmlspecialchars()
 		$str = strtr($str, array_flip(get_html_translation_table(ENT_COMPAT)));
 		// Escape
-		$str = htmlspecialchars($str);
+		$str = htmlspecialchars($str, ENT_COMPAT, $this->encoding);
 		//echo $str;
 		// Unescape
 		$str = str_replace('&amp;', '&', $str);

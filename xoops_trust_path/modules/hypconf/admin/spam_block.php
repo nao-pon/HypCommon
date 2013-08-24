@@ -164,5 +164,5 @@ $config['underContents'] = '<hr />'
 		. sprintf(hypconf_constant($constpref.'_POST_SPAM_SITES_SYSTEM'), $_spamsites_dat_file)
 		. '<p>Updated: '.date('r', filemtime($_spamsites_dat_file)).'</p>'
 		. '<form><textarea style="width:98%;height:15em;" readonly="readonly">'
-		. htmlspecialchars(file_get_contents($_spamsites_dat_file))
+		. htmlspecialchars(file_get_contents($_spamsites_dat_file, ENT_COMPAT, _CHARSET))
 		. '</textarea></form>';

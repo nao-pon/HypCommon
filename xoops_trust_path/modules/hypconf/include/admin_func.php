@@ -284,9 +284,9 @@ function hypconfShowForm($config) {
 				$myts =& MyTextSanitizer::getInstance();
 				if ($config[$i]['valuetype'] == 'array') {
 					// this is exceptional.. only when value type is arrayneed a smarter way for this
-					$ele = ($config[$i]['value'] != '') ? new XoopsFormTextArea($title, $config[$i]['name'], $myts->htmlspecialchars(implode('|', $config[$i]['value'])), 5, 50) : new XoopsFormTextArea($title, $config[$i]['name'], '', 5, 50);
+					$ele = ($config[$i]['value'] != '') ? new XoopsFormTextArea($title, $config[$i]['name'], $myts->htmlspecialchars(implode('|', $config[$i]['value'], _CHARSET)), 5, 50) : new XoopsFormTextArea($title, $config[$i]['name'], '', 5, 50);
 				} else {
-					$ele = new XoopsFormTextArea($title, $config[$i]['name'], $myts->htmlspecialchars($config[$i]['value']), 5, 50);
+					$ele = new XoopsFormTextArea($title, $config[$i]['name'], $myts->htmlspecialchars($config[$i]['value'], ENT_COMPAT, _CHARSET), 5, 50);
 					$ele->setExtra('class="norich plain" spellcheck="false"');
 				}
 				break;
@@ -355,7 +355,7 @@ function hypconfShowForm($config) {
 					$size = $config[$i]['size'];
 				}
 				$myts =& MyTextSanitizer::getInstance();
-				$ele = new XoopsFormPassword($title, $config[$i]['name'], $size, 255, $myts->htmlspecialchars($config[$i]['value']));
+				$ele = new XoopsFormPassword($title, $config[$i]['name'], $size, 255, $myts->htmlspecialchars($config[$i]['value'], ENT_COMPAT, _CHARSET));
 				break;
 			case 'label':
 				$ele = new XoopsFormLabel($title, $description);
@@ -385,7 +385,7 @@ function hypconfShowForm($config) {
 				asort($tplsetlist);
 				$ele->addOption('', hypconf_constant($constpref . '_NOT_SPECIFY'));
 				foreach ($tplsetlist as $key => $name) {
-					$ele->addOption($key, htmlspecialchars($name, ENT_QUOTES));
+					$ele->addOption($key, htmlspecialchars($name, ENT_QUOTES, _CHARSET));
 				}
 				break;
 			case 'textbox':
@@ -395,7 +395,7 @@ function hypconfShowForm($config) {
 					$size = $config[$i]['size'];
 				}
 				$myts =& MyTextSanitizer::getInstance();
-				$ele = new XoopsFormText($title, $config[$i]['name'], $size, 255, $myts->htmlspecialchars($config[$i]['value']));
+				$ele = new XoopsFormText($title, $config[$i]['name'], $size, 255, $myts->htmlspecialchars($config[$i]['value'], ENT_COMPAT, _CHARSET));
 				if ($config[$i]['valuetype'] === 'int') $ele->setExtra(' style="text-align:right;"');
 				break;
 			}

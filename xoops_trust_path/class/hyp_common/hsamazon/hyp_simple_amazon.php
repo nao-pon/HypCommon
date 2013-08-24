@@ -452,7 +452,7 @@ class HypSimpleAmazon
 			return $_key;
 		}
 		if (!$alias) $alias = $key;
-		$alias = htmlspecialchars($alias);
+		$alias = htmlspecialchars($alias, ENT_COMPAT, $this->encoding);
 
 		if ($needEncode) {
 			$e_key = mb_convert_encoding($key, 'UTF-8', $this->encoding);
@@ -465,7 +465,7 @@ class HypSimpleAmazon
 		//if ($category) $url .= '&amp;url=search-alias%3D'.strtolower($category);
 		//if ($category) $url .= '&amp;rs=&amp;rh=i%3Aaps%2Ck%3A'.rawurlencode($e_key).'%2Ci%3A'.strtolower($category);
 
-		$s_key = htmlspecialchars($key);
+		$s_key = htmlspecialchars($key, ENT_COMPAT, $this->encoding);
 		$attrs = '';
 		if ($attr = $this->configs['makeLinkSearch']['Attributes']) {
 			if (isset($attr['title'])) {
@@ -545,7 +545,7 @@ class HypSimpleAmazon
 				$_item['ASIN'] = $item['ASIN'];
 				$_item['JAN'] = @ $item['ItemAttributes']['EAN'];
 				$_item['ADDCARTURL'] = $this->getAddCartURL($item['ASIN']);
-				$_item['TITLE'] = trim(htmlspecialchars(htmlspecialchars_decode(@ $item['ItemAttributes']['Title'] . '/' . $this->get_artist($item, 1), ENT_QUOTES)), '/');
+				$_item['TITLE'] = trim(htmlspecialchars(htmlspecialchars_decode(@ $item['ItemAttributes']['Title'] . '/' . $this->get_artist($item, 1), ENT_QUOTES), ENT_QUOTES, 'UTF-8'), '/');
 				if (isset($item["EditorialReviews"]["EditorialReview"])) {
 					$this->check_array($item["EditorialReviews"]["EditorialReview"]);
 					$_item['DISCRIPTION'] = $this->toPlainText(@ $item["EditorialReviews"]["EditorialReview"][0]["Content"]);
@@ -790,7 +790,7 @@ class HypSimpleAmazon
 			$height =$img['Height']['content'];
 			$width = $img['Width']['content'];
 
-			$to['title'] = htmlspecialchars($item['ItemAttributes']['Title']);
+			$to['title'] = htmlspecialchars($item['ItemAttributes']['Title'], ENT_COMPAT, 'UTF-8');
 			$to['url'] = $item['DetailPageURL'];
 			$to['imgsrc'] = $img['URL'];
 			$to['imgsize'] = 'height="' . $height . '" width="' . $width . '"';
@@ -954,7 +954,7 @@ class HypSimpleAmazon
 	function toPlainText($str, $len = 1000) {
 		$str = preg_replace('#<(style|script).+?/$1>#is', '', $str);
 		$str = preg_replace('#</?(?:br|p|td|tr)[^>]*?>#i', ' ', $str);
-		$str = htmlspecialchars(strip_tags(str_replace('&nbsp;', ' ', $str)));
+		$str = htmlspecialchars(strip_tags(str_replace('&nbsp;', ' ', $str)), ENT_COMPAT, 'UTF-8');
 		$str = preg_replace('#\s+#', ' ', $str);
 		$str = str_replace('&amp;amp;', '&amp;', $str);
 		if (mb_strlen($str) > $len + 4) {

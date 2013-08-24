@@ -226,7 +226,7 @@ class HypGetQueryWord
 		$utf8 = ($enc === 'UTF-8')? 'u' : '';
 		$php5_1 = (version_compare(PHP_VERSION, '5.1.0', '>='));
 		foreach ($keys as $key=>$pattern) {
-			$s_key = preg_replace('/&amp;#(\d+;)/', '&#$1', htmlspecialchars($key));
+			$s_key = preg_replace('/&amp;#(\d+;)/', '&#$1', htmlspecialchars($key, ENT_COMPAT, $enc));
 			$_count = 0;
 			$pattern = ($s_key{0} == '&') ?
 				('/(<head.*?<\/head>|<script.*?<\/script>|<style.*?<\/style>|<textarea.*?<\/textarea>|<strong class="word\d+">.*?<\/strong>|<[^>]*>)|('.$pattern.')/isS'.$utf8):
@@ -273,7 +273,7 @@ class HypGetQueryWord
 		// $special : htmlspecialchars()を通すか
 		$quote_func = create_function('$str',$special ?
 			'return preg_quote($str,"/");' :
-			'return preg_quote(htmlspecialchars($str),"/");'
+			'return preg_quote(htmlspecialchars($str, ENT_COMPAT, $enc),"/");'
 		);
 		// LANG=='ja'で、mb_convert_kanaが使える場合はmb_convert_kanaを使用
 		$convert_kana_exists = function_exists('mb_convert_kana');

@@ -4,7 +4,7 @@ if (! $data = @ file_get_contents(XOOPS_TRUST_PATH . HYP_COMMON_PRELOAD_CONF)) {
 	$data = '';
 }
 if ($data) {
-	$data = htmlspecialchars($data);
+	$data = htmlspecialchars($data, ENT_COMPAT, _CHARSET);
 	$content = <<<EOD
 	<div style="max-width:700px;">
 	 <pre style="width:100%;height:25em;overflow:auto;padding:1em;border:1px solid gray">$data</pre>
