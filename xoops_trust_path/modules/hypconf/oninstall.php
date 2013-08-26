@@ -47,7 +47,7 @@ function hypconf_oninstall_base( $module , $mydirname )
 				return false ;
 			}
 			if( ! $db->query( $prefixed_query[0] ) ) {
-				$ret[] = '<b>'.htmlspecialchars( $db->error(, ENT_COMPAT, _CHARSET) ).'</b><br />' ;
+				$ret[] = '<b>'.htmlspecialchars( $db->error(), ENT_COMPAT, _CHARSET ).'</b><br />' ;
 				//var_dump( $db->error() ) ;
 				return false ;
 			} else {
