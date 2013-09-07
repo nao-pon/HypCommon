@@ -22,6 +22,8 @@
 /**
 * Edited by nao-pon
 * Optimized for environment that has selected data base.
+* Support mysqli environment.
+* 
 **/
 
 class MySQLDump {
@@ -66,19 +68,69 @@ class MySQLDump {
 	var $sqlFiles = array();
 	var $baseName = '';
 	var $extName = '';
+	
+	var $link = false;
 
 	/**
 	* Class constructor
-	* @param string $db The database name
+	* @param mixed $db The mysqli link object
 	* @param string $filepath The file where the dump will be written
 	* @param boolean $compress It defines if the output file is compress (gzip) or not
 	* @param boolean $hexValue It defines if the outup values are base-16 or not
 	*/
 	function MYSQLDump($db = null, $filepath = 'dump.sql', $compress = false, $hexValue = false){
+		if (is_object($db) || is_resource($db)) {
+			if (is_object($db) && get_class($db) === 'mysqli') {
+				$this->link = $db;
+			} else {
+				$this->link = false;
+			}
+			$db = null;
+		}
 		$this->compress = $compress;
 		if ( !$this->setOutputFile($filepath) )
 			return false;
 		return $this->setDatabase($db);
+	}
+	
+	function query($query) {
+		if ($this->link) {
+			return @mysqli_query($this->link, $query);
+		} else {
+			return @mysql_query($query);
+		}
+	}
+	
+	function num_rows($result) {
+		return ($this->link)? @mysqli_num_rows($result) : @mysql_num_rows($result);
+	}
+	
+	function num_fields($result) {
+		return ($this->link)? @mysqli_num_fields($result) : @mysql_num_fields($result);
+	}
+	
+	function fetch_assoc($result) {
+		return ($this->link)? @mysqli_fetch_assoc($result) : @mysql_fetch_assoc($result);
+	}
+	
+	function fetch_row($result) {
+		return ($this->link)? @mysqli_fetch_row($result) : @mysql_fetch_row($result);
+	}
+	
+	function fetch_object($result) {
+		return ($this->link)? @mysqli_fetch_object($result) : @mysql_fetch_object($result);
+	}
+	
+	function field_name($result, $offset) {
+		if ($this->link) {
+			if ($finfo = @mysqli_fetch_field_direct($result, $offset)) {
+				return $finfo->orgname? $finfo->orgname : $finfo->name;
+			} else {
+				return false;
+			}
+		} else {
+			return @mysql_field_name($result, $offset);
+		}
 	}
 
 	/**
@@ -86,8 +138,8 @@ class MySQLDump {
 	* @param string $db The database name
 	*/
 	function setDatabase($db){
-		if (is_null($db)) return true;
 		$this->database = $db;
+		if (is_null($db)) return true;
 		if ( !@mysql_select_db($this->database) )
 			return false;
 		return true;
@@ -167,10 +219,10 @@ class MySQLDump {
 		// Dump Structure
 		$structure .= 'DROP TABLE IF EXISTS `'.$table_name.'`;'."\n";
 		$structure .= "CREATE TABLE `".$table_name."` (\n";
-		$records = @mysql_query('SHOW FIELDS FROM `'.$table.'`');
-		if ( @mysql_num_rows($records) == 0 )
+		$records = $this->query('SHOW FIELDS FROM `'.$table.'`');
+		if ( $this->num_rows($records) == 0 )
 			return false;
-		while ( $record = mysql_fetch_assoc($records) ) {
+		while ( $record = $this->fetch_assoc($records) ) {
 			$structure .= '`'.$record['Field'].'` '.$record['Type'];
 			if ( !empty($record['Default']) )
 				$structure .= ' DEFAULT \''.$record['Default'].'\'';
@@ -187,9 +239,9 @@ class MySQLDump {
 		$structure .= "\n)";
 
 		//Save table engine
-		$records = @mysql_query("SHOW TABLE STATUS LIKE '".$table."'");
+		$records = $this->query("SHOW TABLE STATUS LIKE '".$table."'");
 
-		if ( $record = @mysql_fetch_assoc($records) ) {
+		if ( $record = $this->fetch_assoc($records) ) {
 			if ( !empty($record['Engine']) )
 				$structure .= ' ENGINE='.$record['Engine'];
 			if ( !empty($record['Auto_increment']) )
@@ -219,8 +271,8 @@ class MySQLDump {
 		$data .= "-- Dumping data for table `$table_name` \n";
 		$data .= "-- \n\n";
 
-		$records = mysql_query('SHOW FIELDS FROM `'.$table.'`');
-		$num_fields = @mysql_num_rows($records);
+		$records = $this->query('SHOW FIELDS FROM `'.$table.'`');
+		$num_fields = $this->num_rows($records);
 		if ( $num_fields == 0 )
 			return false;
 		// Field names
@@ -228,7 +280,7 @@ class MySQLDump {
 		$insertStatement = "INSERT INTO `$table_name` (";
 		$hexField = array();
 		for ($x = 0; $x < $num_fields; $x++) {
-			$record = @mysql_fetch_assoc($records);
+			$record = $this->fetch_assoc($records);
 			if ( ($hexValue) && ($this->isTextValue($record['Type'])) ) {
 				$selectStatement .= 'HEX(`'.$record['Field'].'`)';
 				$hexField [$x] = true;
@@ -244,14 +296,16 @@ class MySQLDump {
 		$closeStatement = "\n-- --------------------------------------------------------\n\n";
 		$closeStatement .= "SET FOREIGN_KEY_CHECKS = 1;\n\n";
 
-		$records = @mysql_query($selectStatement);
-		$num_rows = @mysql_num_rows($records);
-		$num_fields = @mysql_num_fields($records);
+		$records = $this->query($selectStatement);
+		$num_rows = $this->num_rows($records);
+		$num_fields = $this->num_fields($records);
 
 		$_i = 0;
 		$dataLen = 0;
 		$statementLen = strlen($insertStatement);
-		if (function_exists('mysql_real_escape_string')) {
+		if ($this->link) {
+			$func_mysql_escape = create_function('$str,$link', 'return mysqli_real_escape_string($link, $str);');
+		} else if (function_exists('mysql_real_escape_string')) {
 			$func_mysql_escape = create_function('$str', 'return mysql_real_escape_string($str);');
 		} else {
 			$func_mysql_escape = create_function('$str', 'return mysql_escape_string($str);');
@@ -261,15 +315,15 @@ class MySQLDump {
 			$data .= $insertStatement;
 			$buf = '';
 			for ($i = 0; $i < $num_rows; $i++) {
-				$record = @mysql_fetch_assoc($records);
+				$record = $this->fetch_assoc($records);
 				$statementLen += strlen($buf);
 				$next = ' (';
 				for ($j = 0; $j < $num_fields; $j++) {
-					$field_name = @mysql_field_name($records, $j);
+					$field_name = $this->field_name($records, $j);
 					if ( isset($hexField[$j]) && (@strlen($record[$field_name]) > 0) ) {
 						$next .= "0x".$record[$field_name];
 					} else {
-						$next .= "'".@str_replace('\"', '"', $func_mysql_escape($record[$field_name]))."'";
+						$next .= "'".@str_replace('\"', '"', $func_mysql_escape($record[$field_name], $this->link))."'";
 					}
 					$next .= ',';
 				}
@@ -333,10 +387,10 @@ class MySQLDump {
 		if ($table) {
 			$this->getTableStructure($table);
 		} else {
-			$records = @mysql_query('SHOW TABLES');
-			if ( @mysql_num_rows($records) == 0 )
+			$records = $this->query('SHOW TABLES');
+			if ( $this->num_rows($records) == 0 )
 				return false;
-			while ( $record = @mysql_fetch_row($records) ) {
+			while ( $record = $this->fetch_row($records) ) {
 				$this->getTableStructure($record[0]);
 			}
 		}
@@ -348,10 +402,10 @@ class MySQLDump {
 	* @param boolean $hexValue It defines if the output is base-16 or not
 	*/
 	function getDatabaseData($hexValue = true){
-		$records = @mysql_query('SHOW TABLES');
-		if ( @mysql_num_rows($records) == 0 )
+		$records = $this->query('SHOW TABLES');
+		if ( $this->num_rows($records) == 0 )
 			return false;
-		while ( $record = @mysql_fetch_row($records) ) {
+		while ( $record = $this->fetch_row($records) ) {
 			$this->getTableData($record[0],$hexValue);
 		}
   }
@@ -391,10 +445,10 @@ class MySQLDump {
 		unset($unique);
 		unset($index);
 		unset($fulltext);
-		$results = mysql_query("SHOW KEYS FROM `{$table}`");
-		if ( @mysql_num_rows($results) == 0 )
+		$results = $this->query("SHOW KEYS FROM `{$table}`");
+		if ( $this->num_rows($results) == 0 )
 			return false;
-		while($row = mysql_fetch_object($results)) {
+		while($row = $this->fetch_object($results)) {
 			if (($row->Key_name == 'PRIMARY') AND ($row->Index_type == 'BTREE')) {
 				if ( $primary == "" )
 					$primary = "  PRIMARY KEY  (`{$row->Column_name}`";
