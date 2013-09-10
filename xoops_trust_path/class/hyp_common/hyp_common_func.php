@@ -2252,7 +2252,7 @@ EOD;
 		// $special : htmlspecialchars()を通すか
 		$quote_func = create_function('$str',$special ?
 			'return preg_quote($str,"/");' :
-			'return preg_quote(htmlspecialchars($str, ENT_COMPAT, $enc),"/");'
+			'return preg_quote(htmlspecialchars($str, ENT_COMPAT, \''.HypCommonFunc::get_htmlspecialchars_encoding($enc).'\'),"/");'
 		);
 		// LANG=='ja'で、mb_convert_kanaが使える場合はmb_convert_kanaを使用
 		$convert_kana_exists = function_exists('mb_convert_kana');
@@ -2301,6 +2301,49 @@ EOD;
 		}
 		return $retval;
 	}
+	
+	public static function get_htmlspecialchars_encoding($encoding) {
+		// for PHP's bug, some version are not understand alias name
+		static $alias = array(
+				'ISO-8859-1'   => 'ISO-8859-1',
+				'ISO8859-1'    => 'ISO-8859-1',
+				'ISO-8859-5'   => 'ISO-8859-5',
+				'ISO8859-5'    => 'ISO-8859-5',
+				'ISO-8859-15'  => 'ISO-8859-15',
+				'ISO8859-15'   => 'ISO-8859-15',
+				'UTF-8'        => 'UTF-8',
+				'CP866'        => 'cp866',
+				'866'          => 'cp866',
+				'CP1251'       => 'cp1251',
+				'WINDOWS-1251' => 'cp1251',
+				'WIN-1251'     => 'cp1251',
+				'1251'         => 'cp1251',
+				'CP1252'       => 'cp1252',
+				'WINDOWS-1252' => 'cp1252',
+				'1252'         => 'cp1252',
+				'KOI8-R'       => 'KOI8-R',
+				'KOI8-RU'      => 'KOI8-R',
+				'KOI8R'        => 'KOI8-R',
+				'BIG5'         => 'BIG5',
+				'950'          => 'BIG5',
+				'GB2312'       => 'GB2312',
+				'936'          => 'GB2312',
+				'BIG5-HKSCS'   => 'BIG5-HKSCS',
+				'Shift_JIS'    => 'Shift_JIS',
+				'SJIS'         => 'Shift_JIS',
+				'SJIS-WIN'     => 'Shift_JIS',
+				'CP932'        => 'Shift_JIS',
+				'932'          => 'Shift_JIS',
+				'EUC-JP'       => 'EUC-JP',
+				'EUCJP'        => 'EUC-JP',
+				'EUCJP-WIN'    => 'EUC-JP',
+				'MACROMAN'     => 'MacRoman'
+		);
+		if ($encoding === '') return '';
+		$encoding = strtoupper($encoding);
+		if (isset($alias[$encoding])) return $alias[$encoding];
+		return (version_compare(PHP_VERSION, '<', '5.4'))? 'ISO-8859-1' : 'UTF-8';
+	}
 }
 
 /*
@@ -2339,6 +2382,10 @@ class Hyp_HTTP_Request
 	var $read_timeout=10;
 	// POST文字エンコード
 	var $content_charset='';
+	// DNS キャッシュ (memcached　利用)
+	var $memcached_server = 'localhost';
+	var $memcached_port = 11211;
+	var $dns_cache_maxttl = 86400; // 1day (0 = cache off)
 
 	var $network_reg = '/^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
 
@@ -2507,21 +2554,50 @@ class Hyp_HTTP_Request
 		{
 			$query .= "\r\n";
 		}
-
+		
+		// use memcached if exists
+		$memcache = null;
+		$ip = $arr['host'];
+		if (! $via_proxy && $this->dns_cache_maxttl && function_exists('dns_get_record') && class_exists('Memcached')) {
+			$memcache = new Memcached();
+			if ($memcache->addServer($this->memcached_server, $this->memcached_port)) {
+				$memcache_key = 'hyp:dns.ip:'.$arr['host'];
+				$ip = $memcache->get($memcache_key);
+				if (! preg_match('/^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/', $ip)) {
+					// protect from injection
+					$ip = false;
+				}
+				if (! $ip) {
+					$dnsres = dns_get_record($arr['host'], DNS_A);
+					if ($dnsres && isset($dnsres[0])) {
+						$dnsres = $dnsres[0];
+						if (! empty($dnsres['ip'])) {
+							$ip = $dnsres['ip'];
+							if (! empty($dnsres['ttl'])) {
+								$ttl = min($dnsres['ttl'], $this->dns_cache_maxttl);
+								$memcache->set($memcache_key, $ip, $ttl);
+							}
+						}
+					}
+					if (! $ip) {
+						$this->query  = $this->url;
+						$this->rc     = 0;
+						$this->header = '';
+						$this->data   = 'DNS Error';
+						return;
+					}
+				}
+			}
+		}
+		
 		//set_time_limit($this->connect_timeout * $this->connect_try + 60);
 		$fp = $connect_try_count = 0;
 		while( !$fp && $connect_try_count < $this->connect_try )
 		{
-			//@set_time_limit($this->connect_timeout + $max_execution_time);
-
-			//if ($now_execution_time = ini_get('max_execution_time')) {
-			//	$this->connect_timeout = min($this->connect_timeout, max(5, $now_execution_time - 10));
-			//}
-
 			$errno = 0;
 			$errstr = "";
 			$fp = @ fsockopen(
-				$via_proxy ? $this->proxy_host : $arr['https'].$arr['host'],
+				$via_proxy ? $this->proxy_host : $arr['https'].$ip,
 				$via_proxy ? $this->proxy_port : $arr['port'],
 				$errno,$errstr,$this->connect_timeout);
 			if ($fp) break;
@@ -2529,6 +2605,11 @@ class Hyp_HTTP_Request
 			if (connection_aborted()) exit();
 			sleep(1); //1秒待つ
 		}
+		
+		if (is_object($memcache)) {
+			$memcache->quit();
+		}
+		
 		if (!$fp)
 		{
 			$this->query  = $query;  // Query String
