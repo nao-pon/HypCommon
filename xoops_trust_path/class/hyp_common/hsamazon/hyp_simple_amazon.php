@@ -19,6 +19,7 @@ class HypSimpleAmazon
 	var $redirectQuery = '/gp/redirect.html?ie=UTF8&amp;location=<url>&amp;tag=<tag>&amp;linkCode=ur2&amp;camp=247&amp;creative=1211';
 	var $beaconHost = 'www.assoc-amazon.jp';
 	var $encoding = 'EUC-JP';
+	var $htmlsp_encoding = '';
 	var $SearchIndexes = array();
 	var $templateSet = 'default';
 	var $templates = array();
@@ -379,6 +380,7 @@ class HypSimpleAmazon
 		$this->error = '';
 		$this->batchCount = 0;
 		$this->batchKeys = array();
+		$this->htmlsp_encoding = HypCommonFunc::get_htmlspecialchars_encoding($this->encoding);
 
 		if (! $this->cacheDir) $this->cacheDir = (defined(XOOPS_TRUST_PATH)? XOOPS_TRUST_PATH : dirname(dirname(dirname(dirname(__FILE__))))) . '/cache/';
 
@@ -452,7 +454,7 @@ class HypSimpleAmazon
 			return $_key;
 		}
 		if (!$alias) $alias = $key;
-		$alias = htmlspecialchars($alias, ENT_COMPAT, $this->encoding);
+		$alias = htmlspecialchars($alias, ENT_COMPAT, $this->htmlsp_encoding);
 
 		if ($needEncode) {
 			$e_key = mb_convert_encoding($key, 'UTF-8', $this->encoding);
@@ -465,7 +467,7 @@ class HypSimpleAmazon
 		//if ($category) $url .= '&amp;url=search-alias%3D'.strtolower($category);
 		//if ($category) $url .= '&amp;rs=&amp;rh=i%3Aaps%2Ck%3A'.rawurlencode($e_key).'%2Ci%3A'.strtolower($category);
 
-		$s_key = htmlspecialchars($key, ENT_COMPAT, $this->encoding);
+		$s_key = htmlspecialchars($key, ENT_COMPAT, $this->htmlsp_encoding);
 		$attrs = '';
 		if ($attr = $this->configs['makeLinkSearch']['Attributes']) {
 			if (isset($attr['title'])) {

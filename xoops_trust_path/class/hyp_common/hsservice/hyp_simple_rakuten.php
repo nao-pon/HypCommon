@@ -262,7 +262,7 @@ class HypSimpleRakuten extends HypSimpleAmazon
 			return $_key;
 		}
 		if (!$alias) $alias = $key;
-		$alias = htmlspecialchars($alias, ENT_COMPAT, $this->encoding);
+		$alias = htmlspecialchars($alias, ENT_COMPAT, $this->htmlsp_encoding);
 
 		if ($needEncode) {
 			$e_key = mb_convert_encoding($key, 'eucJP-win', $this->encoding);
@@ -275,7 +275,7 @@ class HypSimpleRakuten extends HypSimpleAmazon
 		$url = 'http://hb.afl.rakuten.co.jp/hgc/'.$this->AffId.'/?pc=' . urlencode($search_url_raku);
 		$url .= '&amp;m=' . urlencode($mobile_url);
 
-		$s_key = htmlspecialchars($key, ENT_COMPAT, $this->encoding);
+		$s_key = htmlspecialchars($key, ENT_COMPAT, $this->htmlsp_encoding);
 		$attrs = '';
 		if ($attr = $this->configs['makeLinkSearch']['Attributes']) {
 			if (isset($attr['title'])) {
@@ -295,7 +295,7 @@ class HypSimpleRakuten extends HypSimpleAmazon
 		$attrs = '';
 		if ($attr = $this->configs['makeLinkSearch']['Attributes']) {
 			if ($caption && isset($attr['title'])) {
-				$attr['title'] = sprintf($attr['title'], htmlspecialchars($caption, ENT_COMPAT, $this->encoding));
+				$attr['title'] = sprintf($attr['title'], htmlspecialchars($caption, ENT_COMPAT, $this->htmlsp_encoding));
 			}
 			$attrs = array();
 			foreach ($attr as $key => $val) {
