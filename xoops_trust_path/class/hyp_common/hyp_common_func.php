@@ -1345,6 +1345,9 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 	// POST SPAM Check
 	public static function PostSpam_Check($post, $encode = '', $encodehint = '')
 	{
+		// スパマーがフィルター対策として数値文字参照文字列でポストしてくる場合があるのでその対策
+		$post = HypCommonFunc::decode_numericentity($post, ENT_QUOTES, 'ISO-8859-1');
+		
 		if (function_exists('mb_convert_variables') && $encode) {
 			// 文字エンコード変換
 			if ($encodehint && isset($post[$encodehint])) {
@@ -1629,6 +1632,20 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 			}
 		}
 		return;
+	}
+	
+	// 数値文字参照の文字列を実文字にデコードする
+	public static function decode_numericentity($var, $flags = ENT_COMPAT, $encoding = 'UTF-8') {
+		if (is_array($var)) {
+			foreach ($var as $key => $val) {
+				$var[$key] = HypCommonFunc::decode_numericentity($val, $flags, $encoding);
+			}
+		} else if (is_string($var)) {
+			if (preg_match('/&#[0-9]{2,5};/', $var)) {
+				$var = html_entity_decode($var, $flags, $encoding);
+			}
+		}
+		return $var;
 	}
 
 	// リファラーから検索語と検索エンジンを取得し定数に定義する
