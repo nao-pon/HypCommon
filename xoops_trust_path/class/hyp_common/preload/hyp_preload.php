@@ -890,22 +890,25 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 							if (preg_match('#^https?://(?:www\.)?([\-_.!~*\'()a-zA-Z0-9;/?:@&=+$,%]+)#', $_POST[$this->post_spam_trap], $_match)) {
 								$badurl = rtrim($_match[1], '/');
 								$badurl = preg_replace('#^(.+)/[^/]+\.[0-9a-zA-Z]+$#', '$1', $badurl);
-								$myhost = parse_url(XOOPS_URL, PHP_URL_HOST);
-								// 正規表現の検査
-								if (@ preg_match('#(?:'. $this->post_spam_safe_url . ')#', '') === false) {
-									$this->post_spam_safe_url = '(?!)';
-								}
-								if (! preg_match('#' . preg_quote($myhost, '#') . '|(?:' . $this->post_spam_safe_url . ')#', $badurl)) {
-									$confUrls = file($confFile);
-									$confUrls = array_map('rtrim', $confUrls);
-									if (! in_array($badurl, $confUrls)) {
-										file_put_contents($confFile, $badurl . "\n", FILE_APPEND | LOCK_EX);
+								// ドット"."で区切られていないアイテムは除外 ( com だけとかのアイテムの誤登録防止 )
+								if (preg_match('/.+\..+/', $badurl)) {
+									$myhost = parse_url(XOOPS_URL, PHP_URL_HOST);
+									// 正規表現の検査
+									if (@ preg_match('#(?:'. $this->post_spam_safe_url . ')#', '') === false) {
+										$this->post_spam_safe_url = '(?!)';
+									}
+									if (! preg_match('#' . preg_quote($myhost, '#') . '|(?:' . $this->post_spam_safe_url . ')#', $badurl)) {
+										$confUrls = file($confFile);
+										$confUrls = array_map('rtrim', $confUrls);
+										if (! in_array($badurl, $confUrls)) {
+											file_put_contents($confFile, $badurl . "\n", FILE_APPEND | LOCK_EX);
+										}
 									}
 								}
 							}
 						}
 						
-						exit('Processing was not completed.');
+						exit('Processing was not completed.'.$level);
 					} else {
 						if ($this->use_mail_notify > 1) { $this->sendMail($level); }
 					}
