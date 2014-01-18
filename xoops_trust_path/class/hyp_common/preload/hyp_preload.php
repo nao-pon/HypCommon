@@ -715,6 +715,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! empty($_POST)) {
 			// CSRF Token check
 			if (! defined('DISABLE_HYP_CSRF_PROTECTION') && ! empty($this->use_csrf_protect)) {
+				if (empty($_POST['HypToken']) && isset($_SERVER['HTTP_X_HYPTOKEN'])) {
+					$_POST['HypToken'] = $_SERVER['HTTP_X_HYPTOKEN'];
+				}
 				if (empty($_POST['HypToken']) || empty($_SESSION['HYP_CSRF_TOKEN']) || $_POST['HypToken'] !== $_SESSION['HYP_CSRF_TOKEN']) {
 					$this->_rePost();
 					exit();
@@ -1114,7 +1117,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 		
 		$action = ($inSite)? $msg['csrf_repost'] : $msg['do_not_repost'];
-		echo '<html><head><title>'.$msg['csrf_title'].'</title><style>table,td,th {border:solid black 1px; border-collapse:collapse;}</style></head><body><div>' . $msg['csrf_message']  . '<br />' . $action . '</div>' . $table . $form . '</body></html>' ;
+		echo '<!DOCTYPE html><html><head><meta charset="'._CHARSET.'"><title>'.$msg['csrf_title'].'</title><style>table,td,th {border:solid black 1px; border-collapse:collapse;}</style></head><body><div>' . $msg['csrf_message']  . '<br />' . $action . '</div>' . $table . $form . '</body></html>' ;
 	}
 	
 	function _extract_post_recursive( $key_name , $tmp_array ) {
@@ -1406,6 +1409,27 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 	function addHeadTag( $s ) {
 		if ($s === '' || strpos($s, '<html') === FALSE) return false;
+
+		// for CRSF Protection on XMLHttpRequest
+		if (! empty($this->use_csrf_protect)) {
+			if (empty($_SESSION['HYP_CSRF_TOKEN'])) {
+				$_SESSION['HYP_CSRF_TOKEN'] = md5($_SERVER['REMOTE_ADDR'].XOOPS_DB_PASS.time());
+			}
+			// For XMLHttpRequest use HTTP header 'X-HypToken'
+			$GLOBALS['hyp_preload_head_tag'] .=<<<EOD
+<script type="text/javascript">
+<!-- <![CDATA[
+(function(){
+var oldSend = XMLHttpRequest.prototype.send;
+XMLHttpRequest.prototype.send = function(){
+    this.setRequestHeader('X-HypToken','{$_SESSION['HYP_CSRF_TOKEN']}');
+    oldSend.apply(this, arguments);
+}
+})();
+// ]]> -->
+</script>
+EOD;
+		}
 
 		if ($this->xpwiki_render_dirname && $this->xpwiki_render_use_wikihelper) {
 			$notUseWikihelper = false;
