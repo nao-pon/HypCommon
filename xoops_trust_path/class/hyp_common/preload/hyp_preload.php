@@ -1855,9 +1855,10 @@ EOD;
 						$parts['content'] = '<div id="keitaiMainContents" data-role="collapsible" data-theme="'.$this->k_tai_conf['jquery_theme_content'].'" data-content-theme="'.$this->k_tai_conf['jquery_theme_content'].'" data-collapsed="false">' . $parts['content'] . '</div>';
 					}
 
-					// Easy login
+					// Easy login & to PC
+					$easylogin = '';
+					$to_pc = '<li><a href="#" onclick="return jQuery.keitaiSwitchToPc();">PC</a></li>';
 					if (! empty($this->k_tai_conf['easyLogin'])) {
-						$to_pc = '<li><a href="#" onclick="return jQuery.keitaiSwitchToPc();">PC</a></li>';
 						if (! empty($r->vars['ua']['isGuest'])) {
 							$add = '_EASYLOGIN';
 							if ($r->vars['ua']['carrier'] === 'docomo') {
@@ -1931,6 +1932,20 @@ EOD;
 								}
 							}
 						}
+					} else {
+						if (! empty($r->vars['ua']['isGuest'])) {
+							if ($use_jquery) {
+								$easylogin = '<ul>'.$to_pc.'</ul>';
+							}
+						} else {
+							if ($use_jquery) {
+								$easylogin = '<ul>' . $uname . '</li><li><a href="' . XOOPS_URL . '/user.php?op=logout">' . $this->k_tai_conf['msg']['logout'] . '</a></li>'.$to_pc.'</ul>';
+							} else {
+								$easylogin = $uname . ' <a href="' . XOOPS_URL . '/user.php?op=logout">' . $this->k_tai_conf['msg']['logout'] . '</a>';
+							}
+						}
+					}
+					if ($easylogin) {
 						$parts['easylogin'] = $rebuilds['easylogin']['above'] . $easylogin . $rebuilds['easylogin']['below'];
 					}
 
