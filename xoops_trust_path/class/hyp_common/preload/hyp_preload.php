@@ -1583,7 +1583,7 @@ EOD;
 			if (empty($_SESSION['HYP_CSRF_TOKEN'])) {
 				$_SESSION['HYP_CSRF_TOKEN'] = md5($_SERVER['REMOTE_ADDR'].XOOPS_DB_PASS.time());
 			}
-			$insert_post = '<input type="hidden" value="'.$_SESSION['HYP_CSRF_TOKEN'].'" name="HypToken" />';
+			$insert_post = '<input type="hidden" value="'.$_SESSION['HYP_CSRF_TOKEN'].'" name="HypToken" />'."\n";
 		}
 		
 		// エンコーディング判定用ヒント文字
@@ -1593,27 +1593,27 @@ EOD;
 			} else {
 				$encodehint_word = $this->encodehint_word;
 			}
-			$insert .= "\n<input name=\"{$this->encodehint_name}\" type=\"hidden\" value=\"{$encodehint_word}\" />";
+			$insert .= "<input name=\"{$this->encodehint_name}\" type=\"hidden\" value=\"{$encodehint_word}\" />\n";
 		}
 		
 		if ((! defined('HYP_K_TAI_RENDER') || HYP_K_TAI_RENDER !== 1) && ! $this->wizMobileUse) {
 			// スパムロボット用の罠を仕掛ける
 			if (! empty($this->post_spam_trap_set)) {
-				$insert .= "\n<input name=\"{$this->post_spam_trap}\" type=\"text\" size=\"1\" style=\"display:none;speak:none;\" autocomplete=\"off\" />";
+				$insert .= "<input name=\"{$this->post_spam_trap}\" type=\"text\" size=\"1\" style=\"display:none;speak:none;\" autocomplete=\"off\" />\n";
 			}
 		}
 		
 		if ($insert || $insert_post) {
-			$insert && $insert = "\n".$insert."\n";
-			$insert_post && $insert_post = "\n".$insert_post."\n";
+			//$insert && $insert = "\n".$insert;
+			//$insert_post && $insert_post = "\n".$insert_post;
 			$this->changeContentLength = true;
-			return preg_replace_callback('#(<script.+?/script>)|<form([^>]+)?>#isS',
+			return preg_replace_callback('#(<script.+?/script>)|(<form([^>]+)?>.+?)(</form>)#isS',
 				create_function('$match','
 					if (!empty($match[1])) return $match[0];
-					if (preg_match(\'/method=["|\\\']?post/i\', $match[2])) {
-						return $match[0].\''.$insert.$insert_post.'\';
+					if (preg_match(\'/method=["|\\\']?post/i\', $match[3])) {
+						return $match[2].\''.$insert.$insert_post.'\'.$match[4];
 					} else {
-						return $match[0].\''.$insert.'\';
+						return $match[2].\''.$insert.'\'.$match[4];
 					}
 				'), $s);
 		}
