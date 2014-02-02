@@ -645,7 +645,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	}
 	
 	function postFilter() {
-
+		// $_SERVER['REQUEST_URI'] から hyp_preload 固有のキーを削除
+		(isset($_GET[$this->encodehint_name]) || isset($_GET[$this->post_spam_trap]))
+		&& ($_SERVER['REQUEST_URI'] = preg_replace('/&?('.$this->encodehint_name.'|'.$this->post_spam_trap.')=[^&]*/', '', $_SERVER['REQUEST_URI']))
+		&& ($_SERVER['REQUEST_URI'] = str_replace('?&', '?', $_SERVER['REQUEST_URI']))
+		&& ($_SERVER['REQUEST_URI'] = rtrim($_SERVER['REQUEST_URI'], "?"));
+		
 		// <xoops_dhtmltarea editor=bbcode>
 		if (XPWIKI_RENDERER_USE_WIKIHELPER_BBCODE && defined('LEGACY_BASE_VERSION') && version_compare(LEGACY_BASE_VERSION, '2.2', '>=')) {
 			if ( ! $this->mRoot->mContext->mUser->isInRole('Site.Administrator')
@@ -702,7 +707,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				$_GET = HypCommonFunc::input_filter($_GET, $this->input_filter_strength);
 			}
 		}
-
+		
 		global $xoopsUser, $xoopsUserIsAdmin, $xoopsModule;
 
 		if (is_object($xoopsModule)) {
