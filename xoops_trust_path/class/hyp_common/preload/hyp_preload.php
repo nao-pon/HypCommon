@@ -1769,7 +1769,12 @@ EOD;
 			if ($blockmenu) {
 				$_url = XOOPS_URL . '/';
 				$blockmenu = join('</li><li>', $blockmenu);
-				if (isset($rebuilds['blockMenuBar'])) {
+				if (is_file(XOOPS_THEME_PATH.'/'.$this->k_tai_conf['themeSet'].'/menubar_jqm.html')) {
+					$body .= str_replace(
+							array('<_JQUERY_THEME_>', '<_BLOCK_MENU_}>', '<_TOP_URL_>'),
+							array($this->k_tai_conf['jquery_theme'], $blockmenu, XOOPS_URL.'/'),
+							file_get_contents(XOOPS_THEME_PATH.'/'.$this->k_tai_conf['themeSet'].'/menubar_jqm.html'));
+				} else if (isset($rebuilds['blockMenuBar'])) {
 					$body .= <<<EOD
 <!--blockMenu-->
 <div id="keitaiblockmenu" data-role="header" data-theme="{$this->k_tai_conf['jquery_theme']}">
