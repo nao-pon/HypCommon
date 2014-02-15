@@ -6,6 +6,10 @@ if (defined('E_STRICT')) {
 		error_reporting($_error_reporting ^ E_STRICT);
 	}
 }
+// PCRE setting
+if (version_compare(PHP_VERSION, '5.2.0', '>=') && ini_get('pcre.backtrack_limit') < 1000000) {
+	@ini_set('pcre.backtrack_limit', 1000000);
+}
 
 define('X2_ADD_SMARTYPLUGINS_DIR', XOOPS_TRUST_PATH . '/libs/smartyplugins/x2');
 define('HYP_COMMON_PRELOAD_CONF', '/uploads/hyp_common/hypconf_'.md5(preg_replace('/^(http)s/i', '$1', XOOPS_URL) . (defined('XOOPS_SALT')?XOOPS_SALT:XOOPS_DB_PASS)).'.conf');
@@ -1495,7 +1499,7 @@ EOD;
 		
 		$ret = HypGetQueryWord::word_highlight($s, (defined($this->q_word2)? constant($this->q_word) . ' ' . constant($this->q_word2) : constant($this->q_word)), $this->encode, $this->msg_words_highlight, $this->extlink_class_name);
 		
-		if (strlen($s) === $ret) return false;
+		if (!$s || strlen($s) === $ret) return false;
 		
 		$this->changeContentLength = true;
 		
@@ -1611,8 +1615,7 @@ EOD;
 		if ($insert || $insert_post) {
 			//$insert && $insert = "\n".$insert;
 			//$insert_post && $insert_post = "\n".$insert_post;
-			$this->changeContentLength = true;
-			return preg_replace_callback('#(<script.+?/script>)|<form([^>]+?)>#isS',
+			$s = preg_replace_callback('#(<script.+?/script>)|<form([^>]+?)>#isS',
 				create_function('$match','
 					if (!empty($match[1])) return $match[0];
 					if (preg_match(\'/method=["|\\\']?post/i\', $match[2])) {
@@ -1621,8 +1624,12 @@ EOD;
 						return $match[0].\''.$insert.'\';
 					}
 				'), $s);
+			if ($s) {
+				$this->changeContentLength = true;
+				return $s;
+			}
 		}
-		return $s;
+		return false;
 	}
 
 	function keitaiFilter ( $s ) {
@@ -2183,6 +2190,7 @@ EOD;
 			$mpc->setImagePath(XOOPS_URL . '/images/emoji');
 			$mpc->setString($str, FALSE);
 			$str = $mpc->autoConvertModKtai();
+			if (!$str) return false;
 		}
 		
 		$this->changeContentLength = true;
