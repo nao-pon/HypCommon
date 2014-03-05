@@ -1732,13 +1732,15 @@ class HypKTaiRender
 	}
 
 	function _href_give_session_id ($match) {
-
+		static $func;
+		
+		$func || $func = create_function('$m', 'return ($m[1] > 31 && $m[1] < 128)? chr($m[1]) : $m[0];');
 		$url = $match[3];
 		$ext_icon = '';
 		$add_tag = '';
 
 		// Decode numericentity (only ASCII)
-		$url = preg_replace('/&#([0-9]{2,3});/e', '($1 > 31 && $1 < 128)? chr($1) : "$0"', $url);
+		$url = preg_replace_callback('/&#([0-9]{2,3});/', $func, $url);
 
 		// Url rewrite
 		if (! empty($this->Config_urlRewrites['regex']) && ! empty($this->Config_urlRewrites['tostr'])) {
