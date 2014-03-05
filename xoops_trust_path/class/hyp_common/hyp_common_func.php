@@ -128,8 +128,10 @@ class HypCommonFunc
 	// ",' で括ったフレーズ対応スプリット
 	public static function phrase_split($str)
 	{
+		static $func;
+		$func || $func = create_function('$m', 'return str_replace(\' \',"\x08",$m[2]);');
 		$words = array();
-		$str = preg_replace("/(\"|')(.+?)(?:\\1)/e","str_replace(' ','\x08','$2')",$str);
+		$str = preg_replace_callback("/(\"|')(.+?)(?:\\1)/", $func, $str);
 		$words = preg_split('/\s+/',$str,-1,PREG_SPLIT_NO_EMPTY);
 		$words = str_replace("\x08"," ",$words);
 		return $words;
@@ -1604,6 +1606,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 
 	// 文字エンコード変換前に範囲外の文字を実体参照値に変換する
 	public static function encode_numericentity(& $arg, $toencode, $fromencode, $keys = array()) {
+		static $func;
 		$fromencode = strtoupper($fromencode);
 		$toencode = strtoupper($toencode);
 		if ($fromencode === $toencode || $toencode === 'UTF-8') return;
@@ -1619,13 +1622,14 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 				return;
 			}
 			if (extension_loaded('mbstring')) {
+				$func || $func = create_function('$m', 'return \'&#\'.base_convert($m[1],16,10).\';\';');
 				$_sub = mb_substitute_character();
 				mb_substitute_character('long');
 				$arg = preg_replace('/U\+([0-9A-F]{2,5})/', "\x08$1", $arg);
 				if ($fromencode !== 'UTF-8') $arg = mb_convert_encoding($arg, 'UTF-8', $fromencode);
 				$arg = mb_convert_encoding($arg, $toencode, 'UTF-8');
 				$arg = preg_replace('/U\+([0-9A-F]{2,5})/e', '"&#".base_convert("$1",16,10).";"', $arg);
-				$arg = preg_replace('/\x08([0-9A-F]{2,5})/', 'U+$1', $arg);
+				$arg = preg_replace_callback('/U\+([0-9A-F]{2,5})/', $func, $arg);
 				mb_substitute_character($_sub);
 				$arg = mb_convert_encoding($arg, $fromencode, $toencode);
 			} else {
