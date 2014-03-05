@@ -572,8 +572,10 @@ class HypKTaiRender
 
 	// HTML を携帯端末用にシェイプアップする
 	function html_reduce ($body) {
+		static $func;
+		$func || $func = create_function('$m', 'return strtolower($m[0]);');
 		// タグを小文字に統一
-		$body = preg_replace('#</?[a-zA-Z]+#eS', 'strtolower("$0")', $body);
+		$body = preg_replace_callback('#</?[a-zA-Z]+#S', $func, $body);
 
 		if ($this->Config_no_diet) {
 			$body = $this->html_reduce_smart($body);
