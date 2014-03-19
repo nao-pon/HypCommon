@@ -784,6 +784,7 @@ class HypKTaiRender
 			$body = '';
 			$table_attrs = array('border' => '1', 'cellspacing' => '0', 'align' => 'center');
 			foreach($args as $val) {
+				if ($val === '') continue;
 				if ($val[0] === "\x01") {
 					$_attr = '';
 					if ($remove_attr) {
