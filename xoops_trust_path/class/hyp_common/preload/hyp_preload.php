@@ -1699,6 +1699,13 @@ EOD;
 		if (! $encode) $encode = $this->encode;
 
 		if ($body) {
+			// 最適化済みパートをエスケープ
+			while(strpos($body, '<!--HypKTaiOptimized-->') !== FALSE) {
+				$arr1 = explode('<!--HypKTaiOptimized-->', $body, 2);
+				$arr2 = array_pad(explode('<!--/HypKTaiOptimized-->', $arr1[1], 2), 2, '');
+				$body = $arr1[0] . str_replace(array('<', '>'), array("\x1e", "\x1f"), $arr2[0]) . $arr2[1];
+			}
+
 			// 携帯のみ有効にする部分
 			$body = str_replace('<!--HypKTaiOnly', '', $body);
 			$body = str_replace('HypKTaiOnly-->', '', $body);

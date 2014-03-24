@@ -577,8 +577,17 @@ class HypKTaiRender
 		// タグを小文字に統一
 		$body = preg_replace_callback('#</?[a-zA-Z]+#S', $func, $body);
 
+		// 最適化済みパートをエスケープ
+		while(strpos($body, '<!--HypKTaiOptimized-->') !== FALSE) {
+			$arr1 = explode('<!--HypKTaiOptimized-->', $body, 2);
+			$arr2 = array_pad(explode('<!--/HypKTaiOptimized-->', $arr1[1], 2), 2, '');
+			$body = $arr1[0] . str_replace(array('<', '>'), array("\x1e", "\x1f"), $arr2[0]) . $arr2[1];
+		}
+
 		if ($this->Config_no_diet) {
 			$body = $this->html_reduce_smart($body);
+			// 最適化済みパートをデコード
+			$body = str_replace(array("\x1e", "\x1f"), array('<', '>'), $body);
 			return $body;
 		}
 
@@ -758,6 +767,9 @@ class HypKTaiRender
 
 		// Remove empty elements
 		$body = preg_replace('#<([bipqsu]|(?!textarea|td)[a-z]{2,})(?: [^>]+)?></\\1>#', '', $body);
+
+		// 最適化済みパートをデコード
+		$body = str_replace(array("\x1e", "\x1f"), array('<', '>'), $body);
 
 		// Replace attrs "_ktai_*"
 		$reg = '#(<[^>]+?\s)_ktai_#S';
