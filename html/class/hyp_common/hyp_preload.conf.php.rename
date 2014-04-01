@@ -21,6 +21,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_trap_set    = 0; // 無効フィールドのBot罠を自動で仕掛ける
 		$this->use_k_tai_render      = 0; // 携帯対応レンダーを有効にする
 		$this->use_smart_redirect    = 0; // スマートリダイレクトを有効にする
+		$this->use_keep_alive        = 0; // キープアライブ機能を有効にする
 
 		// 各種設定
 		$this->configEncoding = 'EUC-JP'; // このファイルの文字コード

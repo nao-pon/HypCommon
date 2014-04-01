@@ -86,3 +86,11 @@ $config[] = array(
 	'valuetype' => 'int',
 	'default' => 0,
 	);
+$config[] = array(
+	'name' => 'use_keep_alive',
+	'title' => $constpref.'_USE_KEEP_ALIVE',
+	'description' => $constpref.'_USE_KEEP_ALIVE_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
+	);

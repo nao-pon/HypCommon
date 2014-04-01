@@ -28,6 +28,7 @@ define($constpref.'_ADMENU_MISC', 'その他の設定');
 // notice error
 define($constpref.'_MAIN_SWITCH_NOT_ENABLE', 'メインスイッチで「<b>$1</b>」が無効になっています。ここでの設定を機能させるためには、メインスイッチで「<b>$1</b>」を有効にしてください。');
 define($constpref.'_THERE_ARE_NO_CONFIG' , '現在設定されている項目はありません。すべて規定値が適用されます。');
+define($constpref.'_ERR_KEEP_ALIVE' , 'ログインを継続することができません。データを送信する前に再度ログインして下さい。');
 
 // main_switch
 define($constpref.'_USE_SET_QUERY_WORDS', '検索ワードを定数にセット');
@@ -49,7 +50,9 @@ define($constpref.'_POST_SPAM_TRAP_SET_DESC', '');
 define($constpref.'_USE_K_TAI_RENDER', 'モバイル対応機能を有効にする');
 define($constpref.'_USE_K_TAI_RENDER_DESC', '');
 define($constpref.'_USE_SMART_REDIRECT', 'スマートリダイレクトを有効にする');
-define($constpref.'_USE_SMART_REDIRECT_DESC', '');
+define($constpref.'_USE_SMART_REDIRECT_DESC', 'リダイレクトメッセージ表示のためのページ変遷をなくし、メッセージをポップアップ表示します。');
+define($constpref.'_USE_KEEP_ALIVE', 'キープアライブ機能を有効にする');
+define($constpref.'_USE_KEEP_ALIVE_DESC', 'JavaScript (jQuery) を利用し、一定間隔でサーバーにアクセスすることで、セッションタイムアウトによるログアウトを防止します。(jQuery 必須)');
 // main_switch value
 define($constpref.'_INPUT_FILTER_STRENGTH_0', '制御文字の内 NULL 以外は許可');
 define($constpref.'_INPUT_FILTER_STRENGTH_1', '制御文字の内 SoftBankの絵文字と\t,\r,\n は許可');

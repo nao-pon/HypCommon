@@ -28,6 +28,7 @@ define($constpref.'_ADMENU_MISC', 'MISC.');
 // notice error
 define($constpref.'_MAIN_SWITCH_NOT_ENABLE', '"<b>$1</b>" is invalid with the main switch. In order to operate a setup here, please validate "<b>$1</b>" with a main switch.');
 define($constpref.'_THERE_ARE_NO_CONFIG' , 'No item has been set up. All the values are applied with default.');
+define($constpref.'_ERR_KEEP_ALIVE' , 'Login is uncontinuable. Please log in again before transmitting data.');
 
 // main_switch
 define($constpref.'_USE_SET_QUERY_WORDS', 'Set to a constant search words.');
@@ -50,6 +51,8 @@ define($constpref.'_USE_K_TAI_RENDER', 'To enable the feature on mobile phones.'
 define($constpref.'_USE_K_TAI_RENDER_DESC', '');
 define($constpref.'_USE_SMART_REDIRECT', 'To enable smart redirection.');
 define($constpref.'_USE_SMART_REDIRECT_DESC', '');
+define($constpref.'_USE_KEEP_ALIVE', 'To enable Keep Alive');
+define($constpref.'_USE_KEEP_ALIVE_DESC', 'JavaScript (jQuery) is used and logout by session timeout is prevented by accessing a server at fixed intervals. (Require jQuery');
 // main_switch value
 define($constpref.'_INPUT_FILTER_STRENGTH_0', 'Controls allowed in a non-NULL');
 define($constpref.'_INPUT_FILTER_STRENGTH_1', '\t, \r, \n and EMOJI of SoftBank are allowed in controls');

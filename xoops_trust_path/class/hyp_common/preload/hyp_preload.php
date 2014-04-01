@@ -92,7 +92,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->post_spam_trap_set)) $this->post_spam_trap_set = 0;
 		if (! isset($this->use_k_tai_render)) $this->use_k_tai_render = 0;
 		if (! isset($this->use_smart_redirect)) $this->use_smart_redirect = 0;
-
+		if (! isset($this->use_keep_alive)) $this->use_keep_alive = 0;
+		
 		if (! isset($this->configEncoding)) $this->configEncoding = 'ISO-8859-1';
 
 		if (! isset($this->encodehint_word)) $this->encodehint_word = '';
@@ -1419,15 +1420,14 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	function addHeadTag( $s ) {
 		if ($s === '' || strpos($s, '<html') === FALSE) return false;
 
+		$script = '';
 		// for CRSF Protection on XMLHttpRequest
 		if (! empty($this->use_csrf_protect)) {
 			if (empty($_SESSION['HYP_CSRF_TOKEN'])) {
 				$_SESSION['HYP_CSRF_TOKEN'] = md5($_SERVER['REMOTE_ADDR'].XOOPS_DB_PASS.time());
 			}
 			// For XMLHttpRequest use HTTP header 'X-HypToken'
-			$GLOBALS['hyp_preload_head_tag'] .=<<<EOD
-<script type="text/javascript">
-<!-- <![CDATA[
+			$script .=<<<EOD
 (function(){
 var oldSend = XMLHttpRequest.prototype.send;
 XMLHttpRequest.prototype.send = function(){
@@ -1435,9 +1435,34 @@ XMLHttpRequest.prototype.send = function(){
     oldSend.apply(this, arguments);
 }
 })();
-// ]]> -->
-</script>
 EOD;
+		}
+		// keep alive
+		if ($this->use_keep_alive && !empty($_SESSION['xoopsUserId'])) {
+			$interval = @ini_get('session.gc_maxlifetime');
+			$interval = max(300, $interval - 300) * 1000;
+			$script .='
+if (typeof jQuery != "undefined") {
+	(function($){
+		var timer = function(){
+			setTimeout(function(){
+				$.ajax({url:"'.XOOPS_URL.'/class/hyp_common/gate.php",data:{way:"keepalive",_x:0,_d:0,_u:0},cache:false})
+				.success(function(data){
+					if (data) {
+						if (confirm(data)) {
+							window.open("'.XOOPS_URL.'/user.php");
+							timer();
+						}
+					} else {
+						timer();
+					}
+				});
+			}, '.$interval.');
+		};
+		timer();
+	})(jQuery);
+}
+';
 		}
 
 		if ($this->xpwiki_render_dirname && $this->xpwiki_render_use_wikihelper) {
@@ -1448,22 +1473,28 @@ EOD;
 			if (! $notUseWikihelper) {
 				$js = '<script type="text/javascript" src="'.XOOPS_URL.'/modules/'.$this->xpwiki_render_dirname.'/skin/loader.php?src=wikihelper_loader.js"></script>';
 				if (empty($GLOBALS['hyp_preload_head_tag']) || strpos($GLOBALS['hyp_preload_head_tag'], $js) === false) {
-					$GLOBALS['hyp_preload_head_tag'] .= "\n" . $js;
+					$GLOBALS['hyp_preload_head_tag'] .= "\n" . $js . "\n";
 				}
 			}
 			if ($notUseWikihelper || ($this->xpwiki_render_use_wikihelper_admin == 0 && $this->mRoot->mContext->mBaseRenderSystemName === 'Legacy_AdminRenderSystem')) {
-				$GLOBALS['hyp_preload_head_tag'] .=<<<EOD
-<script type="text/javascript">
-<!-- <![CDATA[
+				$script .=<<<EOD
 if (typeof XpWiki != 'undefined' && XpWiki.UseWikihelperAtAll == 1) {
 	XpWiki.UseWikihelperAtAll = 2;
 }
-// ]]> -->
-</script>
 EOD;
 			}
 		}
 		
+		if ($script) {
+			$GLOBALS['hyp_preload_head_tag'] .=<<<EOD
+<script type="text/javascript">
+<!-- <![CDATA[
+{$script}
+// ]]> -->
+</script>
+EOD;
+		}
+
 		if (! defined('HYP_COMMON_HYPCONF_ADMIN_MODE') && $this->misc_head_last_tag) {
 			$_tag = $this->misc_head_last_tag;
 			$_tag = str_replace(array('<{$xoops_url}>', '[XOOPS_URL]'), XOOPS_URL, $_tag);
@@ -2369,6 +2400,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->post_spam_trap_set    = 0; // 無効フィールドのBot罠を自動で仕掛ける
 		$this->use_k_tai_render      = 0; // 携帯対応レンダーを有効にする
 		$this->use_smart_redirect    = 0; // スマートリダイレクトを有効にする
+		$this->use_keep_alive        = 0; // キープアライブ機能を有効にする
 
 		// 各種設定
 		$this->configEncoding = 'EUC-JP'; // このファイルの文字コード
