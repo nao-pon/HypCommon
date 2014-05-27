@@ -558,9 +558,18 @@ class HypSimpleAmazon
 				$_item['RELEASEDATE'] = $this->get_releasedate($item);
 				$_item['RELEASEUTIME'] = @ $item['ReleaseUTIME'];
 				$_item['AVAILABILITY'] = '';
+				$_AllOffers = '';
+				if (isset($item['ItemLinks']) && isset($item['ItemLinks']['ItemLink']) && isset($item['ItemLinks']['ItemLink'][3])) {
+					$_AllOffers = $item['ItemLinks']['ItemLink'][3]['URL'];
+				}
+				$_EFS = false;
 				if (isset($item['Offers']['Offer'])) {
 					$this->check_array($item['Offers']['Offer']);
 					$_item['AVAILABILITY'] = $item['Offers']['Offer'][0]['OfferListing']['Availability'];
+					$_EFS = ($item['Offers']['Offer'][0]['OfferListing']['IsEligibleForSuperSaverShipping'])? true : false;
+					if (!$_AllOffers && @$item['Offers']['MoreOffersUrl']) {
+						$_AllOffers = $item['Offers']['MoreOffersUrl'];
+					}
 				}
 				$_item['SIMG'] = @$item['SmallImage']['URL'];
 				$_item['MIMG'] = @$item['MediumImage']['URL'];
@@ -577,14 +586,14 @@ class HypSimpleAmazon
 				$_price = $this->get_price($item);
 				$_item['PRICE']= $_price[0];
 				$_item['MERCHANTID'] = $this->get_merchantid($item);
-				if ($this->searchHost === 'www.javari.jp') {
+				if ($_EFS || $this->searchHost === 'www.javari.jp') {
 					$_item['GUIDEURL'] = 'free';
 				} else if ($_item['MERCHANTID']) {
 					$_item['GUIDEURL'] = 'http://' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode('http://www.amazon.co.jp/gp/help/seller/shipping.html?ie=UTF8&asin='.$_item['ASIN'].'&seller='.$_item['MERCHANTID']), $this->AssociateTag), $this->redirectQuery);
-				} else if (! $_item['AVAILABILITY']) {
-					$_item['GUIDEURL'] = 'http://' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode('http://www.amazon.co.jp/gp/help/customer/display.html?nodeId=1104814'), $this->AssociateTag), $this->redirectQuery);
+				} else if ($_AllOffers) {
+					$_item['GUIDEURL'] = 'http://' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode(str_replace('%26tag%3D', '%26condition%3Dnew%26tag%3D', $_AllOffers)), $this->AssociateTag), $this->redirectQuery);
 				} else {
-					$_item['GUIDEURL'] = 'free';
+					$_item['GUIDEURL'] = 'http://' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode('http://www.amazon.co.jp/gp/help/customer/display.html?nodeId=1104814'), $this->AssociateTag), $this->redirectQuery);
 				}
 				$_item['PRICE_FORMATTED'] = $_price[1];
 				$_price = $this->get_usedprice($item);
@@ -605,7 +614,10 @@ class HypSimpleAmazon
 				$compact['Items'][] = $_item;
 
 				if ($this->marketplace_listup && $_item['USEDPRICE'] && $_item['USEDPRICE'] < $_item['PRICE']) {
-					$item['DetailPageURL'] = $item['ItemLinks']['ItemLink'][3]['URL'];
+					if ($_AllOffers) {
+						$_AllOffers = str_replace('%26tag%3D', '%26condition%3Dused%26tag%3D', $_AllOffers);
+						$item['DetailPageURL'] = $_AllOffers;
+					}
 					$_item['SERVICE'] = 'amazon_m';
 					$_item['TITLE'] .= ' (Market Place)';
 					$_item['URL'] = $item['DetailPageURL'];
@@ -615,8 +627,11 @@ class HypSimpleAmazon
 					$_item['PRICE'] = $_item['USEDPRICE'];
 					$_item['PRICE_FORMATTED'] = $_item['USEDPRICE_FORMATTED'];
 					$_item['AVAILABILITY'] = '';
-					$_item['GUIDEURL'] = 'http://' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode('http://www.amazon.co.jp/gp/help/customer/display.html?nodeId=1104814'), $this->AssociateTag), $this->redirectQuery);
-
+					if ($_AllOffers) {
+						$_item['GUIDEURL'] = 'http://' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode($_AllOffers), $this->AssociateTag), $this->redirectQuery);
+					} else {		
+						$_item['GUIDEURL'] = 'http://' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode('http://www.amazon.co.jp/gp/help/customer/display.html?nodeId=1104814'), $this->AssociateTag), $this->redirectQuery);
+					}
 					$compact['Items'][] = $_item;
 					$compact['totalresults']++;
 				}
