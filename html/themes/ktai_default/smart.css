@@ -1,6 +1,8 @@
 body {
 	line-height: 1.6;
 	-webkit-text-size-adjust: none;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
 }
 
 a {
@@ -11,6 +13,10 @@ a {
 }
 a + a {
 	padding-left: .5em;
+}
+td a,
+th a {
+	word-break: break-all;
 }
 .ui-title a {
 	display: inline-block;
