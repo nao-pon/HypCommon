@@ -217,8 +217,8 @@ class Hyp_TextFilterAbstract extends Legacy_TextFilter
 
             // XOOPS Quote style
             $text = str_replace(
-                array('<blockquote>','</blockquote>'),
-                array('<div class="paragraph">'._QUOTEC.'<div class="xoopsQuote"><blockquote>','</blockquote></div></div>'),$text
+                array('<blockquote','</blockquote>'),
+                array('<div class="paragraph">'._QUOTEC.'<div class="xoopsQuote"><blockquote','</blockquote></div></div>'),$text
             );
         }
 
