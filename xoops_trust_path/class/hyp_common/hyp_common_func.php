@@ -1069,7 +1069,7 @@ class HypCommonFunc
 			{
 				$ret = true;
 				$tmpfname = @tempnam(dirname($src), "tmp_");
-				exec( HYP_JPEGTRAN_PATH."jpegtran -rotate {$angle} -copy all \"{$src}\" ") . '>' . " \"{$tmpfname}\"" ;
+				exec( HYP_JPEGTRAN_PATH."jpegtran -rotate {$angle} -copy all \"{$src}\" " . '>' . " \"{$tmpfname}\"");
 				if ( ! @filesize($tmpfname) || ! @unlink($src) )
 				{
 					$ret = false;
