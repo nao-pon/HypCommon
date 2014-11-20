@@ -27,12 +27,12 @@ class HypGetQueryWord
 		$_query = array_merge($_POST, $_GET);
 		$_query = HypCommonFunc::stripslashes_gpc($_query);
 
-		$query = (isset($_query['query']))? $_query['query'] : '';
+		$query = (isset($_query['query']) && is_string($_query['query']))? $_query['query'] : '';
 		if ($query) {
 			$query = preg_replace('/^("|\')(.+)\1$/', '$2', $query);
 		}
-		if (!$query) $query = (isset($_query['word']))? $_query['word'] : '';
-		if (!$query) $query = (isset($_query['mes']))? $_query['mes'] : '';
+		if (!$query) $query = (isset($_query['word']) && is_string($_query['word']))? $_query['word'] : '';
+		if (!$query) $query = (isset($_query['mes']) && is_string($_query['mes']))? $_query['mes'] : '';
 
 		$query2 = $se_name = ''; //Default
 
