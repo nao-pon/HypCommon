@@ -129,7 +129,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($this->post_spam_badip_ttl0)) $this->post_spam_badip_ttl0 = 2592000;
 		if (! isset($this->post_spam_checkers)) $this->post_spam_checkers = array(
 			//'list.dsbl.org',
-			'niku.2ch.net',
+			//'niku.2ch.net',
 			array(
 				'dnsbl.spam-champuru.livedoor.com',
 				'/^192\.168\.1\.2/'
@@ -2452,7 +2452,7 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		// Proxy Checkers
 		$this->post_spam_checkers = array(
 			//'list.dsbl.org',
-			'niku.2ch.net',
+			//'niku.2ch.net',
 			array(
 				'dnsbl.spam-champuru.livedoor.com',
 				'/^192\.168\.1\.2/'

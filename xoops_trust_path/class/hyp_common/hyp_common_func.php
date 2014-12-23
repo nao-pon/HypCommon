@@ -1287,8 +1287,9 @@ class HypCommonFunc
 	}
 
 	// 2ch BBQ あらしお断りシステム にリスティングされているかチェック
-	public static function IsBBQListed($safe_reg = '/^$/', $msg = true, $ip = NULL, $checker = array('list.dsbl.org', 'niku.2ch.net'))
+	public static function IsBBQListed($safe_reg = '/^$/', $msg = true, $ip = NULL, $checker = array())
 	{
+		if (!$checker) return false;
 		if (is_null($ip)) $ip = $_SERVER['REMOTE_ADDR'];
 		if(! preg_match($safe_reg, $ip))
 		{
