@@ -879,7 +879,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				}
 
 				// È½Äê
-				if (!$xoopsUserIsAdmin) {
+				if (!$xoopsUserIsAdmin && !defined('HYP_COMMON_HYPCONF_ADMIN_MODE')) {
 					// ïçÃÍ
 					$spamlev = (is_object($xoopsUser))? $this->post_spam_user : $this->post_spam_guest;
 					$level = HypCommonFunc::get_postspam_avr($this->post_spam_a, $this->post_spam_bb, $this->post_spam_url, $this->encode, $this->encodehint_name);
