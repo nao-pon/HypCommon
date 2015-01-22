@@ -56,7 +56,7 @@ if (! defined('HYP_X_SENDFILE_MODE')) define('HYP_X_SENDFILE_MODE', 0);
 function get_favicon($url)
 {
     if (! $url || ! is_url($url)) return false;
-    if (UNIX_TIME <= get_timestamp($url) + FAVICON_CACHE_TTL) {
+    if (!isset($_GET['refresh']) && UNIX_TIME <= get_timestamp($url) + FAVICON_CACHE_TTL) {
         $cache = get_url_filename($url);
         return file_get_contents($cache);
     } else {
@@ -172,12 +172,7 @@ function update_cache($url)
     }
 
 	$url_org = $url;
-    $html = http_get_contents($url, 4096);
-    //$_url = $url;
-    //check_group($url);
-	//if ($url !== $_url) {
-	//	$html = http_get_contents($url, 4096);
-	//}
+    $html = http_get_contents($url, 81920);
     if ($html === false) {        // connection failed or timed out
         $favicon = 'DefaultIcon';
     } else if ($html === null) {  // 404 status code or unsupported scheme
@@ -186,23 +181,30 @@ function update_cache($url)
         $url  = parse_url($url);
         $base = $url['scheme'] . '://' . $url['host'] . (isset($url['port']) ? ':' . $url['port'] : '');
         $url  = $base . (isset($url['path']) ? $url['path'] : '/');
-        if (preg_match('/<link ([^>]*)rel=[\'"]?(?:shortcut )?icon[\'"]?([^>]*)/si', $html, $matches)) {
-            $link = implode(' ', $matches);
-
-            if (preg_match('/href=[\'"]?(https?:\/\/)?([^\'" ]+)/si', $link, $matches)) {
-                $favicon = $matches[2];
-                if ($matches[1]) {
-                    $favicon = $matches[1] . $favicon;
-                } else if ($favicon[0] === '/') {
-                    $favicon = $base . $favicon;
-                } else if (substr($url, -1) === '/') {
-                    $favicon = $url . $favicon;
-                } else {
-                    $favicon = dirname($url) . '/' . $favicon;
-                }
-                str_replace('/./', '/', $favicon);
-                while(preg_match('#[^/]+/\.\./#', $favicon)) {
-                	$favicon = preg_replace('#[^/]+/\.\./#', '', $favicon);
+        $html = strtolower($html);
+        list($html) = explode('</head>', $html);
+            if (preg_match_all('#<link[^>]+?>#', $html, $m)) {
+            $html = join(' ', $m[0]);
+            if (preg_match('/<link ([^>]*)rel=[\'"]?(?:shortcut )?icon[\'"]?([^>]*)/', $html, $matches)) {
+                $link = implode(' ', $matches);
+                if (preg_match('/href=[\'"]?((?:https?:)?\/\/)?([^\'" ]+)/', $link, $matches)) {
+                    $favicon = $matches[2];
+                    if ($matches[1]) {
+                        if ($matches[1][0] === '/') {
+                            $matches[1] = $url['scheme'] . ':' . $matches[1];
+                        }
+                        $favicon = $matches[1] . $favicon;
+                    } else if ($favicon[0] === '/') {
+                        $favicon = $base . $favicon;
+                    } else if (substr($url, -1) === '/') {
+                        $favicon = $url . $favicon;
+                    } else {
+                        $favicon = dirname($url) . '/' . $favicon;
+                    }
+                    str_replace('/./', '/', $favicon);
+                    while(preg_match('#[^/]+/\.\./#', $favicon)) {
+                        $favicon = preg_replace('#[^/]+/\.\./#', '', $favicon);
+                    }
                 }
             }
         }
@@ -360,25 +362,32 @@ function get_hosts() {
 	if ($hosts) return $hosts;
 
 	$cache = FAVICON_CACHE_DIR . '.group.hosts';
+	$hosts_dat = FAVICON_HYP_COMMON_PATH . '/dat/favicon_hostsgroup.dat';
+	$hosts_cnf = FAVICON_HYP_COMMON_PATH . '/config/favicon_hostsgroup.dat';
 	if (is_file($cache)) {
 		 $mtime = filemtime($cache);
-		 $checktime = filemtime(FAVICON_HYP_COMMON_PATH . '/dat/favicon_hostsgroup.dat');
-		 if (is_file(FAVICON_HYP_COMMON_PATH . '/group.hosts')) {
-		 	$checktime = max($checktime, filemtime(FAVICON_HYP_COMMON_PATH . '/group.hosts'));
+		 $checktime = filemtime($hosts_dat);
+		 if (is_file($hosts_cnf)) {
+		 	$checktime = max($checktime, filemtime($hosts_cnf));
 		 }
 		 if ($mtime > $checktime) {
 		 	return unserialize(file_get_contents($cache));
 		 }
 	}
 
-	$_hosts = file(FAVICON_HYP_COMMON_PATH . '/dat/favicon_hostsgroup.dat');
-	if (is_file(FAVICON_HYP_COMMON_PATH . '/config/favicon_hostsgroup.dat')) {
-		$_hosts = array_merge($_hosts, file(FAVICON_HYP_COMMON_PATH . '/config/favicon_hostsgroup.dat'));
+	$_hosts = array();
+	if (is_file($hosts_cnf)) {
+		$_hosts = file($hosts_cnf);
 	}
+	$_hosts = array_merge($_hosts, file($hosts_dat));
 	if ($_hosts) {
 		foreach($_hosts as $host) {
 			list($from, $to) = explode(' ', $host);
-			$hosts[trim($from)] = trim($to);
+			$from = trim($from);
+			$to = trim($to);
+			if ($from && $to) {
+				$hosts[trim($from)] = trim($to);
+			}
 		}
 	}
 	file_put_contents($cache, serialize($hosts));
