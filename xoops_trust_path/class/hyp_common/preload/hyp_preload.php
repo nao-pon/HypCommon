@@ -1152,7 +1152,15 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		return array( $table , $form ) ;
 	}
 
-
+	function _locationRedirect($url, $exit = true) {
+		header('Location: ' . $url);
+		header('Connection: close');
+		header('Content-Encoding: none');
+		header('Content-Length: 0');
+		flush();
+		$exit && exit;
+	}
+	
 	function _onShutdownKtai() {
 		if (! $this->HypKTaiRender->vars['ua']['allowCookie']) {
 			$url = '';
@@ -1181,7 +1189,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				$url = $this->HypKTaiRender->getRealUrl($url);
 				$url = $this->HypKTaiRender->addSID($url, XOOPS_URL);
 				if (! headers_sent()) {
-					header('Location: ' . $url, TRUE);
+					$this->_locationRedirect($url, false);
 				} else if ($this->HypKTaiRender->vars['ua']['uid'] && $nosession) {
 					$file = XOOPS_ROOT_PATH . '/cache/' . md5($this->HypKTaiRender->vars['ua']['uid'] . XOOPS_DB_PASS) . '.redirect';
 					$fp = fopen($file, 'w');
@@ -1255,8 +1263,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 						$url = $this->HypKTaiRender->myRoot . $this->HypKTaiRender->removeQueryFromUrl($uri, array($this->HypKTaiRender->session_name, 'guid', '_EASYLOGIN', '_EASYLOGINSET', '_EASYLOGINUNSET'));
 
 						$url = $this->HypKTaiRender->addSID($url);
-						header('Location: ' . $url);
-						exit();
+						$this->_locationRedirect($url);
 					}
 				} else if ($mode === 'login') {
 					// Do easy login
@@ -1295,8 +1302,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					}
 					// Redirect
 					$url = $this->HypKTaiRender->addSID($url);
-					header('Location: ' . $url);
-					exit();
+					$this->_locationRedirect($url);
 				}
 			}
 		}
@@ -1310,8 +1316,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				if (filemtime($redirectfile) + 10 > time()) {
 					list($url) = file($redirectfile);
 					unlink($redirectfile);
-					header('Location: '. $url);
-					exit();
+					$this->_locationRedirect($url);
 				} else {
 					unlink($redirectfile);
 				}
@@ -1550,8 +1555,9 @@ EOD;
 				$body = preg_replace('#<p>.*?<a[^>]*?href="'.preg_quote($s_url, '#').'".*?</p>#', '', $body);
 				$_SESSION['hyp_redirect_message'] = $body;
 				$_SESSION['hyp_redirect_wait'] = $wait;
+				session_write_close();
 			}
-			header('Location: ' .$url);
+			$this->_locationRedirect($url, false);
 			return '';
 		} else {
 			if (!empty($_SESSION['hyp_redirect_message'])) {
@@ -2032,7 +2038,7 @@ EOD;
 				}
 				$url = $r->getRealUrl($url);
 				$url = $r->addSID($url, XOOPS_URL);
-				header('Location: ' .$url);
+				$this->_locationRedirect($url, false);
 				return '';
 			}
 
