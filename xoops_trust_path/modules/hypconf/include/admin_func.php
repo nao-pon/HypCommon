@@ -281,7 +281,7 @@ function hypconfShowForm($config) {
 			$title = '' ; // GIJ
 			switch ($config[$i]['formtype']) {
 			case 'textarea':
-				$myts =& MyTextSanitizer::getInstance();
+				(method_exists('MyTextSanitizer', 'sGetInstance') and $myts =& MyTextSanitizer::sGetInstance()) || $myts =& MyTextSanitizer::getInstance();
 				if ($config[$i]['valuetype'] == 'array') {
 					// this is exceptional.. only when value type is arrayneed a smarter way for this
 					$ele = ($config[$i]['value'] != '') ? new XoopsFormTextArea($title, $config[$i]['name'], $myts->htmlspecialchars(implode('|', $config[$i]['value'], _CHARSET)), 5, 50) : new XoopsFormTextArea($title, $config[$i]['name'], '', 5, 50);
@@ -354,7 +354,7 @@ function hypconfShowForm($config) {
 				if (! empty($config[$i]['size'])) {
 					$size = $config[$i]['size'];
 				}
-				$myts =& MyTextSanitizer::getInstance();
+				(method_exists('MyTextSanitizer', 'sGetInstance') and $myts =& MyTextSanitizer::sGetInstance()) || $myts =& MyTextSanitizer::getInstance();
 				$ele = new XoopsFormPassword($title, $config[$i]['name'], $size, 255, $myts->htmlspecialchars($config[$i]['value'], ENT_COMPAT, _CHARSET));
 				break;
 			case 'label':
@@ -394,7 +394,7 @@ function hypconfShowForm($config) {
 				if (! empty($config[$i]['size'])) {
 					$size = $config[$i]['size'];
 				}
-				$myts =& MyTextSanitizer::getInstance();
+				(method_exists('MyTextSanitizer', 'sGetInstance') and $myts =& MyTextSanitizer::sGetInstance()) || $myts =& MyTextSanitizer::getInstance();
 				$ele = new XoopsFormText($title, $config[$i]['name'], $size, 255, $myts->htmlspecialchars($config[$i]['value'], ENT_COMPAT, _CHARSET));
 				if ($config[$i]['valuetype'] === 'int') $ele->setExtra(' style="text-align:right;"');
 				break;

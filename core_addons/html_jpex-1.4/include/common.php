@@ -213,7 +213,7 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
             redirect_header(XOOPS_URL . '/', 0, _RETRYPOST);
         }
 
-        $myts =& MyTextSanitizer::getInstance();
+        (method_exists('MyTextSanitizer', 'sGetInstance') and $myts =& MyTextSanitizer::sGetInstance()) || $myts =& MyTextSanitizer::getInstance();
         $uname = $myts->stripSlashesGPC($_COOKIE['autologin_uname']);
         $pass = $myts->stripSlashesGPC($_COOKIE['autologin_pass']);
         if( empty( $uname ) || is_numeric( $pass ) ) $user = false ;
