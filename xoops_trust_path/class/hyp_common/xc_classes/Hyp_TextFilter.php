@@ -9,9 +9,9 @@ class Hyp_TextFilterAbstract extends Legacy_TextFilter
     var $hypEscTags      = array('quote', 'color', 'font', 'size', 'b', 'c', 'd', 'i', 'u');
     var $hypBypassTags   = array('fig');
 
-    function Hyp_TextFilter() {
+    function Hyp_TextFilterAbstract() {
         parent::Legacy_TextFilter();
-        $this->mMakeXCodeConvertTable->add('Hyp_TextFilter::makeXCodeConvertTable', XCUBE_DELEGATE_PRIORITY_3);
+        $this->mMakeXCodeConvertTable->add('Hyp_TextFilter::sMakeXCodeConvertTable', XCUBE_DELEGATE_PRIORITY_3);
         $this->mMakeXCodeConvertTable->add(array(& $this, 'getXcodeBBcode'), XCUBE_DELEGATE_PRIORITY_FINAL);
     }
 	
@@ -45,8 +45,8 @@ class Hyp_TextFilterAbstract extends Legacy_TextFilter
 		return $this->toShowTarea($text, $html, $smiley, $xcode, $image, $br, $x2comat, 0);
 	}
 
-	// Original function for Over write "makeXCodeConvertTable"
-	private static function _makeXCodeConvertTable(& $patterns, & $replacements) {
+	// Over write "makeXCodeConvertTable"
+	public static function sMakeXCodeConvertTable(& $patterns, & $replacements) {
 		if ($key = array_search('/\[quote\]/sU', $patterns)) {
 			$replacements[0][$key] = $replacements[1][$key] = '<div class="paragraph">'._QUOTEC.'<div class="xoopsQuote"><blockquote>';
 		}
@@ -264,16 +264,22 @@ class Hyp_TextFilterAbstract extends Legacy_TextFilter
 
 if (! defined('LEGACY_BASE_VERSION') || version_compare(LEGACY_BASE_VERSION, '2.2.2.2', '>=') || (! defined('_MI_LEGACY_DETAILED_VERSION') || version_compare(_MI_LEGACY_DETAILED_VERSION, 'CorePack 20130503', '<'))) {
 	class Hyp_TextFilter extends Hyp_TextFilterAbstract {
+		function Hyp_TextFilter() {
+			parent::Hyp_TextFilterAbstract();
+		}
 		// Over write
 		public function makeXCodeConvertTable(& $patterns, & $replacements) {
-			self::_makeXCodeConvertTable($patterns, $replacements);
+			self::sMakeXCodeConvertTable($patterns, $replacements);
 	    }
 	}
 } else {
 	class Hyp_TextFilter extends Hyp_TextFilterAbstract {
+		function Hyp_TextFilter() {
+			parent::Hyp_TextFilterAbstract();
+		}
 		// Over write
 		public static function makeXCodeConvertTable(& $patterns, & $replacements) {
-			self::_makeXCodeConvertTable($patterns, $replacements);
+			self::sMakeXCodeConvertTable($patterns, $replacements);
 	    }
 	}
 }
