@@ -68,7 +68,7 @@ class MobilePictogramConverter
     * @param string  $type    $str‚ÌŠG•¶Žšƒ^ƒCƒv  (MPC_FROM_OPTION_RAW, MPC_FROM_OPTION_WEB, MPC_FROM_OPTION_IMG)
     * @return mixed
     */
-    function &factory($str, $carrier, $charset, $type = MPC_FROM_OPTION_RAW)
+    public static function &factory($str, $carrier, $charset, $type = MPC_FROM_OPTION_RAW)
     {
         $filepath = dirname(__FILE__).'/Carrier/'.strtolower($carrier).'.php';
         if (file_exists($filepath) == false) {
@@ -93,7 +93,7 @@ class MobilePictogramConverter
         return $mpc;
     }
 
-    function &factory_common($charset = MPC_FROM_CHARSET_SJIS)
+    public static function &factory_common($charset = MPC_FROM_CHARSET_SJIS)
     {
         static $mpc = NULL;
 
