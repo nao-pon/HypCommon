@@ -638,7 +638,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	function BBCode_add_switch(&$html, $element) {
 		if (! preg_match('/(?:^| )(?:plain|none|xcode)(?: |$)/', $element['class'])) {
 			$this->check_XpWiki();
-			$script = (method_exists('XpWiki', 'sGet_BBCode_switch_js'))? XpWiki::aGet_BBCode_switch_js($element['id'], XPWIKI_RENDERER_DIR) : '';
+			$script = (method_exists('XpWiki', 'sGet_BBCode_switch_js'))? XpWiki::sGet_BBCode_switch_js($element['id'], XPWIKI_RENDERER_DIR) : '';
 			$html .= $script;
 		}
 	}
