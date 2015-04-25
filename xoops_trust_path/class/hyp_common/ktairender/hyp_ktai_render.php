@@ -132,7 +132,7 @@ class HypKTaiRender
 		}
 	}
 
-	function & getSingleton () {
+	public static function & getSingleton () {
 		static $my = NULL;
 		if (is_null($my)) {
 			$my = new HypKTaiRender();
