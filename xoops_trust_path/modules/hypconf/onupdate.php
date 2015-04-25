@@ -24,7 +24,6 @@ function hypconf_onupdate_base( $module , $mydirname )
 	$mid = $module->getVar('mid') ;
 
 	// TABLES (write here ALTER TABLE etc. if necessary)
-*/
 
 	// TEMPLATES (all templates have been already removed by modulesadmin)
 	$tplfile_handler =& xoops_gethandler( 'tplfile' ) ;
@@ -66,7 +65,8 @@ function hypconf_onupdate_base( $module , $mydirname )
 	include_once XOOPS_ROOT_PATH.'/class/xoopsblock.php' ;
 	include_once XOOPS_ROOT_PATH.'/class/template.php' ;
 	xoops_template_clear_module_cache( $mid ) ;
-
+*/
+	
 	return true ;
 }
 
