@@ -322,7 +322,7 @@ class MPC_Common
     */
     function autoConvertModKtai()
     {
-        $useragent = (is_null($this->userAgent))? $_SERVER['HTTP_USER_AGENT'] : $this->userAgent;
+        $useragent = (is_null($this->userAgent))? @$_SERVER['HTTP_USER_AGENT'] : $this->userAgent;
         if (preg_match($this->getRegexp('DoCoMo'), $useragent)) {
             $to     = MPC_TO_FOMA;
             $option = MPC_TO_OPTION_RAW;
@@ -594,7 +594,7 @@ class MPC_Common
     */
     function autoConvert($toCharset = null)
     {
-        $useragent = (is_null($this->userAgent))? $_SERVER['HTTP_USER_AGENT'] : $this->userAgent;
+        $useragent = (is_null($this->userAgent))? @$_SERVER['HTTP_USER_AGENT'] : $this->userAgent;
         if (preg_match($this->getRegexp('DoCoMo'), $useragent)) {
             $to     = MPC_TO_FOMA;
             $option = MPC_TO_OPTION_RAW;
