@@ -233,7 +233,7 @@ class Hyp_TextFilterAbstract extends Legacy_TextFilter
     }
 
     // Original function
-    function renderWiki_base64decode($text, $word_breaker) {
+    public static function renderWiki_base64decode($text, $word_breaker) {
         //return str_replace(array('<','>','\\"'),array('&lt;','&gt;','"'),base64_decode(strip_tags(str_replace($word_breaker, '', $text))));
         return str_replace(array('<','>'),array('&lt;','&gt;'),base64_decode(strip_tags(str_replace($word_breaker, '', $text))));
     }
