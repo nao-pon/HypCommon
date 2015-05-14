@@ -16,7 +16,7 @@ $ret = "ERROR: 9";
 if (empty($_SERVER['QUERY_STRING'])) exit($ret);
 
 // 有効なパラメーター
-$allows = array("m","p","z","q","u","o","s");
+$allows = array("m","p","z","r","q","u","o","s");
 
 
 
@@ -46,6 +46,7 @@ if ($m == 'r')
 
 	$q = intval($q);
 	$z = intval($z);
+	$r = intval($r);
 	$p = escapeshellcmd($p);
 
 	// 変数チェック
@@ -53,8 +54,8 @@ if ($m == 'r')
 	// ディレクトリ遡りパターン検出
 	if (preg_match("/([\|\s]|\.\.\/)/",$p.$o.$s)) exit($ret);
 
-	// コマンドと元ファイルの存在確認
-	if (!file_exists($p."convert") || !file_exists($o)) exit($ret);
+	// 元ファイルの存在確認
+	if (!file_exists($o)) exit($ret);
 
 	// イメージファイルか？
 	$size = @getimagesize($o);
@@ -65,6 +66,11 @@ if ($m == 'r')
 
 	// quality の範囲
 	if ($q < 1 || $q > 100) exit($ret);
+	
+	// orientation
+	if (isset($r) && is_numeric($r) && $r > 1) {
+		$autoorient = ($orientation > 1)? ' -auto-orient' : '';
+	}
 
 	// unshrap の値
 	if (empty($u) || preg_match('/^[0-9.|]+$/', trim($u))) {
@@ -84,9 +90,10 @@ if ($m == 'r')
 
 	// 実行
 	$out = array();
-	exec( "{$p}convert -thumbnail {$z}%  -quality {$q}{$u} {$o} {$s}" , $out) ;
+	$res = 1;
+	exec( "{$p}convert -thumbnail {$z}%  -quality {$q}{$autoorient}{$u} {$o} {$s}" , $out, $res) ;
 
-	if ($out)
+	if ($res !== 0)
 	{
 		$ret = "ERROR: 1";
 	}
@@ -139,15 +146,17 @@ else if ($m == 'ro')
 	$tmpfile = $s . '_tmp.png';
 
 	$out = array();
+	$res = 1;
 	$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -channel RGBA -fill white -draw "roundrectangle '.max(0,($edge-1)).','.max(1,($edge-1)).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" '.$o.' -compose src_in -composite '.$tmpfile;
-	exec( $p . $cmd, $out ) ;
-	if ($out) $ret = "ERROR: 1";
+	exec( $p . $cmd, $out, $res ) ;
+	if ($res !== 0) $ret = "ERROR: 1";
 
-	if (!$out && $edge) {
+	if ($res === 0 && $edge) {
 		$out = array();
+		$res = 1;
 		$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -fill none -stroke white -strokewidth '.$edge.' -draw "roundrectangle '.($edge-1).','.($edge-1).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" -shade 135x25 -blur 0x1 -normalize '.$tmpfile.' -compose overlay -composite '.$tmpfile;
-		exec( $p . $cmd, $out ) ;
-		if ($out) $ret = "ERROR: 1";
+		exec( $p . $cmd, $out, $res ) ;
+		if ($res !== 0) $ret = "ERROR: 1";
 	}
 
 	if (!$out) {
@@ -162,7 +171,7 @@ else if ($m == 'ro')
 }
 
 // 回転
-else if ($m == 'rj' || $m == 'ri')
+else if ($m == 'rj' || $m == 'ri' || $m == 're')
 {
 	// 必要なパラメーターがあるかどうか
 	$needs = array("p","z","q","s");
@@ -174,6 +183,7 @@ else if ($m == 'rj' || $m == 'ri')
 	$q = intval($q);
 	$z = intval($z);
 	$p = escapeshellcmd($p);
+	
 
 	// 変数チェック
 
@@ -185,44 +195,82 @@ else if ($m == 'rj' || $m == 'ri')
 	if (!$size) exit($ret); //画像ファイルではない
 
 	// 回転の範囲
-	if ($z < 90 || $z > 270) exit($ret);
+	if ($z < 0 || $z > 270) exit($ret);
 
 	// quality の範囲
 	if ($q < 1 || $q > 100) exit($ret);
 
-	// 元画像のサイズ
-	$w = $size[0];
-	$h = $size[1];
-
-	if ($m == "rj")
+	if ($m == "re")
 	{
-		// コマンドと元ファイルの存在確認
-		if (!file_exists($p."jpegtran") || !file_exists($s)) exit($ret);
+		// 元ファイルの存在確認
+		if (!file_exists($s)) exit($ret);
 
-		$tmpfname = @tempnam(dirname($s), "tmp_");
-		exec( "{$p}jpegtran -rotate {$z} -copy all {$s} > {$tmpfname}" );
-		if ( ! @filesize($tmpfname) || ! @unlink($s) )
+		switch ($z) {
+			case '0':
+				$z = '-a';
+			case '90':
+				$z = '-9';
+				break;
+			case '180':
+				$z = '-1';
+				break;
+			case '270':
+				$z = '-2';
+				break;
+			default:
+				$z = '';
+		}
+		if (!$z) exit($ret);
+
+		$out = array();
+		$res = 1;
+		exec("exiftran {$z} -i \"{$s}\"", $out, $res);
+		if ( $res !== 0 )
 		{
 			$ret = "ERROR: 1";
 		}
 		else
 		{
 			$ret = "ERROR: 0";
-			copy($tmpfname, $s);
 			chmod($s, 0606);
 		}
-		unlink($tmpfname);
+	}
+	else if ($m == "rj")
+	{
+		if ($z < 90) exit($ret);
+		
+		// 元ファイルの存在確認
+		if (!file_exists($s)) exit($ret);
+
+		$out = array();
+		$res= 1;
+		exec("{$p}jpegtran -rotate {$z} -copy all -outfile \"{$s}\" \"{$s}\", $out, $res);
+		if ( $res !== 0 )
+		{
+			$ret = "ERROR: 1";
+		}
+		else
+		{
+			$ret = "ERROR: 0";
+			chmod($s, 0606);
+		}
 	}
 	else
 	{
-		// コマンドと元ファイルの存在確認
-		if (!file_exists($p."convert") || !file_exists($s)) exit($ret);
-
+		// 元ファイルの存在確認
+		if (!file_exists($s)) exit($ret);
+		
+		if (!$z) {
+			$z = '-auto-orient';
+		} else {
+			$z = '-rotate +'.$z;
+		}
+		
 		$out = array();
+		$res= 1;
 		// 実行
-		exec( "{$p}convert -size {$w}x{$h} -rotate +{$z} -quality {$q} {$s} {$s}", $out) ;
-
-		if ($out)
+		exec( "{$p}convert {$z} -quality {$q} {$s} {$s}", $out, $res) ;
+		if ( $res !== 0 )
 		{
 			$ret = "ERROR: 1";
 		}

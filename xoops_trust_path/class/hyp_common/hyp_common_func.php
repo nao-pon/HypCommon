@@ -42,10 +42,11 @@ class HypCommonFunc
 	}
 
 	public static function loadClass($name) {
-		if (XC_CLASS_EXISTS($name)) return TRUE;
+		list($class, $dir) = array_pad(explode(':', $name), 2, '');
+		if (XC_CLASS_EXISTS($class)) return TRUE;
 
 		$ret = FALSE;
-		switch($name) {
+		switch($class) {
 			case 'HypSimpleAmazon':
 				$ret = include_once HYP_COMMON_ROOT_PATH . '/hsamazon/hyp_simple_amazon.php';
 				break;
@@ -85,7 +86,7 @@ class HypCommonFunc
 				$ret = include_once HYP_COMMON_ROOT_PATH . '/getid3/getid3.php';
 				break;
 			default:
-				$ret = FALSE;
+				$ret = @include_once HYP_COMMON_ROOT_PATH . '/'.$dir.'/'.$class.'.php';
 		}
 		return $ret;
 	}
@@ -509,6 +510,17 @@ class HypCommonFunc
 		$size = @getimagesize($o_file);
 		if (!$size) return $o_file;//画像ファイルではない
 
+		$orientation = 0;
+		if (function_exists('exif_read_data')) {
+			$exif = exif_read_data($o_file);
+			if (isset($exif['Orientation'])) {
+				$orientation = (int)$exif['Orientation'];
+				if ($orientation === 6 || $orientation === 8) {
+					list($max_height, $max_width) = array($max_width, $max_height);
+				}
+			}
+		}
+
 		// 元画像のサイズ
 		$org_w = $size[0];
 		$org_h = $size[1];
@@ -522,23 +534,20 @@ class HypCommonFunc
 
 		@unlink($s_file);
 
-		if (defined('HYP_IMAGEMAGICK_PATH') && HYP_IMAGEMAGICK_PATH)
-		{
-			// ImageMagick を使用
-			return HypCommonFunc::make_thumb_imagemagick($o_file, $s_file, $zoom, $quality, $size[2], $org_w, $org_h);
-		}
-		else
-		{
-			if (!HypCommonFunc::check_memory4gd($org_w,$org_h,$zoom))
-			{
-				// メモリー制限に引っ掛かりそう。
-				return $o_file;
-			}
-			return HypCommonFunc::make_thumb_gd($o_file, $s_file, $zoom, $quality, $size[2], $org_w, $org_h);
-		}
+		// Try ImageMagick
+		$ret = HypCommonFunc::make_thumb_imagemagick($o_file, $s_file, $zoom, $quality, $size[2], $org_w, $org_h, $orientation);
+ 		if ($ret === $o_file) {
+ 			// Try GD
+ 			if (!HypCommonFunc::check_memory4gd($org_w,$org_h,$zoom)) {
+ 				// メモリー制限に引っ掛かりそう。
+ 				return $o_file;
+ 			}
+ 			$ret = HypCommonFunc::make_thumb_gd($o_file, $s_file, $zoom, $quality, $size[2], $org_w, $org_h, $orientation);
+ 		}
+		return $ret;
 	}
 
-	public static function make_thumb_gd($o_file, $s_file, $zoom, $quality, $type ,$org_w, $org_h)
+	public static function make_thumb_gd($o_file, $s_file, $zoom, $quality, $type ,$org_w, $org_h, $orientation = 0)
 	{
 		//GD のバージョンを取得
 		static $gd_ver = null;
@@ -576,13 +585,13 @@ class HypCommonFunc
 							imagepalettecopy ($dst_im, $src_im);
 							imagefill($dst_im,0,0,$colortransparent);
 							imagecolortransparent($dst_im, $colortransparent);
-							HypCommonFunc::gd_resizer('imagecopyresized',$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h);
+							$dst_im = HypCommonFunc::gd_resizer('imagecopyresized',$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h, $orientation);
 						}
 						else
 						{
 							// 透過色なし
 							$dst_im = $imagecreate($width,$height);
-							HypCommonFunc::gd_resizer($imageresize,$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h);
+							$dst_im = HypCommonFunc::gd_resizer($imageresize,$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h, $orientation);
 							if (function_exists('imagetruecolortopalette')) imagetruecolortopalette ($dst_im, false, imagecolorstotal($src_im));
 						}
 						HypCommonFunc::touch($s_file);
@@ -609,7 +618,7 @@ class HypCommonFunc
 				$src_im = @ imagecreatefromjpeg($o_file);
 				if ($src_im) {
 					$dst_im = $imagecreate($width,$height);
-					HypCommonFunc::gd_resizer($imageresize,$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h);
+					$dst_im = HypCommonFunc::gd_resizer($imageresize,$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h, $orientation);
 					HypCommonFunc::touch($s_file);
 					imagejpeg($dst_im,$s_file,$quality);
 					$o_file = $s_file;
@@ -629,13 +638,13 @@ class HypCommonFunc
 							imagepalettecopy ($dst_im, $src_im);
 							imagefill($dst_im,0,0,$colortransparent);
 							imagecolortransparent($dst_im, $colortransparent);
-							HypCommonFunc::gd_resizer('imagecopyresized',$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h);
+							$dst_im = HypCommonFunc::gd_resizer('imagecopyresized',$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h, $orientation);
 						}
 						else
 						{
 							// 透過色なし
 							$dst_im = $imagecreate($width,$height);
-							HypCommonFunc::gd_resizer($imageresize,$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h);
+							$dst_im = HypCommonFunc::gd_resizer($imageresize,$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h, $orientation);
 							if (function_exists('imagetruecolortopalette')) imagetruecolortopalette ($dst_im, false, imagecolorstotal($src_im));
 						}
 					}
@@ -643,7 +652,7 @@ class HypCommonFunc
 					{
 						// TrueColor
 						$dst_im = $imagecreate($width,$height);
-						HypCommonFunc::gd_resizer($imageresize,$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h);
+						$dst_im = HypCommonFunc::gd_resizer($imageresize,$gd_ver,$dst_im,$src_im,$width,$height,$org_w,$org_h, $orientation);
 					}
 					HypCommonFunc::touch($s_file);
 					if ($s_ext == "jpg")
@@ -666,12 +675,24 @@ class HypCommonFunc
 		return $o_file;
 	}
 
-	public static function gd_resizer($func, $gd_ver, $dst_im, $src_im, $width, $height, $org_w, $org_h) {
+	public static function gd_resizer($func, $gd_ver, $dst_im, $src_im, $width, $height, $org_w, $org_h, $orientation = 0) {
 		$func($dst_im,$src_im,0,0,0,0,$width,$height,$org_w,$org_h);
 		if ($gd_ver >= 2) {
 			list($amount, $radius, $threshold) = HypCommonFunc::get_unsharp_mask_params();
-			HypCommonFunc::UnsharpMask($dst_im ,$amount ,$radius ,$threshold);
+			$dst_im = HypCommonFunc::UnsharpMask($dst_im ,$amount ,$radius ,$threshold);
 		}
+		switch($orientation) {
+			case 8:
+				$dst_im = imagerotate($dst_im, 90, 0);
+				break;
+			case 3:
+				$dst_im = imagerotate($dst_im, 180, 0);
+				break;
+			case 6:
+				$dst_im = imagerotate($dst_im, -90, 0);
+				break;
+		}
+		return $dst_im;
 	}
 
 	public static function get_unsharp_mask_params() {
@@ -821,7 +842,7 @@ class HypCommonFunc
 
 	}
 
-	public static function make_thumb_imagemagick($o_file, $s_file, $zoom, $quality, $type ,$org_w, $org_h)
+	public static function make_thumb_imagemagick($o_file, $s_file, $zoom, $quality, $type ,$org_w, $org_h, $orientation = 0)
 	{
 		$zoom = intval($zoom * 100);
 		$quality = intval($quality);
@@ -833,29 +854,30 @@ class HypCommonFunc
 		$rs_file = realpath(dirname($s_file))."/".basename($s_file);
 
 		// Make Thumb and check success
-		if ( ini_get('safe_mode') != "1" )
-		{
+		$path = defined('HYP_IMAGEMAGICK_PATH')? HYP_IMAGEMAGICK_PATH : '';
+		if ( ini_get('safe_mode') != "1" ) {
 			list($amount, $radius, $threshold) = HypCommonFunc::get_unsharp_mask_params();
-			exec( HYP_IMAGEMAGICK_PATH."convert -thumbnail {$zoom}% -quality {$quality} -unsharp ".number_format(($radius * 2) - 1, 2).'x1+'.number_format($amount / 100, 2).'+'.number_format($threshold / 100, 2)." \"{$ro_file}\" \"{$rs_file}\"" ) ;
+			$autoorient = ($orientation > 1)? '-auto-orient' : '';
+			$o = array();
+			$r = 1;
+			exec($path."convert -thumbnail {$zoom}% -quality {$quality} {$autoorient} -unsharp ".number_format(($radius * 2) - 1, 2).'x1+'.number_format($amount / 100, 2).'+'.number_format($threshold / 100, 2)." \"{$ro_file}\" \"{$rs_file}\"", $o, $r) ;
 			//@chmod($s_file, 0666);
-		}
-		else
-		{
+		} else {
 			// safeモードの場合は、CGIを起動して取得してみる
 
 			$cmds = "?m=r".
-					"&p=".rawurlencode(HYP_IMAGEMAGICK_PATH).
+					"&p=".rawurlencode($path).
 					"&z=".$zoom.
 					"&q=".$quality.
+					"&r=".$orientation.
 					"&u=".rawurlencode(HYP_IMAGEMAGICK_UNSHARP).
 					"&o=".rawurlencode($ro_file).
 					"&s=".rawurlencode($rs_file);
 
-			HypCommonFunc::exec_image_magick_cgi($cmds);
+			HypCommonFunc::exec_image_magick_cgi($cmds, $orientation);
 		}
 
-		if( ! is_readable( $s_file ) )
-		{
+		if( $r !== 0 || ! is_readable( $s_file ) ) {
 			// can't exec convert, big thumbs!
 			return $o_file;
 		}
@@ -1053,122 +1075,185 @@ class HypCommonFunc
 			return false;
 		}
 
-		list($w, $h, $type) = @getimagesize($src);
+		$size = @getimagesize($src);
 
-		if (!$w || !$h || ((!defined('HYP_IMAGEMAGICK_PATH') || !HYP_IMAGEMAGICK_PATH) && $type != 2)) return false;
+		if (!$size) return false;
 
+		$auto = ($count == 0);
 		$angle = (($count > 0 && $count < 4) ? $count : 0 ) * 90;
+
+		if ($auto) {
+			if (function_exists('exif_read_data')) {
+				$exif = exif_read_data($src);
+				if(!empty($exif['Orientation'])) {
+					switch($exif['Orientation']) {
+						case 8:
+							$angle = 270;
+							break;
+						case 3:
+							$angle = 180;
+							break;
+						case 6:
+							$angle = 90;
+							break;
+					}
+				}
+			}
+		}
+		if (!$angle) {
+			return false;
+		}
+		
+		// Try exiftran
+		//if (self::rotateImageExiftran($src, $auto? 0 : $angle)) {
+		// exiftran のバグ? $exif['Orientation'] = 3 の auto-rotation が正常に機能しない
+		if (self::rotateImageExiftran($src, ($auto && $angle !== 180)? 0 : $angle)) {
+			return 1;
+		}
+		// Try jpegtran
+		if (self::rotateImageJpegtran($src, $angle, $auto)) {
+			return 2;
+		}
+		// Try convert
+		if (self::rotateImageImagemagick($src, $auto? 0 : $angle, $quality)) {
+			return 3;
+		}
+		// GD を使用
+		if (self::rotateImageGd($src, $angle, $quality, $auto)) {
+			return 4;
+		}
+		return false;
+	}
+	
+	public static function rotateImageExiftran($src, $angle) {
+		$path = defined('HYP_EXIFTRAN_PATH')? HYP_EXIFTRAN_PATH : '';
+		switch ($angle) {
+			case '0':
+				$angle = '-a';
+			case '90':
+				$angle = '-9';
+				break;
+			case '180':
+				$angle = '-1';
+				break;
+			case '270':
+				$angle = '-2';
+				break;
+			default:
+				$angle = '';
+		}
 		if (!$angle) return false;
-
-		if (defined('HYP_JPEGTRAN_PATH') && HYP_JPEGTRAN_PATH && $type == 2)
-		{
-			// jpegtran を使用
-			if (ini_get('safe_mode') != "1")
-			{
-				$ret = true;
-				$tmpfname = @tempnam(dirname($src), "tmp_");
-				exec( HYP_JPEGTRAN_PATH."jpegtran -rotate {$angle} -copy all \"{$src}\" " . '>' . " \"{$tmpfname}\"");
-				if ( ! @filesize($tmpfname) || ! @unlink($src) )
-				{
-					$ret = false;
-				}
-				else
-				{
-					rename($tmpfname, $src);
-					//chmod($src, 0666);
-				}
-				@unlink($tmpfname);
-				return $ret;
-			}
-			else
-			{
-				$cmds = "?m=rj".
-						"&p=".rawurlencode(HYP_JPEGTRAN_PATH).
-						"&z=".$angle.
-						"&q=".$quality.
-						"&s=".rawurlencode($src);
-
-				return HypCommonFunc::exec_image_magick_cgi($cmds);
-			}
+		
+		if (ini_get('safe_mode') != "1") {
+			$o = array();
+			$r = 1;
+			exec($path."exiftran {$angle} -i \"{$src}\"", $o, $r);
+			return ($r === 0)? true : false;
+		} else {
+			$cmds = "?m=re".
+					"&p=".rawurlencode($path).
+					"&z=".$angle.
+					"&q".
+					"&s=".rawurlencode($src);
+		
+			return HypCommonFunc::exec_image_magick_cgi($cmds);
 		}
-		else if (defined('HYP_IMAGEMAGICK_PATH') && HYP_IMAGEMAGICK_PATH)
-		{
-			// image magick を使用
-			if (ini_get('safe_mode') != "1")
-			{
-				$ret = true;
-				$out = array();
-				exec( HYP_IMAGEMAGICK_PATH."convert -size {$w}x{$h} -rotate +{$angle} -quality {$quality} \"{$src}\" \"{$src}\"", $out ) ;
-				if ($out)
-				{
-					$ret = false;
-				}
-				else
-				{
-					//chmod($src, 0666);
-				}
-				return $ret;
-			}
-			else
-			{
-				$cmds = "?m=ri".
-						"&p=".rawurlencode(HYP_IMAGEMAGICK_PATH).
-						"&z=".$angle.
-						"&q=".$quality.
-						"&s=".rawurlencode($src);
+	}
 
-				return HypCommonFunc::exec_image_magick_cgi($cmds);
+	public static function rotateImageJpegtran($src, $angle, $auto = false) {
+		$path = defined('HYP_JPEGTRAN_PATH')? HYP_JPEGTRAN_PATH : '';
+		if (ini_get('safe_mode') != "1") {
+			$exif = null;
+			$o = array();
+			$r = 1;
+			exec($path."jpegtran -rotate {$angle} -copy all -outfile \"{$src}\" \"{$src}\"", $o, $r);
+			if ($r === 0 && $auto && HypCommonFunc::loadClass('PelJpeg:pel')) {
+				$pelDst = new PelJpeg($src);
+				if ($exifDst = $pelDst->getExif()) {
+					if ($tiff = $exifDst->getTiff()) {
+						if ($ifd0 = $tiff->getIfd()) {
+							if ($entry = $ifd0->getEntry(PelTag::ORIENTATION)) {
+								$entry->setValue(1);
+								$pelDst->saveFile($src);
+							}
+						}
+					}
+				}
 			}
+			return ($r === 0)? true : false;
+		} else {
+			$cmds = "?m=rj".
+					"&p=".rawurlencode($path).
+					"&z=".$angle.
+					"&q".
+					"&s=".rawurlencode($src);
+		
+			return HypCommonFunc::exec_image_magick_cgi($cmds);
 		}
-		else
-		{
-			// GD を使用
-
-			// メモリーチェック
-			if (!HypCommonFunc::check_memory4gd($w,$h)) return false;
-
-			$angle = 360 - $angle;
-			if (($in = imageCreateFromJpeg($src)) === false) {
-				return false;
+	}
+	
+	public static function rotateImageImagemagick($src, $angle, $quality = 95) {
+		$path = defined('HYP_IMAGEMAGICK_PATH')? HYP_IMAGEMAGICK_PATH : '';
+		if (ini_get('safe_mode') != "1") {
+			if (!$angle) {
+				$angle = '-auto-orient';
+			} else {
+				$angle = '-rotate +'.$angle;
 			}
-			if ($w == $h || $angle == 180) {
-				$out = imageRotate($in, $angle, 0);
-			} elseif ($angle == 90 || $angle == 270) {
-				$size = ($w > $h ? $w : $h);
-
-				$portrait = ($h > $w)? true : false;
-
-				// Create a square image the size of the largest side of our src image
-				if (($tmp = imageCreateTrueColor($size, $size)) == false) {
-					//echo "Failed create square trueColor<br>";
-					return false;
-				}
-
-				// Exchange sides
-				if (($out = imageCreateTrueColor($h, $w)) == false) {
-					//echo "Failed create trueColor<br>";
-					return false;
-				}
-
-				// Now copy our src image to tmp where we will rotate and then copy that to $out
-				imageCopy($tmp, $in, 0, 0, 0, 0, $w, $h);
-				$tmp2 = imageRotate($tmp, $angle, 0);
-
-				// Now copy tmp2 to $out;
-				imageCopy($out, $tmp2, 0, 0, (($angle == 270 && !$portrait) ? abs($w - $h) : 0), (($angle == 90 && $portrait) ? abs($w - $h) : 0), $h, $w);
-				imageDestroy($tmp);
-				imageDestroy($tmp2);
-			} elseif ($angle == 360) {
-				imageDestroy($in);
-				return true;
-			}
-			unlink($src);
-			imageJpeg($out, $src, $quality);
-			imageDestroy($in);
-			imageDestroy($out);
-			//chmod($src, 0666);
+			$o = array();
+			$r = 1;
+			exec($path."convert {$angle} -quality {$quality} \"{$src}\" \"{$src}\"", $o, $r) ;
+			return ($r === 0)? true : false;
+		} else {
+			$cmds = "?m=ri".
+					"&p=".rawurlencode($path).
+					"&z=".$angle.
+					"&q=".$quality.
+					"&s=".rawurlencode($src);
+		
+			return HypCommonFunc::exec_image_magick_cgi($cmds);
+		}
+	}
+	
+	public static function rotateImageGd($src, $angle, $quality = 95, $auto = false) {
+		// メモリーチェック
+		if (!HypCommonFunc::check_memory4gd($w,$h)) return false;
+		
+		$exif = null;
+		if (HypCommonFunc::loadClass('PelJpeg:pel')) {
+			$pelSrc = new PelJpeg($src);
+			$exif = $pelSrc->getExif();
+		}
+		
+		$angle = 360 - $angle;
+		if ($angle == 360) {
 			return true;
 		}
+		if (($in = imagecreatefromstring(file_get_contents($src))) === false) {
+			return false;
+		}
+		if (($in = imagerotate($in, $angle, 0)) === false) {
+			return false;
+		}
+		unlink($src);
+		imagejpeg($in, $src, $quality);
+		imagedestroy($in);
+		
+		if ($exif) {
+			$pelDst = new PelJpeg($src);
+			$pelDst->setExif($exif);
+			$exif = $pelDst->getExif();
+			if ($auto && ($tiff = $exif->getTiff())) {
+				if ($ifd0 = $tiff->getIfd()) {
+					if ($entry = $ifd0->getEntry(PelTag::ORIENTATION)) {
+						$entry->setValue(1);
+					}
+				}
+			}
+			$pelDst->saveFile($src);
+		}
+		
+		return true;
 	}
 
 	// image_magick.cgi へアクセス
