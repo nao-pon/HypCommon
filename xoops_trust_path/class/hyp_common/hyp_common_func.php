@@ -1085,7 +1085,7 @@ class HypCommonFunc
 		if ($auto) {
 			if (function_exists('exif_read_data')) {
 				$exif = exif_read_data($src);
-				if(!empty($exif['Orientation'])) {
+				if($exif && !empty($exif['Orientation'])) {
 					switch($exif['Orientation']) {
 						case 8:
 							$angle = 270;
@@ -1167,20 +1167,7 @@ class HypCommonFunc
 			$o = array();
 			$r = 1;
 			exec($path."jpegtran -rotate {$angle} -copy all -outfile \"{$src}\" \"{$src}\"", $o, $r);
-			if ($r === 0 && $auto && HypCommonFunc::loadClass('PelJpeg:pel')) {
-				$pelDst = new PelJpeg($src);
-				if ($exifDst = $pelDst->getExif()) {
-					if ($tiff = $exifDst->getTiff()) {
-						if ($ifd0 = $tiff->getIfd()) {
-							if ($entry = $ifd0->getEntry(PelTag::ORIENTATION)) {
-								$entry->setValue(1);
-								$pelDst->saveFile($src);
-							}
-						}
-					}
-				}
-			}
-			return ($r === 0)? true : false;
+			$ret = ($r === 0)? true : false;
 		} else {
 			$cmds = "?m=rj".
 					"&p=".rawurlencode($path).
@@ -1188,8 +1175,26 @@ class HypCommonFunc
 					"&q".
 					"&s=".rawurlencode($src);
 		
-			return HypCommonFunc::exec_image_magick_cgi($cmds);
+			$ret = HypCommonFunc::exec_image_magick_cgi($cmds);
 		}
+		if ($ret && $auto && HypCommonFunc::loadClass('PelJpeg:pel')) {
+			try {
+				$pelDst = new PelJpeg($src);
+				if ($exifDst = $pelDst->getExif()) {
+					if ($tiff = $exifDst->getTiff()) {
+						if ($ifd0 = $tiff->getIfd()) {
+							if ($entry = $ifd0->getEntry(PelTag::ORIENTATION)) {
+								$entry->setValue(1);
+								$pelDst->saveFile($src);
+								clearstatcache($src);
+							}
+						}
+					}
+				}
+				unset($pelDst);
+			} catch (PelException $e) {}
+		}
+		return $ret;
 	}
 	
 	public static function rotateImageImagemagick($src, $angle, $quality = 95) {
@@ -1220,9 +1225,12 @@ class HypCommonFunc
 		if (!HypCommonFunc::check_memory4gd($w,$h)) return false;
 		
 		$exif = null;
-		if (HypCommonFunc::loadClass('PelJpeg:pel')) {
-			$pelSrc = new PelJpeg($src);
-			$exif = $pelSrc->getExif();
+		if (self::loadClass('PelJpeg:pel')) {
+			try {
+				$pelSrc = new PelJpeg($src);
+				$exif = $pelSrc->getExif();
+				unset($pelSrc);
+			} catch (PelException $e) {}
 		}
 		
 		$angle = 360 - $angle;
@@ -1240,20 +1248,50 @@ class HypCommonFunc
 		imagedestroy($in);
 		
 		if ($exif) {
-			$pelDst = new PelJpeg($src);
-			$pelDst->setExif($exif);
-			$exif = $pelDst->getExif();
-			if ($auto && ($tiff = $exif->getTiff())) {
-				if ($ifd0 = $tiff->getIfd()) {
-					if ($entry = $ifd0->getEntry(PelTag::ORIENTATION)) {
-						$entry->setValue(1);
+			try {
+				$pelSrc = new PelJpeg($src);
+				$pelSrc->setExif($exif);
+				$exif = $pelSrc->getExif();
+				if ($auto && ($tiff = $exif->getTiff())) {
+					if ($ifd0 = $tiff->getIfd()) {
+						if ($entry = $ifd0->getEntry(PelTag::ORIENTATION)) {
+							$entry->setValue(1);
+						}
 					}
 				}
-			}
-			$pelDst->saveFile($src);
+				$pelSrc->saveFile($src);
+				unset($pelSrc);
+				clearstatcache($src);
+			} catch (PelException $e) {}
 		}
 		
 		return true;
+	}
+
+	public static function removeExifGps($src) {
+		if (self::loadClass('PelJpeg:pel')) {
+			try {
+				$pelDst = new PelJpeg($src);
+				if ($exif = $pelDst->getExif()) {
+					if ($tiff = $exif->getTiff()) {
+						if ($ifd0 = $tiff->getIfd()) {
+							$touch = false;
+							if ($gps = $ifd0->getSubIfd(PelIfd::GPS)) {
+								foreach($gps->getEntries() as $tag => $entry) {
+									$gps->offsetUnset($tag);
+								}
+								$touch = true;
+							}
+							if ($touch) {
+								$pelDst->saveFile($src);
+								clearstatcache($src);
+							}
+						}
+					}
+				}
+				unset($pelDst);
+			} catch (PelException $e) {}
+		}
 	}
 
 	// image_magick.cgi へアクセス
