@@ -1067,7 +1067,7 @@ class HypCommonFunc
 	}
 
 	// イメージを回転
-	public static function rotateImage($src, $count = 1, $quality = 95)
+	public static function rotateImage($src, $count = 1, $quality = 95, $imgSize = null)
 	{
 		$src = realpath($src);
 
@@ -1075,11 +1075,16 @@ class HypCommonFunc
 			return false;
 		}
 
-		$size = @getimagesize($src);
-
-		if (!$size) return false;
+		if (is_null($imgSize)) {
+			$imgSize = @getimagesize($src);
+		}
+		if (!$imgSize) return false;
 
 		$auto = ($count == 0);
+		if ($auto && (! in_array($imgSize[2], array(IMAGETYPE_JPEG, IMAGETYPE_JPEG2000)))) {
+			return false;
+		}
+		
 		$angle = (($count > 0 && $count < 4) ? $count : 0 ) * 90;
 
 		if ($auto) {
@@ -1268,7 +1273,17 @@ class HypCommonFunc
 		return true;
 	}
 
-	public static function removeExifGps($src) {
+	public static function removeExifGps($src, $imgSize = null) {
+		$src = realpath($src);
+		if (! is_file($src)) {
+			return;
+		}
+		if (is_null($imgSize)) {
+			$imgSize = @getimagesize($src);
+		}
+		if (! in_array($imgSize[2], array(IMAGETYPE_JPEG, IMAGETYPE_JPEG2000))) {
+			return;
+		}
 		if (self::loadClass('PelJpeg:pel')) {
 			try {
 				$pelDst = new PelJpeg($src);
