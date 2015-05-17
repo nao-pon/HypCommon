@@ -91,7 +91,9 @@ if ($m == 'r')
 	// 実行
 	$out = array();
 	$res = 1;
-	exec( "{$p}convert -thumbnail {$z}%  -quality {$q}{$autoorient}{$u} {$o} {$s}" , $out, $res) ;
+	$qo = escapeshellarg($o);
+	$qs = escapeshellarg($qs);
+	exec( "{$p}convert -thumbnail {$z}%  -quality {$q}{$autoorient}{$u} {$qo} {$qs}" , $out, $res) ;
 
 	if ($res !== 0)
 	{
@@ -147,14 +149,14 @@ else if ($m == 'ro')
 
 	$out = array();
 	$res = 1;
-	$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -channel RGBA -fill white -draw "roundrectangle '.max(0,($edge-1)).','.max(1,($edge-1)).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" '.$o.' -compose src_in -composite '.$tmpfile;
+	$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -channel RGBA -fill white -draw "roundrectangle '.max(0,($edge-1)).','.max(1,($edge-1)).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" '.escapeshellarg($o).' -compose src_in -composite '.escapeshellarg($tmpfile);
 	exec( $p . $cmd, $out, $res ) ;
 	if ($res !== 0) $ret = "ERROR: 1";
 
 	if ($res === 0 && $edge) {
 		$out = array();
 		$res = 1;
-		$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -fill none -stroke white -strokewidth '.$edge.' -draw "roundrectangle '.($edge-1).','.($edge-1).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" -shade 135x25 -blur 0x1 -normalize '.$tmpfile.' -compose overlay -composite '.$tmpfile;
+		$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -fill none -stroke white -strokewidth '.$edge.' -draw "roundrectangle '.($edge-1).','.($edge-1).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" -shade 135x25 -blur 0x1 -normalize '.escapeshellarg($tmpfile).' -compose overlay -composite '.escapeshellarg($tmpfile);
 		exec( $p . $cmd, $out, $res ) ;
 		if ($res !== 0) $ret = "ERROR: 1";
 	}
@@ -224,7 +226,8 @@ else if ($m == 'rj' || $m == 'ri' || $m == 're')
 
 		$out = array();
 		$res = 1;
-		exec("exiftran {$z} -i \"{$s}\"", $out, $res);
+		$qs = escapeshellarg($s);
+		exec("exiftran {$z} -i \"{$qs}\"", $out, $res);
 		if ( $res !== 0 )
 		{
 			$ret = "ERROR: 1";
@@ -244,7 +247,8 @@ else if ($m == 'rj' || $m == 'ri' || $m == 're')
 
 		$out = array();
 		$res= 1;
-		exec("{$p}jpegtran -rotate {$z} -copy all -outfile \"{$s}\" \"{$s}\", $out, $res);
+		$qs = escapeshellarg($s);
+		exec("{$p}jpegtran -rotate {$z} -copy all -outfile \"{$qs}\" \"{$qs}\", $out, $res);
 		if ( $res !== 0 )
 		{
 			$ret = "ERROR: 1";
@@ -268,8 +272,9 @@ else if ($m == 'rj' || $m == 'ri' || $m == 're')
 		
 		$out = array();
 		$res= 1;
+		$qs = escapeshellarg($s);
 		// 実行
-		exec( "{$p}convert {$z} -quality {$q} {$s} {$s}", $out, $res) ;
+		exec( "{$p}convert {$z} -quality {$q} {$qs} {$qs}", $out, $res) ;
 		if ( $res !== 0 )
 		{
 			$ret = "ERROR: 1";

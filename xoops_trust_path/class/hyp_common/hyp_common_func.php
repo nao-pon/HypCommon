@@ -112,6 +112,24 @@ class HypCommonFunc
 		}
 	}
 	
+	public static function cmdExec($cmd_format, $cmd_args = array(), $results = array()) {
+		if (isset($results[0])) {
+			$output =& $results[0];
+		}
+		if (isset($results[1])) {
+			$return_var =& $results[1];
+		}
+		$return_var = -1;
+		$cmd_args = array_map('escapeshellarg', $cmd_args);
+		$cmd = vsprintf($cmd_format, $cmd_args);
+		if ($cmd) {
+			@exec($cmd, $output, $return_var);
+		} else {
+			exit(var_dump($cmd_format));
+		}
+		return $return_var;
+	}
+	
 	// 1バイト文字をエンティティ化
 	public static function str_to_entity(&$str)
 	{
@@ -858,9 +876,9 @@ class HypCommonFunc
 		if ( ini_get('safe_mode') != "1" ) {
 			list($amount, $radius, $threshold) = HypCommonFunc::get_unsharp_mask_params();
 			$autoorient = ($orientation > 1)? '-auto-orient' : '';
-			$o = array();
-			$r = 1;
-			exec($path."convert -thumbnail {$zoom}% -quality {$quality} {$autoorient} -unsharp ".number_format(($radius * 2) - 1, 2).'x1+'.number_format($amount / 100, 2).'+'.number_format($threshold / 100, 2)." \"{$ro_file}\" \"{$rs_file}\"", $o, $r) ;
+			$r = self::cmdExec($path."convert -thumbnail {$zoom}%% -quality {$quality} {$autoorient} -unsharp ".number_format(($radius * 2) - 1, 2).'x1+'.number_format($amount / 100, 2).'+'.number_format($threshold / 100, 2)." %s %s",
+				array($ro_file, $rs_file)
+			);
 			//@chmod($s_file, 0666);
 		} else {
 			// safeモードの場合は、CGIを起動して取得してみる
@@ -948,6 +966,7 @@ class HypCommonFunc
 
 		if (file_exists($rs_file)) unlink($rs_file);
 
+		$path = defined('HYP_IMAGEMAGICK_PATH')? HYP_IMAGEMAGICK_PATH : '';
 		// Make Thumb and check success
 		if ( ini_get('safe_mode') != "1" ) {
 			// 元画像のサイズ
@@ -961,20 +980,20 @@ class HypCommonFunc
 
 			$tmpfile = $rs_file . '_tmp.png';
 
-			$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -channel RGBA -fill white -draw "roundrectangle '.max(0,($edge-1)).','.max(1,($edge-1)).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" "'.$ro_file.'" -compose src_in -composite "'.$tmpfile.'"';
-			exec( HYP_IMAGEMAGICK_PATH . $cmd ) ;
+			$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -channel RGBA -fill white -draw "roundrectangle '.max(0,($edge-1)).','.max(1,($edge-1)).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" %s -compose src_in -composite %s';
+			$r = self::cmdExec($cmd, array($ro_file, $tmpfile));
 
-			if ($edge) {
-				$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -fill none -stroke white -strokewidth '.$edge.' -draw "roundrectangle '.($edge-1).','.($edge-1).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" -shade 135x25 -blur 0x1 -normalize "'.$tmpfile.'" -compose overlay -composite "'.$tmpfile.'"';
-				exec( HYP_IMAGEMAGICK_PATH . $cmd ) ;
+			if ($r === 0 && $edge) {
+				$cmd = 'convert -size '.$imw.'x'.$imh.' xc:none -fill none -stroke white -strokewidth '.$edge.' -draw "roundrectangle '.($edge-1).','.($edge-1).' '.($imw-$edge).','.($imh-$edge).' '.$corner.','.$corner.'" -shade 135x25 -blur 0x1 -normalize %1$s -compose overlay -composite %1$s';
+				$r = self::cmdExec($cmd, array($tmpfile));
 			}
-			copy ($tmpfile, $rs_file);
+			if ($r === 0) copy ($tmpfile, $rs_file);
 			unlink($tmpfile);
 		} else {
 			// safeモードの場合は、CGIを起動して取得してみる
 
 			$cmds = "?m=ro".
-					"&p=".rawurlencode(HYP_IMAGEMAGICK_PATH).
+					"&p=".rawurlencode($path).
 					"&z=".$corner.
 					"&q=".$edge.
 					"&o=".rawurlencode($ro_file).
@@ -1150,9 +1169,7 @@ class HypCommonFunc
 		if (!$angle) return false;
 		
 		if (ini_get('safe_mode') != "1") {
-			$o = array();
-			$r = 1;
-			exec($path."exiftran {$angle} -i \"{$src}\"", $o, $r);
+			$r = self::cmdExec($path."exiftran {$angle} -np -i %s", array($src));
 			return ($r === 0)? true : false;
 		} else {
 			$cmds = "?m=re".
@@ -1169,9 +1186,7 @@ class HypCommonFunc
 		$path = defined('HYP_JPEGTRAN_PATH')? HYP_JPEGTRAN_PATH : '';
 		if (ini_get('safe_mode') != "1") {
 			$exif = null;
-			$o = array();
-			$r = 1;
-			exec($path."jpegtran -rotate {$angle} -copy all -outfile \"{$src}\" \"{$src}\"", $o, $r);
+			$r = self::cmdExec($path."jpegtran -rotate {$angle} -copy all -outfile %1\$s %1\$s", array($src));
 			$ret = ($r === 0)? true : false;
 		} else {
 			$cmds = "?m=rj".
@@ -1210,9 +1225,7 @@ class HypCommonFunc
 			} else {
 				$angle = '-rotate +'.$angle;
 			}
-			$o = array();
-			$r = 1;
-			exec($path."convert {$angle} -quality {$quality} \"{$src}\" \"{$src}\"", $o, $r) ;
+			$r = self::cmdExec($path."convert {$angle} -quality {$quality} %1\$s %1\$s", array($src));
 			return ($r === 0)? true : false;
 		} else {
 			$cmds = "?m=ri".
