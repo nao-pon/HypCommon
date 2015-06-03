@@ -529,8 +529,8 @@ class HypCommonFunc
 		if (!$size) return $o_file;//画像ファイルではない
 
 		$orientation = 0;
-		if (function_exists('exif_read_data')) {
-			$exif = exif_read_data($o_file);
+		if (function_exists('exif_read_data') && in_array($size[2], array(IMAGETYPE_JPEG, IMAGETYPE_JPEG2000))) {
+			$exif = @exif_read_data($o_file);
 			if (isset($exif['Orientation'])) {
 				$orientation = (int)$exif['Orientation'];
 				if ($orientation === 6 || $orientation === 8) {
