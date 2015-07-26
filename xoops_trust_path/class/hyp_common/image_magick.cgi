@@ -93,7 +93,7 @@ if ($m == 'r')
 	$res = 1;
 	$qo = escapeshellarg($o);
 	$qs = escapeshellarg($qs);
-	exec( "{$p}convert -thumbnail {$z}%  -quality {$q}{$autoorient}{$u} {$qo} {$qs}" , $out, $res) ;
+	exec( "{$p}convert {$qo} -coalesce -thumbnail {$z}%  -quality {$q}{$autoorient}{$u} -deconstruct -repage 0x0 {$qs}" , $out, $res) ;
 
 	if ($res !== 0)
 	{

@@ -876,7 +876,7 @@ class HypCommonFunc
 		if ( ini_get('safe_mode') != "1" ) {
 			list($amount, $radius, $threshold) = HypCommonFunc::get_unsharp_mask_params();
 			$autoorient = ($orientation > 1)? '-auto-orient' : '';
-			$r = self::cmdExec($path."convert -thumbnail {$zoom}%% -quality {$quality} {$autoorient} -unsharp ".number_format(($radius * 2) - 1, 2).'x1+'.number_format($amount / 100, 2).'+'.number_format($threshold / 100, 2)." %s %s",
+			$r = self::cmdExec($path."convert %s -coalesce -thumbnail {$zoom}%% -quality {$quality} -unsharp ".number_format(($radius * 2) - 1, 2).'x1+'.number_format($amount / 100, 2).'+'.number_format($threshold / 100, 2)." -deconstruct -repage 0x0 %s",
 				array($ro_file, $rs_file)
 			);
 			//@chmod($s_file, 0666);
