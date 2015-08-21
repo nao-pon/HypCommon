@@ -25,7 +25,7 @@
 * Support mysqli environment.
 * 
 **/
-error_reporting(E_ALL);
+
 class MySQLDump {
 	/**
 	* @access private
