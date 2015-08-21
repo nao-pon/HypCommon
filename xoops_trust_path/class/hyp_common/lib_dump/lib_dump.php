@@ -236,7 +236,7 @@ class MySQLDump {
 				$structure .= ' '.$record['Extra'];
 			$structure .= ",\n";
 		}
-		$structure = @ereg_replace(",\n$", null, $structure);
+		$structure = @preg_replace("/,\n$/", null, $structure);
 
 		// Save all Column Indexes
 		$structure .= $this->getSqlKeysTable($table);
