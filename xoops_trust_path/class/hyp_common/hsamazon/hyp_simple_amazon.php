@@ -48,8 +48,11 @@ class HypSimpleAmazon
 	var $parseXml = true;
 	var $releaseTime = array();
 
-	function HypSimpleAmazon ($AssociateTag = '', $AccessKeyId = null, $SecretAccessKey = null) {
-
+	// PHP 4 style constructor for compat
+	public function HypSimpleAmazon ($AssociateTag = '', $AccessKeyId = null, $SecretAccessKey = null) {
+		self::__construct($AssociateTag, $AccessKeyId, $SecretAccessKey);
+	}
+	public function __construct($AssociateTag = '', $AccessKeyId = null, $SecretAccessKey = null) {
 		$this->myDirectory = dirname(__FILE__);
 
 		include_once dirname($this->myDirectory) . '/hyp_common_func.php';

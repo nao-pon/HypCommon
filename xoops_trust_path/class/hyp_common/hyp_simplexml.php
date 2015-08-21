@@ -372,7 +372,11 @@ class HypXMLData
 	 * @param string $name name
 	 * @param array $options options
 	 */
-	function HypXMLData($name, $options = array())
+	// PHP 4 style constructor for compat
+	public function HypXMLData($name, $options = array()) {
+		self::__construct($name, $options);
+	}
+	public function __construct($name, $options = array())
 	{
 		if (empty($options["contentkey"]))
 			$options["contentkey"] = "content";

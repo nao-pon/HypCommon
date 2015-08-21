@@ -9,7 +9,11 @@ class Hyp_TextFilterAbstract extends Legacy_TextFilter
     var $hypEscTags      = array('quote', 'color', 'font', 'size', 'b', 'c', 'd', 'i', 'u');
     var $hypBypassTags   = array('fig');
 
-    function Hyp_TextFilterAbstract() {
+	// PHP 4 style constructor for compat
+	public function Hyp_TextFilterAbstract() {
+		self::__construct();
+	}
+	public function __construct() {
         parent::Legacy_TextFilter();
         $this->mMakeXCodeConvertTable->add('Hyp_TextFilter::sMakeXCodeConvertTable', XCUBE_DELEGATE_PRIORITY_3);
         $this->mMakeXCodeConvertTable->add(array(& $this, 'getXcodeBBcode'), XCUBE_DELEGATE_PRIORITY_FINAL);
@@ -264,7 +268,11 @@ class Hyp_TextFilterAbstract extends Legacy_TextFilter
 
 if (! defined('LEGACY_BASE_VERSION') || version_compare(LEGACY_BASE_VERSION, '2.2.2.2', '>=') || (! defined('_MI_LEGACY_DETAILED_VERSION') || version_compare(_MI_LEGACY_DETAILED_VERSION, 'CorePack 20130503', '<'))) {
 	class Hyp_TextFilter extends Hyp_TextFilterAbstract {
-		function Hyp_TextFilter() {
+		// PHP 4 style constructor for compat
+		public function Hyp_TextFilter() {
+			self::__construct();
+		}
+		public function __construct() {
 			parent::Hyp_TextFilterAbstract();
 		}
 		// Over write
@@ -274,8 +282,12 @@ if (! defined('LEGACY_BASE_VERSION') || version_compare(LEGACY_BASE_VERSION, '2.
 	}
 } else {
 	class Hyp_TextFilter extends Hyp_TextFilterAbstract {
-		function Hyp_TextFilter() {
-			parent::Hyp_TextFilterAbstract();
+		// PHP 4 style constructor for compat
+		public function Hyp_TextFilter() {
+			self::__construct();
+		}
+		public function __construct() {
+		parent::Hyp_TextFilterAbstract();
 		}
 		// Over write
 		public static function makeXCodeConvertTable(& $patterns, & $replacements) {

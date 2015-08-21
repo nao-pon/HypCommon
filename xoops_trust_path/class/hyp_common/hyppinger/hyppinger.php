@@ -20,7 +20,11 @@ class HypPinger {
 		
 	var $debug = FALSE;
 	
-	function HypPinger ($name, $url, $changesurl=NULL, $rssurl=NULL, $tag=NULL) {
+	// PHP 4 style constructor for compat
+	public function HypPinger ($name, $url, $changesurl=NULL, $rssurl=NULL, $tag=NULL) {
+		self::__construct($name, $url, $changesurl, $rssurl, $tag);
+	}
+	public function __construct($name, $url, $changesurl=NULL, $rssurl=NULL, $tag=NULL) {
 		$this->name = $name;
 		$this->url = $url;
 		$this->changesurl = $changesurl? $changesurl : '';

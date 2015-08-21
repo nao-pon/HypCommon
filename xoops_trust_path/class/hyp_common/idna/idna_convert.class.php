@@ -99,7 +99,11 @@ class idna_convert
      * @return boolean
      * @since 0.5.2
      */
-    function idna_convert($options = false)
+    // PHP 4 style constructor for compat
+    public function idna_convert($options = false) {
+        self::__construct($options);
+    }
+    public function __construct($options = false)
     {
         $this->slast = $this->_sbase + $this->_lcount * $this->_vcount * $this->_tcount;
         // If parameters are given, pass these to the respective method

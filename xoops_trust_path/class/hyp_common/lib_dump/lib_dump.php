@@ -25,7 +25,7 @@
 * Support mysqli environment.
 * 
 **/
-
+error_reporting(E_ALL);
 class MySQLDump {
 	/**
 	* @access private
@@ -78,7 +78,11 @@ class MySQLDump {
 	* @param boolean $compress It defines if the output file is compress (gzip) or not
 	* @param boolean $hexValue It defines if the outup values are base-16 or not
 	*/
-	function MYSQLDump($db = null, $filepath = 'dump.sql', $compress = false, $hexValue = false){
+	// PHP 4 style constructor for compat
+	public function MYSQLDump($db = null, $filepath = 'dump.sql', $compress = false, $hexValue = false) {
+		return self::__construct($db, $filepath, $compress, $hexValue);
+	}
+	public function __construct($db = null, $filepath = 'dump.sql', $compress = false, $hexValue = false) {
 		if (is_object($db) || is_resource($db)) {
 			if (is_object($db) && get_class($db) === 'mysqli') {
 				$this->link = $db;

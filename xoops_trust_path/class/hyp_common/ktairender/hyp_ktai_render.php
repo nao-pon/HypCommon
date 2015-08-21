@@ -63,7 +63,11 @@ class HypKTaiRender
 	var $Config_jquery_resolve_table = false;
 	var $Config_jquery_image_convert = 0;
 
-	function HypKTaiRender () {
+	// PHP 4 style constructor for compat
+	public function HypKTaiRender () {
+		self::__construct();
+	}
+	public function __construct() {
 
 		$this->keymap['prev'] = '4';
 		$this->keymap['next'] = '6';

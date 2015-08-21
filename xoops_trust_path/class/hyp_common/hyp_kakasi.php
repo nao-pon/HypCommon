@@ -24,7 +24,11 @@ class Hyp_KAKASHI
 	var $dicts = array();
 	var $cmd = "";
 
-	function Hyp_KAKASHI()
+	// PHP 4 style constructor for compat
+	public function Hyp_KAKASHI() {
+		self::__construct();
+	}
+	public function __construct()
 	{
 		if (defined('HYP_POST_ENCODING')) {
 			$this->encoding = HYP_POST_ENCODING;

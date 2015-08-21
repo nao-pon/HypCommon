@@ -2600,7 +2600,12 @@ class Hyp_HTTP_Request
 	var $header = '';    // Header
 	var $data = '';      // Data
 	var $getSize = null; // Get size
-	function Hyp_HTTP_Request()
+	
+	// PHP 4 style constructor for compat
+	public function Hyp_HTTP_Request() {
+		self::__construct();
+	}
+	public function __construct()
 	{
 		$this->ua = 'PHP/'.PHP_VERSION;
 

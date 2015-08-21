@@ -9,7 +9,11 @@ class HypSimpleRakuten extends HypSimpleAmazon
 	var $DevId = '';
 	var $Version = '2010-09-15';
 
-	function HypSimpleRakuten ($AffId = null, $DevId = null) {
+	// PHP 4 style constructor for compat
+	public function HypSimpleRakuten ($AffId = null, $DevId = null) {
+		self::__construct($AffId, $DevId);
+	}
+	public function __construct($AffId = null, $DevId = null) {
 		$this->myDirectory = dirname(__FILE__);
 		include_once dirname($this->myDirectory) . '/hyp_common_func.php';
 		include_once dirname($this->myDirectory) . '/hyp_simplexml.php';
