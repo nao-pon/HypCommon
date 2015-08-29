@@ -457,7 +457,7 @@ class HypSimpleAmazon
 			return $_key;
 		}
 		if (!$alias) $alias = $key;
-		$alias = htmlspecialchars($alias, ENT_COMPAT, $this->htmlsp_encoding);
+		$alias = htmlspecialchars($alias, ENT_COMPAT, $needEncode? $this->htmlsp_encoding : 'UTF-8');
 
 		if ($needEncode) {
 			$e_key = mb_convert_encoding($key, 'UTF-8', $this->encoding);
@@ -905,7 +905,9 @@ class HypSimpleAmazon
 		} else if (@ $item['VariationSummary']['LowestPrice']['Amount']) {
 			$price[0] = $item['VariationSummary']['LowestPrice']['Amount'];
 			$price[1] = $item['VariationSummary']['LowestPrice']['FormattedPrice'];
-		}
+		} else {
+			$price = $this->get_listprice($item);
+ 		}
 		return $price;
 	}
 
