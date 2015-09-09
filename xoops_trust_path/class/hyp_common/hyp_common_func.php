@@ -2251,6 +2251,7 @@ EOD;
 	}
 
 	public static function readfile($file, $use_content_encoding = FALSE) {
+		while(@ob_get_level()){ @ob_end_clean(); }
 		if (defined('HYP_X_SENDFILE_MODE')) {
 			if (HYP_X_SENDFILE_MODE === 3 || (! $use_content_encoding && HYP_X_SENDFILE_MODE === 2)) {
 				if ( $use_content_encoding && HYP_X_SENDFILE_MODE === 3) {
@@ -2266,19 +2267,31 @@ EOD;
 				return;
 			}
 		}
+		header('Accept-Ranges: bytes');
 		// Range: bytes=xxx-xxx
 		if (isset($_SERVER['HTTP_RANGE'])) {
 			$range = $_SERVER['HTTP_RANGE'];
 			$fsize = filesize($file);
-			if (preg_match('/^bytes=(\d+)\-(\d+)$/i', $range, $arr)) {
-				$offset = $arr[1];
-				$end = $arr[2];
+			if (preg_match('/^bytes=(\d+)?\-(\d+)?$/i', trim($range), $arr)) {
+				$offset = intval($arr[1]);
+				$end = intval($arr[2]);
+				if (!$offset) {
+					$offset = $fsize - $end;
+					$end = 0;
+				}
+				if (!$end) {
+					$end = $fsize - 1;
+				}
 				$len = $end - $offset + 1;
 				header('HTTP/1.1 206 Partial Content');
-				header('Accept-Ranges: bytes');
 				header(sprintf('Content-Range: bytes %d-%d/%d',$offset, $end, $fsize));
 				header('Content-Length: ' . $len);
-				echo HypCommonFunc::file_get_contents($file, false, null, $offset, $len);
+				$fp = fopen($file, rb);
+				$out = fopen('php://output', 'wb');
+				fseek($fp, $offset);
+				stream_copy_to_stream($fp, $out, $len);
+				fclose($out);
+				fclose($fp);
 				return;
 			}
 		}
