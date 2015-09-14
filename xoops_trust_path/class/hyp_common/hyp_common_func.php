@@ -2273,14 +2273,18 @@ EOD;
 			$range = $_SERVER['HTTP_RANGE'];
 			$fsize = filesize($file);
 			if (preg_match('/^bytes=(\d+)?\-(\d+)?$/i', trim($range), $arr)) {
-				$offset = intval($arr[1]);
-				$end = intval($arr[2]);
-				if (!$offset) {
-					$offset = $fsize - $end;
-					$end = 0;
+				$offset = isset($arr[1])? $arr[1] : null;
+				$end = isset($arr[2])? $arr[2] : null;
+				if ($offset === '' || is_null($offset)) {
+					$offset = $fsize - intval($end);
+					$end = null;
+				} else {
+					$offset = intval($offset);
 				}
-				if (!$end) {
+				if ($end === '' || is_null($end)) {
 					$end = $fsize - 1;
+				} else {
+					$end = intval($end);
 				}
 				$len = $end - $offset + 1;
 				header('HTTP/1.1 206 Partial Content');
