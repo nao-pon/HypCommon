@@ -351,8 +351,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 	function preFilter() {
 
+		$ua = isset($_SERVER['HTTP_USER_AGENT'])? $_SERVER['HTTP_USER_AGENT'] : '';
+		
 		// Set const "HYP_IS_BOT_UA"
-		if (preg_match($this->bot_ua_reg, $_SERVER['HTTP_USER_AGENT'])) {
+		if ($ua && preg_match($this->bot_ua_reg, $ua)) {
 			define('HYP_IS_BOT_UA', true);
 		}
 
@@ -365,8 +367,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				}
 			}
 			$_k_tai_ua_regex = isset($this->k_tai_conf['ua_regex#'.XOOPS_URL])? $this->k_tai_conf['ua_regex#'.XOOPS_URL] : $this->k_tai_conf['ua_regex'];
-			if (empty($_COOKIE['_hypktaipc']) && isset($_SERVER['HTTP_USER_AGENT']) &&
-				preg_match($_k_tai_ua_regex, $_SERVER['HTTP_USER_AGENT'])) {
+			if (empty($_COOKIE['_hypktaipc']) && $ua &&
+				preg_match($_k_tai_ua_regex, $ua)) {
 
 				// Reset each site values.
 				foreach (array_keys($this->k_tai_conf) as $key) {
@@ -453,7 +455,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				@ ini_set('session.use_trans_sid', 0);
 				if (! $this->HypKTaiRender->vars['ua']['allowCookie']) {
 					$parseUrl = parse_url(XOOPS_URL);
-					if ($_SERVER['HTTP_HOST'] !== $parseUrl['host']) {
+					if (@$_SERVER['HTTP_HOST'] !== $parseUrl['host']) {
 						header('HTTP', true, 400);
 						exit('400 Bad Request');
 					}
@@ -2271,10 +2273,10 @@ EOD;
 			$info['UID'] = 0;
 			$info['UNAME'] = 'Guest';
 		}
-		$info['REQUEST_URI'] = $_SERVER['REQUEST_URI'];
-		$info['HTTP_REFERER'] = $_SERVER['HTTP_REFERER'];
-		$info['HTTP_USER_AGENT'] = $_SERVER['HTTP_USER_AGENT'];
-		$info['REMOTE_ADDR'] = $_SERVER['REMOTE_ADDR'];
+		$info['REQUEST_URI'] = isset($_SERVER['REQUEST_URI'])? $_SERVER['REQUEST_URI'] : '';
+		$info['HTTP_REFERER'] = isset($_SERVER['HTTP_REFERER'])? $_SERVER['HTTP_REFERER'] : '';
+		$info['HTTP_USER_AGENT'] = isset($_SERVER['HTTP_USER_AGENT'])? $_SERVER['HTTP_USER_AGENT'] : '';;
+		$info['REMOTE_ADDR'] = isset($_SERVER['REMOTE_ADDR'])? $_SERVER['REMOTE_ADDR'] : '';;
 		$info['SPAM LEVEL'] = $spamlev;
 
 		$_info = '';
