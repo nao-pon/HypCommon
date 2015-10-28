@@ -3,4 +3,4 @@
  * Created on 2007/05/30 by nao-pon http://hypweb.net/
  */
 
-$version = '20150915.1';
+$version = '20151028';
