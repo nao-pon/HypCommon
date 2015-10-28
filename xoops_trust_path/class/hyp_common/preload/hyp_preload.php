@@ -909,10 +909,10 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 								if (preg_match('/.+\..+/', $badurl)) {
 									$myhost = parse_url(XOOPS_URL, PHP_URL_HOST);
 									// 正規表現の検査
-									if (@ preg_match('#(?:'. $this->post_spam_safe_url . ')#', '') === false) {
+									if (@ preg_match('#(?:'. $this->post_spam_safe_url . ')#i', '') === false) {
 										$this->post_spam_safe_url = '(?!)';
 									}
-									if (! preg_match('#' . preg_quote($myhost, '#') . '|(?:' . $this->post_spam_safe_url . ')#', $badurl)) {
+									if (! preg_match('#' . preg_quote($myhost, '#') . '|(?:' . $this->post_spam_safe_url . ')#i', $badurl)) {
 										$confUrls = file($confFile);
 										$confUrls = array_map('rtrim', $confUrls);
 										if (! in_array($badurl, $confUrls)) {
