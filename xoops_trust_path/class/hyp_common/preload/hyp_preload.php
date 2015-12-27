@@ -724,6 +724,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		// For addHeadTag()
 		if (! isset($GLOBALS['hyp_preload_head_tag'])) $GLOBALS['hyp_preload_head_tag'] = '';
 
+		// For CSRF Protection
+		$csrfToken = null;
+		if ($this->use_csrf_protect) {
+			$csrfToken = md5($_SERVER['REMOTE_ADDR'].XOOPS_DB_PASS.time());
+		}
+
 		if (! empty($_POST)) {
 			// CSRF Token check
 			if (! defined('DISABLE_HYP_CSRF_PROTECTION') && ! empty($this->use_csrf_protect)) {
@@ -731,6 +737,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					$_POST['HypToken'] = $_SERVER['HTTP_X_HYPTOKEN'];
 				}
 				if (empty($_POST['HypToken']) || empty($_SESSION['HYP_CSRF_TOKEN']) || $_POST['HypToken'] !== $_SESSION['HYP_CSRF_TOKEN']) {
+					$_SESSION['HYP_CSRF_TOKEN'] = $this->csrfToken;
 					$this->_rePost();
 					exit();
 				}
@@ -931,6 +938,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 		}
 
+		// set CSRF Token
+		if (!isset($_SESSION['HYP_CSRF_TOKEN']) && $csrfToken) {
+			$_SESSION['HYP_CSRF_TOKEN'] = $csrfToken;
+		}
+
 		// Insert tag into <head>
 		if (! defined('HYP_K_TAI_RENDER') || HYP_K_TAI_RENDER !== 1) {
 			ob_start(array(& $this, 'addHeadTag'));
@@ -1120,9 +1132,6 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 		}
 		$table .= '</table>' ;
-		if (empty($_SESSION['HYP_CSRF_TOKEN'])) {
-			$_SESSION['HYP_CSRF_TOKEN'] = md5($_SERVER['REMOTE_ADDR'].XOOPS_DB_PASS.time());
-		}
 		if ($inSite) {
 			$form .= '<input type="hidden" value="'.$_SESSION['HYP_CSRF_TOKEN'].'" name="HypToken" />';
 			$form .= '<input type="submit" value="'.$msg['btn_repost'].'" /></form>';
@@ -1429,10 +1438,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 		$script = '';
 		// for CRSF Protection on XMLHttpRequest
-		if (! empty($this->use_csrf_protect)) {
-			if (empty($_SESSION['HYP_CSRF_TOKEN'])) {
-				$_SESSION['HYP_CSRF_TOKEN'] = md5($_SERVER['REMOTE_ADDR'].XOOPS_DB_PASS.time());
-			}
+		if (isset($_SESSION['HYP_CSRF_TOKEN'])) {
 			// For XMLHttpRequest use HTTP header 'X-HypToken'
 			$script .=<<<EOD
 (function(){
@@ -1627,10 +1633,7 @@ EOD;
 		$insert_post = '';
 
 		// CSRF ÂÐºöÍÑ
-		if (! empty($this->use_csrf_protect)) {
-			if (empty($_SESSION['HYP_CSRF_TOKEN'])) {
-				$_SESSION['HYP_CSRF_TOKEN'] = md5($_SERVER['REMOTE_ADDR'].XOOPS_DB_PASS.time());
-			}
+		if (isset($_SESSION['HYP_CSRF_TOKEN'])) {
 			$insert_post = "\n".'<input type="hidden" value="'.$_SESSION['HYP_CSRF_TOKEN'].'" name="HypToken" />';
 		}
 		
