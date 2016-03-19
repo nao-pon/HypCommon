@@ -77,6 +77,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	var $detect_order_org = array();
 	var $changeContentLength = false;
 	var $isXCL222 = false;
+	private $csrfToken = null;
 
 	// コンストラクタ
 	function HypCommonPreLoadBase (& $controller) {
@@ -725,9 +726,9 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! isset($GLOBALS['hyp_preload_head_tag'])) $GLOBALS['hyp_preload_head_tag'] = '';
 
 		// For CSRF Protection
-		$csrfToken = null;
+		$this->csrfToken = null;
 		if ($this->use_csrf_protect) {
-			$csrfToken = md5($_SERVER['REMOTE_ADDR'].XOOPS_DB_PASS.time());
+			$this->csrfToken = md5($_SERVER['REMOTE_ADDR'].XOOPS_DB_PASS.time());
 		}
 
 		if (! empty($_POST)) {
@@ -737,6 +738,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					$_POST['HypToken'] = $_SERVER['HTTP_X_HYPTOKEN'];
 				}
 				if (empty($_POST['HypToken']) || empty($_SESSION['HYP_CSRF_TOKEN']) || $_POST['HypToken'] !== $_SESSION['HYP_CSRF_TOKEN']) {
+					@session_start();
 					$_SESSION['HYP_CSRF_TOKEN'] = $this->csrfToken;
 					$this->_rePost();
 					exit();
@@ -939,8 +941,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 
 		// set CSRF Token
-		if (!isset($_SESSION['HYP_CSRF_TOKEN']) && $csrfToken) {
-			$_SESSION['HYP_CSRF_TOKEN'] = $csrfToken;
+		if (!isset($_SESSION['HYP_CSRF_TOKEN']) && $this->csrfToken) {
+			$_SESSION['HYP_CSRF_TOKEN'] = $this->csrfToken;
 		}
 
 		// Insert tag into <head>
@@ -1133,7 +1135,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		}
 		$table .= '</table>' ;
 		if ($inSite) {
-			$form .= '<input type="hidden" value="'.$_SESSION['HYP_CSRF_TOKEN'].'" name="HypToken" />';
+			$form .= '<input type="hidden" value="'.$this->csrfToken.'" name="HypToken" />';
 			$form .= '<input type="submit" value="'.$msg['btn_repost'].'" /></form>';
 		}
 		
