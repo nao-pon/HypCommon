@@ -8,7 +8,7 @@
 <span style="font-size:12px;">(<_CATEGORY_>)</span><br />
 <span style="font-size:12px;"><_PRESENTER_></span><br />
 <span style="font-family:Arial;font-size:14px;color:#990000;"><_PRICE_FORMATTED_></span>
-<a href="<_ADDCARTURL_>" target="_blank" rel="nofollow"><img src="http://xoops.hypweb.net/download/tocart_s.gif" width="30" height="18" value="ショッピングカートに入れる" style="border:none;" alt="ショッピングカートに入れる" title="ショッピングカートに入れる" /></a>
+<a href="<_ADDCARTURL_>" target="_blank" rel="nofollow"><img src="//xoops.hypweb.net/download/tocart_s.gif" width="30" height="18" value="ショッピングカートに入れる" style="border:none;" alt="ショッピングカートに入れる" title="ショッピングカートに入れる" /></a>
 </div>
 <!--/EACH-->
 

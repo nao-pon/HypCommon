@@ -1,7 +1,7 @@
 <div style="word-break:break-all;"><_EACH_><div style="clear: both;"></div></div>
 
 <!--EACH(10)-->
-<form method="POST" action="http://www.amazon.co.jp/exec/obidos/handle-buy-box=<_ASIN_>" target="_blank" rel="nofollow">
+<form method="POST" action="//www.amazon.co.jp/exec/obidos/handle-buy-box=<_ASIN_>" target="_blank" rel="nofollow">
 <_count!=6_><div style="float:left;width:19%;padding: 0px 1px;"><_/count_>
 <_count=6_><div style="float:left;width:19%;padding: 0px 1px;clear:left;"><_/count_>
 <_LINKED_SIMG_><br />
@@ -13,7 +13,7 @@
 <input type="hidden" name="asin.<_ASIN_>" value="1" />
 <input type="hidden" name="tag-value" value="<_ASSTAG_>" />
 <input type="hidden" name="dev-tag-value" value="<_DEVKEY_>" />
-<input type="image" name="submit" value="ショッピングカートに入れる" style="border:none;" alt="ショッピングカートに入れる" title="ショッピングカートに入れる" src="http://xoops.hypweb.net/download/tocart_s.gif" width="30" height="18" />
+<input type="image" name="submit" value="ショッピングカートに入れる" style="border:none;" alt="ショッピングカートに入れる" title="ショッピングカートに入れる" src="//xoops.hypweb.net/download/tocart_s.gif" width="30" height="18" />
 </form>
 </div>
 <!--/EACH-->

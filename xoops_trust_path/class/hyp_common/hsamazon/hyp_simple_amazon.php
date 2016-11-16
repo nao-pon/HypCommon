@@ -48,11 +48,18 @@ class HypSimpleAmazon
 	var $parseXml = true;
 	var $releaseTime = array();
 
+	protected $ssl = false;
+
 	// PHP 4 style constructor for compat
 	public function HypSimpleAmazon ($AssociateTag = '', $AccessKeyId = null, $SecretAccessKey = null) {
 		self::__construct($AssociateTag, $AccessKeyId, $SecretAccessKey);
 	}
 	public function __construct($AssociateTag = '', $AccessKeyId = null, $SecretAccessKey = null) {
+		// check ssl
+		if (! empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off') {
+			$this->ssl = true;
+		}
+		
 		$this->myDirectory = dirname(__FILE__);
 
 		include_once dirname($this->myDirectory) . '/hyp_common_func.php';
@@ -93,9 +100,9 @@ class HypSimpleAmazon
 		if (! $this->AccessKeyId) $this->AccessKeyId = '';
 		$this->AssociateTag = $AssociateTag? $AssociateTag : '';
 
-		$this->beaconImg = '<img src="http://'.$this->beaconHost.'/e/ir?t='.$this->AssociateTag.'&l=ur2&o=9" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />';
-		$this->mobileBeaconImg = '<!--HypKTaiOnly<img src="http://'.$this->beaconHost.'/e/ir?t='.$this->AssociateTag.'&l=msn&o=9&a=ASIN" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />HypKTaiOnly-->';
-		// <img src="http://www.assoc-amazon.jp/e/ir?t=amahyp-22&l=msn&o=9&a=6131057214" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />
+		$this->beaconImg = '<img src="//'.$this->beaconHost.'/e/ir?t='.$this->AssociateTag.'&l=ur2&o=9" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />';
+		$this->mobileBeaconImg = '<!--HypKTaiOnly<img src="//'.$this->beaconHost.'/e/ir?t='.$this->AssociateTag.'&l=msn&o=9&a=ASIN" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />HypKTaiOnly-->';
+		// <img src="//www.assoc-amazon.jp/e/ir?t=amahyp-22&l=msn&o=9&a=6131057214" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />
 		$this->loadSearchIndexes();
 
 		// Set Default template
@@ -466,7 +473,7 @@ class HypSimpleAmazon
 		}
 		$e_key = $this->searchQueryOptimize($e_key);
 
-		$url = 'http://' . $this->searchHost . str_replace(array('<keyword>', '<tag>'), array(rawurlencode($e_key), $this->AssociateTag), $this->searchQuery);
+		$url = '//' . $this->searchHost . str_replace(array('<keyword>', '<tag>'), array(rawurlencode($e_key), $this->AssociateTag), $this->searchQuery);
 		//if ($category) $url .= '&amp;url=search-alias%3D'.strtolower($category);
 		//if ($category) $url .= '&amp;rs=&amp;rh=i%3Aaps%2Ck%3A'.rawurlencode($e_key).'%2Ci%3A'.strtolower($category);
 
@@ -483,7 +490,7 @@ class HypSimpleAmazon
 			$attrs = ' ' . join(' ', $attrs);
 		}
 
-		//$beacon = '<img src="http://'.$this->beaconHost.'/e/ir?t='.$this->AssociateTag.'&l=ur2&o=9" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />';
+		//$beacon = '<img src="//'.$this->beaconHost.'/e/ir?t='.$this->AssociateTag.'&l=ur2&o=9" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />';
 
 		return '<a href="' . $url . '"' . $attrs . '>' . $alias . '</a>' . $this->beaconImg;
 	}
@@ -574,9 +581,9 @@ class HypSimpleAmazon
 						$_AllOffers = $item['Offers']['MoreOffersUrl'];
 					}
 				}
-				$_item['SIMG'] = @$item['SmallImage']['URL'];
-				$_item['MIMG'] = @$item['MediumImage']['URL'];
-				$_item['LIMG'] = @$item['LargeImage']['URL'];
+				$_item['SIMG'] = $this->imgUrlNormalize(@$item['SmallImage']['URL']);
+				$_item['MIMG'] = $this->imgUrlNormalize(@$item['MediumImage']['URL']);
+				$_item['LIMG'] = $this->imgUrlNormalize(@$item['LargeImage']['URL']);
 				$_item['LINKED_SIMG'] = $this->get_image($item, 's');
 				$_item['LINKED_MIMG'] = $this->get_image($item, 'm');
 				$_item['LINKED_LIMG'] = $this->get_image($item, 'l');
@@ -592,11 +599,11 @@ class HypSimpleAmazon
 				if ($_EFS || $this->searchHost === 'www.javari.jp') {
 					$_item['GUIDEURL'] = 'free';
 				} else if ($_item['MERCHANTID']) {
-					$_item['GUIDEURL'] = 'http://' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode('http://www.amazon.co.jp/gp/help/seller/shipping.html?ie=UTF8&asin='.$_item['ASIN'].'&seller='.$_item['MERCHANTID']), $this->AssociateTag), $this->redirectQuery);
+					$_item['GUIDEURL'] = '//' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode('//www.amazon.co.jp/gp/help/seller/shipping.html?ie=UTF8&asin='.$_item['ASIN'].'&seller='.$_item['MERCHANTID']), $this->AssociateTag), $this->redirectQuery);
 				} else if ($_AllOffers) {
-					$_item['GUIDEURL'] = 'http://' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode(str_replace('%26tag%3D', '%26condition%3Dnew%26tag%3D', $_AllOffers)), $this->AssociateTag), $this->redirectQuery);
+					$_item['GUIDEURL'] = '//' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode(str_replace('%26tag%3D', '%26condition%3Dnew%26tag%3D', $_AllOffers)), $this->AssociateTag), $this->redirectQuery);
 				} else {
-					$_item['GUIDEURL'] = 'http://' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode('http://www.amazon.co.jp/gp/help/customer/display.html?nodeId=1104814'), $this->AssociateTag), $this->redirectQuery);
+					$_item['GUIDEURL'] = '//' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode('//www.amazon.co.jp/gp/help/customer/display.html?nodeId=1104814'), $this->AssociateTag), $this->redirectQuery);
 				}
 				$_item['PRICE_FORMATTED'] = $_price[1];
 				$_price = $this->get_usedprice($item);
@@ -631,9 +638,9 @@ class HypSimpleAmazon
 					$_item['PRICE_FORMATTED'] = $_item['USEDPRICE_FORMATTED'];
 					$_item['AVAILABILITY'] = '';
 					if ($_AllOffers) {
-						$_item['GUIDEURL'] = 'http://' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode($_AllOffers), $this->AssociateTag), $this->redirectQuery);
+						$_item['GUIDEURL'] = '//' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode($_AllOffers), $this->AssociateTag), $this->redirectQuery);
 					} else {		
-						$_item['GUIDEURL'] = 'http://' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode('http://www.amazon.co.jp/gp/help/customer/display.html?nodeId=1104814'), $this->AssociateTag), $this->redirectQuery);
+						$_item['GUIDEURL'] = '//' . $this->searchHost . str_replace(array('<url>', '<tag>'), array(rawurlencode('//www.amazon.co.jp/gp/help/customer/display.html?nodeId=1104814'), $this->AssociateTag), $this->redirectQuery);
 					}
 					$compact['Items'][] = $_item;
 					$compact['totalresults']++;
@@ -666,7 +673,7 @@ class HypSimpleAmazon
 
 	function getAddCartURL ($asin) {
 
-		$url = 'http://' . $this->searchHost
+		$url = '//' . $this->searchHost
 		     . '/gp/aws/cart/add.html?AWSAccessKeyId=' . $this->AccessKeyId
 		     . '&amp;AssociateTag=' . $this->AssociateTag
 		     . '&amp;ASIN.1=' . $asin
@@ -812,7 +819,7 @@ class HypSimpleAmazon
 
 			$to['title'] = htmlspecialchars($item['ItemAttributes']['Title'], ENT_COMPAT, 'UTF-8');
 			$to['url'] = $item['DetailPageURL'];
-			$to['imgsrc'] = $img['URL'];
+			$to['imgsrc'] = $this->imgUrlNormalize($img['URL']);
 			$to['imgsize'] = 'height="' . $height . '" width="' . $width . '"';
 
 			$img = str_replace($from, $to, $this->templates[$this->templateSet]['img']) . $item['MobileBeaconImg'];
@@ -988,6 +995,13 @@ class HypSimpleAmazon
 	function getReleaseTime($title) {
 		$title = mb_convert_encoding(trim($title), 'UTF-8', $this->encoding);
 		return isset($this->releaseTime[$title])? $this->releaseTime[$title] : $this->newestTime;
+	}
+
+	function imgUrlNormalize($url) {
+		if ($this->ssl) {
+			$url = str_replace('http://ecx.', 'https://images-na.ssl-', $url);
+		}
+		return $url;
 	}
 }
 
