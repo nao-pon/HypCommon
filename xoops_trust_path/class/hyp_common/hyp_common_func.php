@@ -2251,6 +2251,7 @@ EOD;
 	}
 
 	public static function readfile($file, $use_content_encoding = FALSE) {
+		session_write_close();
 		while(@ob_get_level()){ @ob_end_clean(); }
 		if (defined('HYP_X_SENDFILE_MODE')) {
 			if (HYP_X_SENDFILE_MODE === 3 || (! $use_content_encoding && HYP_X_SENDFILE_MODE === 2)) {

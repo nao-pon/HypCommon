@@ -35,6 +35,7 @@
 
 ignore_user_abort(FALSE);
 error_reporting(0);
+session_write_close();
 
 define('FAVICON_TRUST_PATH' , dirname(__FILE__));
 define('FAVICON_HYP_COMMON_PATH', dirname(FAVICON_TRUST_PATH));
