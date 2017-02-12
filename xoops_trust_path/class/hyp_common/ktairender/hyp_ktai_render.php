@@ -1544,7 +1544,6 @@ class HypKTaiRender
 						'#'	=>	'&#xE6E0;',
 						'*'	=>	'[*]'
 					);
-					if (isset($this->SERVER['HTTP_X_DCMGUID'])) $this->vars['ua']['uid'] = $this->SERVER['HTTP_X_DCMGUID'];
 					$this->vars['ua']['isKTai'] = TRUE;
 					$this->vars['ua']['carrier'] = $carrier;
 					$this->vars['ua']['allowPNG'] = FALSE;
@@ -1555,6 +1554,16 @@ class HypKTaiRender
 					} else {
 						$this->vars['ua']['allowCookie'] = TRUE;
 						list($this->vars['ua']['width'], $this->vars['ua']['height']) = array('480', '480');
+					}
+					if ($this->vars['ua']['allowCookie']) {
+						if (isset($_COOKIE['KTaiRenderUid'])) {
+							$this->vars['ua']['uid'] = $_COOKIE['KTaiRenderUid'];
+							setcookie('KTaiRenderUid', $this->vars['ua']['uid'], 86400 * 365 + time(), '/');
+						} else {
+							setcookie('KTaiRenderUid', uniqid() . $carrier, 86400 * 365 + time(), '/');
+						}
+					} else {
+						if (isset($this->SERVER['HTTP_X_DCMGUID'])) $this->vars['ua']['uid'] = $this->SERVER['HTTP_X_DCMGUID'];
 					}
 					$this->vars['ua']['contentType'] = 'application/xhtml+xml';
 					$this->xmlDocType = '<!DOCTYPE html PUBLIC "-//i-mode group (ja)//DTD XHTML i-XHTML(Locale/Ver.=ja/2.3) 1.0//EN" "i-xhtml_4ja_10.dtd">';
@@ -1575,7 +1584,12 @@ class HypKTaiRender
 						'#'	=>	'<img localsrc="818">',
 						'*'	=>	'[*]'
 					);
-					if (isset($this->SERVER['HTTP_X_UP_SUBNO'])) $this->vars['ua']['uid'] = $this->SERVER['HTTP_X_UP_SUBNO'];
+					if (isset($_COOKIE['KTaiRenderUid'])) {
+						$this->vars['ua']['uid'] = $_COOKIE['KTaiRenderUid'];
+						setcookie('KTaiRenderUid', $this->vars['ua']['uid'], 86400 * 365 + time(), '/');
+					} else {
+						setcookie('KTaiRenderUid', uniqid() . $carrier, 86400 * 365 + time(), '/');
+					}
 					$this->vars['ua']['isKTai'] = TRUE;
 					$this->vars['ua']['carrier'] = $carrier;
 					$this->vars['ua']['allowPNG'] = TRUE;
@@ -1604,7 +1618,12 @@ class HypKTaiRender
 						'#'	=>	chr(27).'$F0'.chr(15),
 						'*'	=>	'[*]'
 					);
-					if (isset($this->SERVER['HTTP_X_JPHONE_UID'])) $this->vars['ua']['uid'] = $this->SERVER['HTTP_X_JPHONE_UID'];
+					if (isset($_COOKIE['KTaiRenderUid'])) {
+						$this->vars['ua']['uid'] = $_COOKIE['KTaiRenderUid'];
+						setcookie('KTaiRenderUid', $this->vars['ua']['uid'], 86400 * 365 + time(), '/');
+					} else {
+						setcookie('KTaiRenderUid', uniqid() . $carrier, 86400 * 365 + time(), '/');
+					}
 					$this->vars['ua']['isKTai'] = TRUE;
 					$this->vars['ua']['carrier'] = $carrier;
 					$this->vars['ua']['allowPNG'] = TRUE;
