@@ -825,25 +825,26 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					$datfiles[] = HYP_COMMON_ROOT_PATH . '/dat/spamsites.dat';
 				}
 				$datfiles[] = HYP_COMMON_ROOT_PATH . '/config/spamsites.conf.dat';
-				$checks = array();
+				$spmsiteChecks = array();
 				$mtime = 0;
 				foreach($datfiles as $datfile) {
 					if (is_file($datfile)) {
 						$mtime = max(filemtime($datfile), $mtime);
-						$checks[] = $datfile;
+						$spmsiteChecks[] = $datfile;
 					}
 				}
-				if ($checks) {
-					$cachefile = XOOPS_TRUST_PATH . '/cache/hyp_spamsites.dat';
-					if ($mtime > @ filemtime($cachefile)) {
+				if ($spmsiteChecks) {
+					$spmsiteCachefile = XOOPS_TRUST_PATH . '/cache/hyp_spamsites.dat';
+					//if ($mtime > @ filemtime($cachefile)) {
+					if (! is_file($spmsiteCachefile)) {
 						$words = array();
-						foreach($checks as $datfile) {
+						foreach($spmsiteChecks as $datfile) {
 							$words = array_merge($words, file($datfile));
 						}
 						$regs = HypCommonFunc::get_matcher_regex_safe($words, "\x08");
-						HypCommonFunc::flock_put_contents($cachefile, $regs);
+						HypCommonFunc::flock_put_contents($spmsiteCachefile, $regs);
 					} else {
-						$regs = join('', file($cachefile));
+						$regs = join('', file($spmsiteCachefile));
 					}
 					foreach(explode("\x08", $regs) as $reg) {
 						HypCommonFunc::PostSpam_filter('/((ht|f)tps?:\/\/(.+\.)*|@|url=)' . $reg . '/i', $this->post_spam_host);
@@ -901,6 +902,8 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 					}
 
 					if ($level > $spamlev) {
+						ignore_user_abort(true);
+						
 						$ttl = ($level > $this->post_spam_badip_forever)? $this->post_spam_badip_ttl0 : $this->post_spam_badip_ttl;
 						if ($level > $this->post_spam_badip) { HypCommonFunc::register_bad_ips(null, $ttl); }
 						if ($this->use_mail_notify) { $this->sendMail($level); }
@@ -909,7 +912,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 						HypCommonFunc::spamdat_auto_update();
 						
 						// config/spamsites.conf.dat ¤Ø¤Î¼«Æ°ÅÐÏ¿
-						$confFile = XOOPS_TRUST_PATH . '/class/hyp_common/config/spamsites.conf.dat';
+						$confFile = HYP_COMMON_ROOT_PATH . '/config/spamwords.conf.dat';
 						if ($this->post_spam_site_auto_regist &&  isset($_POST[$this->post_spam_trap]) && is_writable($confFile)) {
 							if (preg_match('#^https?://(?:www\.)?([\-_.!~*\'()a-zA-Z0-9;/?:@&=+$,%]+)#', $_POST[$this->post_spam_trap], $_match)) {
 								$badurl = rtrim($_match[1], '/');
@@ -926,10 +929,22 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 										$confUrls = array_map('rtrim', $confUrls);
 										if (! in_array($badurl, $confUrls)) {
 											file_put_contents($confFile, $badurl . "\n", FILE_APPEND | LOCK_EX);
+											if (! in_array($confFile, $spmsiteChecks)) {
+												$spmsiteChecks[] = $confFile;
+											}
 										}
 									}
 								}
 							}
+						}
+						
+						if ($spmsiteChecks) {
+							$words = array();
+							foreach($spmsiteChecks as $datfile) {
+								$words = array_merge($words, file($datfile));
+							}
+							$regs = HypCommonFunc::get_matcher_regex_safe($words, "\x08");
+							HypCommonFunc::flock_put_contents($spmsiteCachefile, $regs);
 						}
 						
 						exit('Processing was not completed.'.$level);
@@ -1229,7 +1244,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (! empty($this->k_tai_conf['easyLogin'])) {
 
 			if (isset($_GET['_EASYLOGIN']) || ($this->HypKTaiRender->vars['ua']['xoopsUid'] && (isset($_GET['_EASYLOGINSET']) || isset($_GET['_EASYLOGINUNSET'])))) {
-				if ((isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')) {
+				if ((isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off') && ! $this->HypKTaiRender->vars['ua']['allowCookie']) {
 					exit('Can not use "Easy Login" on SSL connection.');
 				}
 
@@ -1438,17 +1453,22 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 	function addHeadTag( $s ) {
 		if ($s === '' || strpos($s, '<html') === FALSE) return false;
 
+		$xoopsurl = XOOPS_URL;
 		$script = '';
 		// for CRSF Protection on XMLHttpRequest
 		if (isset($_SESSION['HYP_CSRF_TOKEN'])) {
 			// For XMLHttpRequest use HTTP header 'X-HypToken'
 			$script .=<<<EOD
 (function(){
-var oldSend = XMLHttpRequest.prototype.send;
-XMLHttpRequest.prototype.send = function(){
-    this.setRequestHeader('X-HypToken','{$_SESSION['HYP_CSRF_TOKEN']}');
-    oldSend.apply(this, arguments);
-}
+var xp = XMLHttpRequest.prototype, o = xp.open, s = xp.send, url = '';
+xp.open = function(m,u){
+	url = u;
+	return o.apply(this, arguments);
+};
+xp.send = function(){
+    (url.indexOf('{$xoopsurl}') === 0 || !url.match(/^https?:\/\//)) && this.setRequestHeader('X-HypToken','{$_SESSION['HYP_CSRF_TOKEN']}');
+    return s.apply(this, arguments);
+};
 })();
 EOD;
 		}
