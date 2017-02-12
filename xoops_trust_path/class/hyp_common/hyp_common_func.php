@@ -1440,7 +1440,7 @@ class HypCommonFunc
 	{
 		if (!$checker) return false;
 		if (is_null($ip)) $ip = $_SERVER['REMOTE_ADDR'];
-		if(! preg_match($safe_reg, $ip))
+		if (strpos($ip, ':') === false /* IPv6 */ && ! preg_match($safe_reg, $ip))
 		{
 			$host = array_reverse(explode('.', $ip));
 			foreach($checker as $chk) {
