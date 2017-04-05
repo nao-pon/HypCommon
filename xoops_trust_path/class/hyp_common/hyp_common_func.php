@@ -1844,6 +1844,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 			// for ex. 1mb, 1KB
 			$val = rtrim($val, 'bB');
 			$last = strtolower(substr($val, -1));
+			$val = (int)$val;
 			switch($last) {
 				// 'G' は、PHP 5.1.0 より有効となる
 				case 'g':
