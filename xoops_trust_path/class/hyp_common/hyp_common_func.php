@@ -2256,14 +2256,16 @@ EOD;
 		while(@ob_get_level()){ @ob_end_clean(); }
 		if (defined('HYP_X_SENDFILE_MODE')) {
 			if (HYP_X_SENDFILE_MODE === 3 || (! $use_content_encoding && HYP_X_SENDFILE_MODE === 2)) {
-				if ( $use_content_encoding && HYP_X_SENDFILE_MODE === 3) {
-					header('X-Sendfile-Use-CE: Yes');
+				if (empty($_SERVER['HTTP_RANGE'])) {
+					if ( $use_content_encoding && HYP_X_SENDFILE_MODE === 3) {
+						header('X-Sendfile-Use-CE: Yes');
+					}
+					if (! defined('HYP_X_SENDFILE_UNESCAPE' && HYP_X_SENDFILE_UNESCAPE)) {
+						$file = dirname($file) . DIRECTORY_SEPARATOR . rawurlencode(basename($file));
+					}
+					header('X-Sendfile: ' . $file);
+					return;
 				}
-				if (! defined('HYP_X_SENDFILE_UNESCAPE' && HYP_X_SENDFILE_UNESCAPE)) {
-					$file = dirname($file) . DIRECTORY_SEPARATOR . rawurlencode(basename($file));
-				}
-				header('X-Sendfile: ' . $file);
-				return;
 			} else if (HYP_X_SENDFILE_MODE === 1) {
 				header('X-LIGHTTPD-send-file: ' . $file);
 				return;
