@@ -443,14 +443,16 @@ class HypKTaiRender
 
 		if (! $this->Config_no_diet) {
 			// Optimize query strings
-			$_func = create_function(
-				'$match',
-				'if ($match[3][0] === \'?\') $match[3] = preg_replace(\'/^.*?'.$h_reg.'(#[^#]+)?$/\', \'?' . str_replace("'", "\\'", $this->SERVER['QUERY_STRING']) . '$1\', $match[3]);' .
-				'$match[3] = preg_replace(\'/(?:&(?:amp;)?)+/\', \'&amp;\', $match[3]);' .
-				'$match[3] = str_replace(\'?&amp;\', \'?\', $match[3]);' .
-				'$match[3] = str_replace(array(\'?#\', \'&amp;#\'), \'#\', $match[3]);' .
-				'return $match[1] . $match[3] . (isset($match[4])? $match[4] : \'\');'
-			);
+			$_qstr = $this->SERVER['QUERY_STRING'];
+			$_func = function($match) use($h_reg, $_qstr) {
+				if ($match[3][0] === '?') {
+					$match[3] = preg_replace('/^.*?'.$h_reg.'(#[^#]+)?$/', '?'.$_qstr.'$1', $match[3]);
+				}
+				$match[3] = preg_replace('/(?:&(?:amp;)?)+/', '&amp;', $match[3]);
+				$match[3] = str_replace('?&amp;', '?', $match[3]);
+				$match[3] = str_replace(array('?#', '&amp;#'), '#', $match[3]);
+				return $match[1] . $match[3] . (isset($match[4])? $match[4] : '');
+			};
 			$_reg = '#(<a[^>]*? href=([\'"])?)([^\s"\'>]+)(\\2)?#isS';
 			$header = preg_replace_callback($_reg, $_func, $header);
 			$body   = preg_replace_callback($_reg, $_func, $body);
@@ -577,7 +579,7 @@ class HypKTaiRender
 	// HTML を携帯端末用にシェイプアップする
 	function html_reduce ($body) {
 		static $func;
-		$func || $func = create_function('$m', 'return strtolower($m[0]);');
+		$func || $func = function($m) { return strtolower($m[0]); };
 		// タグを小文字に統一
 		$body = preg_replace_callback('#</?[a-zA-Z]+#S', $func, $body);
 
@@ -609,21 +611,24 @@ class HypKTaiRender
 		// 半角カナに変換
 		if (function_exists('mb_convert_kana')) {
 			$_body = $body;
+			$_inputEncode = $this->inputEncode;
 			$body = preg_replace_callback('/(^|<textarea.+?\/textarea>|<pre.+?\/pre>|<[^>]*?>)(.*?)(?=<textarea.+?\/textarea>|<pre.+?\/pre>|<[^>]*?>|$)/sS',
-				create_function(
-					'$match',
-					'return $match[1] . mb_convert_kana(preg_replace(\'/[\s]+/\',\' \',str_replace(array("\r\n","\r","\n"),\'\',$match[2])), \'knr\', \''.$this->inputEncode.'\');'
-				), $body);
+				function ($match) use ($_inputEncode) {
+					return $match[1] . mb_convert_kana(preg_replace('/[\s]+/', ' ',str_replace(array("\r\n","\r","\n"),'',$match[2])), 'knr', $_inputEncode);
+				},
+				$body);
+				
 			if (! $body) $body = $_body; // PCRE エラー対策
 		}
 
 		// Is <form> action anchor only?
+		$_requri = $this->SERVER['REQUEST_URI'];
 		$body = preg_replace_callback('#(<form[^>]*?\baction=([\'"])?)([^\s"\'>]+)((?:\\2)?)#isS',
-			create_function(
-				'$match',
-				'if ($match[3][0] !== \'#\') return $match[0];
-				return $match[1] . preg_replace(\'/#.*$/\', \'\', \'' . str_replace("'", "\\'", $this->SERVER['REQUEST_URI']) . '\') . (($match[3] !== \'#\')? $match[3] : \'\') . $match[4];'
-			), $body);
+			function ($match) use ($_requri) {
+				if ($match[3][0] !== '#') return $match[0];
+				return $match[1] . preg_replace('/#.*$/', '', $_requri) . (($match[3] !== '#')? $match[3] : '') . $match[4];
+			},
+			$body);
 
 		// Hint character for encoding judgment
 		if (! empty($this->Config_encodeHintWord)) {
@@ -751,15 +756,14 @@ class HypKTaiRender
 		if ($this->outputMode === 'xhtml' && $this->vars['ua']['carrier'] === 'docomo') {
 			$body = preg_replace_callback(
 				'#<marquee([^>]*?)>#',
-				create_function(
-					'$matches',
-					'$matches[1] = str_replace("\'", \'"\', $matches[1]);
+				function ($match) {
+					$matches[1] = str_replace("'", '"', $matches[1]);
 					$prms = array();
-					if (preg_match(\'#loop="?(\d+)#\', $matches[1], $m)) {
-						$prms[] = \'-wap-marquee-loop:\' . intval($m[1]);
+					if (preg_match('#loop="?(\d+)#', $matches[1], $m)) {
+						$prms[] = '-wap-marquee-loop:' . intval($m[1]);
 					}
-					return \'<div style="display:-wap-marquee;\' . join(\';\', $prms) . \'">\';'
-				),
+					return '<div style="display:-wap-marquee;' . join(';', $prms) . '">';
+				},
 				$body
 			);
 			$body = str_replace('</marquee>', '</div>', $body);
@@ -930,12 +934,14 @@ class HypKTaiRender
 		// Check FORM
 		if ($this->vars['needSID']) {
 			$sid_val = $this->session_id;
+			$_mroot = $this->myRoot;
+			$_sname = $this->session_name;
 			$html = preg_replace_callback('#(<form[^>]*?\baction=([\'"])?)([^\s"\'>]+)((?:\\2)?[^>]*>)#isS',
-				create_function(
-					'$match',
-					'if (strpos($match[3], "'.$this->myRoot.'") !== 0 && preg_match("#^https?://#i", $match[3])) return $match[0];
-					return $match[0] . \'<input type="hidden" name="'.$this->session_name.'" value="'.$sid_val.'" />\';'
-				), $html);
+				function ($match) use ($sid_val, $_mroot, $_sname) {
+					if (strpos($match[3], $_mroot) !== 0 && preg_match("#^https?://#i", $match[3])) return $match[0];
+					return $match[0] . '<input type="hidden" name="'.$_sname.'" value="'.$sid_val.'" />';
+				},
+				$html);
 		}
 
 		return $html;
@@ -1772,7 +1778,7 @@ class HypKTaiRender
 	function _href_give_session_id ($match) {
 		static $func;
 		
-		$func || $func = create_function('$m', 'return ($m[1] > 31 && $m[1] < 128)? chr($m[1]) : $m[0];');
+		$func || $func = function ($m) { return ($m[1] > 31 && $m[1] < 128)? chr($m[1]) : $m[0]; };
 		$url = $match[3];
 		$ext_icon = '';
 		$add_tag = '';

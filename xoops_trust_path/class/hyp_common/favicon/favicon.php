@@ -329,7 +329,7 @@ function is_url(& $url)
 
 	check_group($url);
 
-	$repfunc = create_function('$m', 'return rawurlencode($m[1]);');
+	$repfunc = function($m) { return rawurlencode($m[1]); };
 	$url = preg_replace_callback('/([" \x80-\xff]+)/', $repfunc, $url);
 	return (preg_match('/(?:https?|ftp|news):\/\/[!~*\'();\/?:\@&=+\$,%#_0-9a-zA-Z.-]+/', $url));
 }

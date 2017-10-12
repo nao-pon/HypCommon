@@ -308,11 +308,11 @@ class MySQLDump {
 		$dataLen = 0;
 		$statementLen = strlen($insertStatement);
 		if ($this->link) {
-			$func_mysql_escape = create_function('$str,$link', 'return mysqli_real_escape_string($link, $str);');
+			$func_mysql_escape = function($str, $link) { return mysqli_real_escape_string($link, $str); };
 		} else if (function_exists('mysql_real_escape_string')) {
-			$func_mysql_escape = create_function('$str', 'return mysql_real_escape_string($str);');
+			$func_mysql_escape = function($str) { return mysql_real_escape_string($str); };
 		} else {
-			$func_mysql_escape = create_function('$str', 'return mysql_escape_string($str);');
+			$func_mysql_escape = function($str) { return mysql_escape_string($str); };
 		}
 		// Dump data
 		if ( $num_rows > 0 ) {

@@ -1680,14 +1680,15 @@ EOD;
 			//$insert && $insert = "\n".$insert;
 			//$insert_post && $insert_post = "\n".$insert_post;
 			$s = preg_replace_callback('#(<script.+?/script>)|<form([^>]+?)>#isS',
-				create_function('$match','
+				function ($match) use ($insert, $insert_post) {
 					if (!empty($match[1])) return $match[0];
-					if (preg_match(\'/method=["|\\\']?post/i\', $match[2])) {
-						return $match[0].\''.$insert.$insert_post.'\';
+					if (preg_match('/method=["|\']?post/i', $match[2])) {
+						return $match[0].$insert.$insert_post;
 					} else {
-						return $match[0].\''.$insert.'\';
+						return $match[0].$insert;
 					}
-				'), $s);
+				},
+				$s);
 			if ($s) {
 				$this->changeContentLength = true;
 				return $s;

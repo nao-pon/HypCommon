@@ -148,7 +148,7 @@ class HypCommonFunc
 	public static function phrase_split($str)
 	{
 		static $func;
-		$func || $func = create_function('$m', 'return str_replace(\' \',"\x08",$m[2]);');
+		$func || $func = function($m) { return str_replace(' ',"\x08",$m[2]); };
 		$words = array();
 		$str = preg_replace_callback("/(\"|')(.+?)(?:\\1)/", $func, $str);
 		$words = preg_split('/\s+/',$str,-1,PREG_SPLIT_NO_EMPTY);
@@ -1480,17 +1480,18 @@ class HypCommonFunc
 		$counter = 0;
 		if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 			if (! $func) {
-				$func = create_function('$match','
-$ok = FALSE;
-$parsed = parse_url($match[0]);
-if (isset($parsed[\'host\'])) {
-	$ip = gethostbyname($parsed[\'host\']);
-	if ($ip == $parsed[\'host\'] && substr_count($parsed[\'host\'], \'.\') === 1) {
-		$ip = gethostbyname(\'www.\' . $parsed[\'host\']);
-	}
-	$ok = (preg_match(\'/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\', $ip));
-}
-return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
+				$func = function($match) {
+					$ok = FALSE;
+					$parsed = parse_url($match[0]);
+					if (isset($parsed['host'])) {
+						$ip = gethostbyname($parsed['host']);
+						if ($ip == $parsed['host'] && substr_count($parsed['host'], '.') === 1) {
+							$ip = gethostbyname('www.' . $parsed['host']);
+						}
+						$ok = (preg_match('/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/', $ip));
+					}
+					return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);
+				};
 			}
 			if (is_array($post)) {
 				foreach (array_keys($post) as $key) {
@@ -1772,7 +1773,7 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 				return;
 			}
 			if (extension_loaded('mbstring')) {
-				$func || $func = create_function('$m', 'return \'&#\'.base_convert($m[1],16,10).\';\';');
+				$func || $func = function($m) { return '&#'.base_convert($m[1],16,10).';'; };
 				$_sub = mb_substitute_character();
 				mb_substitute_character('long');
 				$arg = preg_replace('/U\+([0-9A-F]{2,5})/', "\x08$1", $arg);
@@ -1996,9 +1997,8 @@ return ($ok)? $match[0] : ($match[1] . "\x08" . $match[2]);');
 
 	public static function html_wordwrap(& $html, $num = 36, $sep = '&#8203;') {
 		$ret = preg_replace_callback('/(<(script|textarea|style|option|pre).+?<\/\\2>|<[^>]+?>)|((?>&#?[a-z0-9]+?;|\(\([eisv]:[0-9a-f]{4}\)\)|\[emj:\d{1,4}(?::(?:im|ez|sb))?\]|[!=\x23-\x3b\x3f-\x7e]){'.$num.'})/isS',
-		create_function('$arg',
-			'if ($arg[1]) { return $arg[1]; } else { return $arg[3] . "'.$sep.'";}'
-		),$html);
+		function($arg) use ($sep) { if ($arg[1]) { return $arg[1]; } else { return $arg[3] . $sep; } },
+		$html);
 		if (! is_null($ret)) {
 			$html = $ret;
 		}
@@ -2454,24 +2454,20 @@ EOD;
 			$is_utf8 = true;
 		}
 		// $special : htmlspecialchars()を通すか
-		$quote_func = create_function('$str',$special ?
-			'return preg_quote($str,"/");' :
-			'return preg_quote(htmlspecialchars($str, ENT_COMPAT, \''.HypCommonFunc::get_htmlspecialchars_encoding($enc).'\'),"/");'
-		);
+		$quote_func = function($str) use ($special, $enc) {
+			return $special? preg_quote($str, '/') : preg_quote(htmlspecialchars($str, ENT_COMPAT, HypCommonFunc::get_htmlspecialchars_encoding($enc)));
+		};
 		// LANG=='ja'で、mb_convert_kanaが使える場合はmb_convert_kanaを使用
-		$convert_kana_exists = function_exists('mb_convert_kana');
-		$convert_kana = create_function('$str,$option,$enc',
-			($convert_kana_exists) ?
-				'return mb_convert_kana($str,$option,$enc);' : 'return $str;'
-		);
-		$mb_strlen = create_function('$str,$enc',
-			(function_exists('mb_strlen')) ?
-				'return mb_strlen($str,$enc);' : 'return strlen($str);'
-		);
-		$mb_substr = create_function('$str,$start,$len,$enc',
-			(function_exists('mb_substr')) ?
-				'return mb_substr($str,$start,$len,$enc);' : 'return substr($str,$start,$len);'
-		);
+		$convert_kana = function_exists('mb_convert_kana') ?
+			function($str, $option, $enc) { return mb_convert_kana($str, $option, $enc); } :
+			function($str, $option, $enc) { return $str; };
+		$mb_strlen = function_exists('mb_strlen') ?
+			function($str, $enc) { return mb_strlen($str, $enc); } :
+			function($str, $enc) { return strlen($str); };
+		
+		$mb_substr = function_exists('mb_substr') ?
+			function($str, $start, $len, $enc) { return mb_substr($str, $start, $len, $enc); } :
+			function($str, $start, $len, $enc) { return substr($str, $start, $len); };
 
 		foreach ($words as $word)
 		{

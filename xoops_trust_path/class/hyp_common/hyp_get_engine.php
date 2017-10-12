@@ -186,7 +186,7 @@ class HypGetQueryWord
 		if ($extlink_class_name) {
 			$_body = preg_replace_callback(
 						'/(<script.*?<\/script>)|(<a[^>]+?href=(?:"|\')?(?!https?:\/\/'.$_SERVER['HTTP_HOST'].')https?:[^>]+?)>/isS' ,
-						create_function('$arr', 'return $arr[1]? $arr[1] : ((strpos($arr[2], \'class=\') === FALSE)? "$arr[2] class=\"' . $extlink_class_name . '\">" : "$arr[0]");') ,
+						function($arr) use ($extlink_class_name) { return $arr[1]? $arr[1] : ((strpos($arr[2], 'class=') === FALSE)? ($arr[2] .' class="' . $extlink_class_name . '">') : $arr[0]); } ,
 						$body
 					);
 			if ($_body) $body = $_body; // for RCRE error.
@@ -208,20 +208,20 @@ class HypGetQueryWord
 		$keys = array();
 		$cnt = 0;
 		if (function_exists('mb_strlen')) {
-			$strlen = create_function('$str', 'return mb_strlen("$str");');
+			$strlen = function($str, $enc) { return mb_strlen($str, $enc); };
 		} else {
-			$strlen = create_function('$str', 'return strlen("$str");');
+			$strlen = function($str, $enc) { return strlen($str); };
 		}
 		foreach ($words as $word=>$id) {
-			$_len = $strlen($word);
+			$_len = $strlen($word, $enc);
 			if ($_len < $xoopsConfigSearch['keyword_min']) continue;
 			if ($_len > $word_max_len) continue;
-			$keys[$word] = $strlen($word);
+			$keys[$word] = $strlen($word, $enc);
 			$cnt++;
 			if ($cnt > 10) break;
 		}
 		//arsort($keys,SORT_NUMERIC);
-		$keys = HypGetQueryWord::get_search_words(array_keys($keys),false,$enc);
+		$keys = HypCommonFunc::get_search_words(array_keys($keys), false, $enc);
 		$id = 0;
 		$utf8 = ($enc === 'UTF-8')? 'u' : '';
 		$php5_1 = (version_compare(PHP_VERSION, '5.1.0', '>='));
@@ -233,8 +233,15 @@ class HypGetQueryWord
 				('/(<head.*?<\/head>|<script.*?<\/script>|<style.*?<\/style>|<textarea.*?<\/textarea>|<strong class="word\d+">.*?<\/strong>|<[^>]*>|&(?:#[0-9]+|#x[0-9a-f]+|[0-9a-zA-Z]+);)|('.$pattern.')/isS'.$utf8);
 			$GLOBALS['HypGetQueryWord_Highlighted'] = false;
 			$_body = preg_replace_callback($pattern,
-				create_function('$arr',
-					'if ($arr[1]) {return $arr[1];} else {$GLOBALS[\'HypGetQueryWord_Highlighted\'] = true; return \'<strong class="word'.$id.'">\'.$arr[2].\'</strong>\';}'), $body);
+				function($arr) use ($id) {
+					if ($arr[1]) {
+						return $arr[1];
+					} else {
+						$GLOBALS['HypGetQueryWord_Highlighted'] = true;
+						return '<strong class="word'.$id.'">'.$arr[2].'</strong>';
+					}
+				},
+				$body);
 			if ($GLOBALS['HypGetQueryWord_Highlighted']) {
 				$body = $_body;
 				$search_word .= ' <strong class="word'.$id.'">'.$s_key.'</strong>';
@@ -253,74 +260,7 @@ class HypGetQueryWord
 	// 検索語を展開する
 	public static function get_search_words($words, $special=false, $enc='EUC-JP')
 	{
-		$retval = array();
-
-		//if (defined('XOOPS_USE_MULTIBYTES') && XOOPS_USE_MULTIBYTES && (!function_exists('mb_strlen') || !function_exists('mb_substr'))) return $retval;
-
-		// Perlメモ - 正しくパターンマッチさせる
-		// http://www.din.or.jp/~ohzaki/perl.htm#JP_Match
-		$eucpre = $eucpost = '';
-		$enc = strtoupper($enc);
-		$is_utf8 = false;
-		if ($enc === 'EUC-JP' || $enc === 'EUCJP-WIN')
-		{
-			$eucpre = '(?<!\x8F)';
-			// # JIS X 0208 が 0文字以上続いて # ASCII, SS2, SS3 または終端
-			$eucpost = '(?=(?:[\xA1-\xFE][\xA1-\xFE])*(?:[\x00-\x7F\x8E\x8F]|\z))';
-		} else if ($enc === 'UTF-8') {
-			$is_utf8 = true;
-		}
-		// $special : htmlspecialchars()を通すか
-		$quote_func = create_function('$str',$special ?
-			'return preg_quote($str,"/");' :
-			'return preg_quote(htmlspecialchars($str, ENT_COMPAT, \''.HypCommonFunc::get_htmlspecialchars_encoding($enc).'\'),"/");'
-		);
-		// LANG=='ja'で、mb_convert_kanaが使える場合はmb_convert_kanaを使用
-		$convert_kana_exists = function_exists('mb_convert_kana');
-		$convert_kana = create_function('$str,$option,$enc',
-			($convert_kana_exists) ?
-				'return mb_convert_kana($str,$option,$enc);' : 'return $str;'
-		);
-		$mb_strlen = create_function('$str,$enc',
-			(function_exists('mb_strlen')) ?
-				'return mb_strlen($str,$enc);' : 'return strlen($str);'
-		);
-		$mb_substr = create_function('$str,$start,$len,$enc',
-			(function_exists('mb_substr')) ?
-				'return mb_substr($str,$start,$len,$enc);' : 'return substr($str,$start,$len);'
-		);
-
-		foreach ($words as $word)
-		{
-			// 英数字は半角,カタカナは全角,ひらがなはカタカナに
-			$word_zk = $convert_kana($word,'aKCV',$enc);
-			$chars = array();
-			for ($pos = 0; $pos < $mb_strlen($word_zk,$enc);$pos++)
-			{
-				$char = $mb_substr($word_zk,$pos,1,$enc);
-				$arr = array($quote_func($char));
-				if (strlen($char) == 1) // 英数字
-				{
-					$arr[] = $quote_func($char); // 英文字
-					if ($convert_kana_exists) {
-						$arr[] = $quote_func($convert_kana(strtoupper($char),"A",$enc)); // 全角大文字
-						$arr[] = $quote_func($convert_kana(strtolower($char),"A",$enc)); // 全角小文字
-					}
-				}
-				else // マルチバイト文字
-				{
-					$arr[] = $quote_func($convert_kana($char,"c",$enc)); // ひらがな
-					$arr[] = $quote_func($convert_kana($char,"k",$enc)); // 半角カタカナ
-				}
-				if ($is_utf8) {
-					$chars[] = '['.join('',array_unique($arr)).']';
-				} else {
-					$chars[] = '(?:'.join('|',array_unique($arr)).')';
-				}
-			}
-			$retval[$word] = $eucpre.join('',$chars).$eucpost;
-		}
-		return $retval;
+		return HypCommonFunc::get_search_words($words, $special, $enc);
 	}
 }
 }

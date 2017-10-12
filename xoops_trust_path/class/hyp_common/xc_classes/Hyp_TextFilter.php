@@ -131,15 +131,15 @@ class Hyp_TextFilterAbstract extends Legacy_TextFilter
                 // BB Code url
                 $chkc[$className][$image][] = '[url';
                 $patc[$className][$image][] = '/\[url=([\'"]?)((?:ht|f)tp[s]?:\/\/[!~*\'();\/?:\@&=+\$,%#_0-9a-zA-Z.-]+)\\1\](.+)\[\/url\]/sU';
-                $repc[$className][$image][] = create_function('$m', 'return \'[[\'.str_replace(array("\r\n", "\r", "\n"), \'&br;\', $m[3]).\':\'.$m[2].\']]\';');
+                $repc[$className][$image][] = function($m) { return '[['.str_replace(array("\r\n", "\r", "\n"), '&br;', $m[3]).':'.$m[2].']]'; };
 
                 $chkc[$className][$image][] = '[url';
                 $patc[$className][$image][] = '/\[url=([\'"]?)([!~*\'();\/?:\@&=+\$,%#_0-9a-zA-Z.-]+)\\1\](.+)\[\/url\]/sU';
-                $repc[$className][$image][] = create_function('$m', 'return \'[[\'.str_replace(array("\r\n", "\r", "\n"), \'&br;\', $m[3]).\':http://\'.$m[2].\']]\';');
+                $repc[$className][$image][] = function($m) { return '[['.str_replace(array("\r\n", "\r", "\n"), '&br;', $m[3]).':http://'.$m[2].']]'; };
 
                 $chkc[$className][$image][] = '[siteurl';
                 $patc[$className][$image][] = '/\[siteurl=([\'"]?)\/?([!~*\'();?:\@&=+\$,%#_0-9a-zA-Z.-][!~*\'();\/?:\@&=+\$,%#_0-9a-zA-Z.-]+)\\1\](.+)\[\/siteurl\]/sU';
-                $repc[$className][$image][] = create_function('$m', 'return \'[[\'.str_replace(array("\r\n", "\r", "\n"), \'&br;\', $m[3]).\':site://\'.$m[2].\']]\';');
+                $repc[$className][$image][] = function($m) { return '[['.str_replace(array("\r\n", "\r", "\n"), '&br;', $m[3]).':site://'.$m[2].']]'; };
 
                 // BB Code quote
                 $pat[$className][$image][] = '/(\[quote[^\]]*])(?:\r\n|\r|\n)(?![<>*|,#: \t+-])/';
@@ -183,20 +183,20 @@ class Hyp_TextFilterAbstract extends Legacy_TextFilter
 				/// outer matting
 				$chkc[$className][$image][] = "\x01";
 				$patc[$className][$image][] = '/\x01(?:\=([^\]]+))?\](?:\r\n|[\r\n])((?:(?>[^\x01\x02]+)|(?R))*)\x02(?:\r\n|[\r\n]|$)?/';
-				$repc[$className][$image][] = create_function('$m', 'return "\n".preg_replace(array(\'/(?:\x01[^\]]*\]|\x02)(\r\n|[\r\n])/\',\'/\[\*\]/\'),array("\n",'.$list_tag.'), $m[2])."\n\n";');
+				$repc[$className][$image][] = function($m) use($list_tag) { return "\n".preg_replace(array('/(?:\x01[^\]]*\]|\x02)(\r\n|[\r\n])/','/\[\*\]/'),array("\n",$list_tag), $m[2])."\n\n"; };
 				
 				// Some BB Code Tags, Contents allows xpWiki rendering.
                 if ($_reg = join('|', $this->renderWiki_getEscTags())) {
                     $chkc[$className][$image][] = '[';
                     $patc[$className][$image][] = '/\[\/?(?:' . $_reg . ')(?:(?: |=)[^\]]+)?\]/';
-                    $repc[$className][$image][] = create_function('$m', 'return \'[ b 6 4 ]\' . base64_encode($m[0]) . \'[ / b 6 4 ]\';');
+                    $repc[$className][$image][] = function($m) { return '[ b 6 4 ]' . base64_encode($m[0]) . '[ / b 6 4 ]'; };
                 }
 
                 // Other or Unknown BB Code Tags, All part escapes.
                 if ($_reg = join('|', $this->renderWiki_getBypassTags())) {
                     $chkc[$className][$image][] = '[';
                     $patc[$className][$image][] = '/\[(' . $_reg . ')(?:\b[^\]]+)?].+\[\/\\1\]/sU';
-                    $repc[$className][$image][] = create_function('$m', 'return \'[ b 6 4 ]\' . base64_encode($m[0]) . \'[ / b 6 4 ]\';');
+                    $repc[$className][$image][] = function($m) { return '[ b 6 4 ]' . base64_encode($m[0]) . '[ / b 6 4 ]'; };
                 }
 
             }
@@ -213,9 +213,10 @@ class Hyp_TextFilterAbstract extends Legacy_TextFilter
         if ($text = $render->transform($text, XPWIKI_RENDERER_DIR)) {
             if (isset($pat[$className]) && strpos($text, '[ b 6 4 ]') !== false) {
                 // BB Code decode
+                $_word_breaker = $render->root->word_breaker;
                 $text = preg_replace_callback(
                         '/\[ b 6 4 ](.+?)\[ \/ b 6 4 ]/S',
-                        create_function('$m', 'return Hyp_TextFilter::renderWiki_base64decode($m[1],\''.$render->root->word_breaker.'\');'),
+                        function($m) use($_word_breaker) { return Hyp_TextFilter::renderWiki_base64decode($m[1], $_word_breaker); },
                         $text);
             }
 
