@@ -291,8 +291,8 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 		$this->k_tai_conf['style']['highlight'] = 'background-color:#ffc0cb';
 
 		// Easy login: 設定 or 解除リンクを表示するURI(XOOPS_URL以降)とuidのGETキーと挿入位置
-		$this->k_tai_conf['easyLoginConfPath'] = '/userinfo.php';
-		$this->k_tai_conf['easyLoginConfuid'] = 'uid';
+		$this->k_tai_conf['easyLoginConfPath'] = '/userinfo.php'; // %s は user id に置換されます
+		$this->k_tai_conf['easyLoginConfuid'] = 'uid';            // 上記で %s を使用する場合は '' (空文字) を指定
 		$this->k_tai_conf['easyLoginConfInsert'] = 'content';
 
 		// GET query keys

@@ -1985,12 +1985,17 @@ EOD;
 
 							// 簡単ログイン:設定 or 解除
 							if (isset($this->k_tai_conf['easyLoginConfPath']) && isset($this->k_tai_conf['easyLoginConfuid'])) {
+								$confPathHasUid = false;
+								if (strpos($this->k_tai_conf['easyLoginConfPath'], '%s') !== false) {
+									$confPathHasUid = true;
+									$this->k_tai_conf['easyLoginConfPath'] = sprintf($this->k_tai_conf['easyLoginConfPath'], (string)$this->HypKTaiRender->vars['ua']['xoopsUid']);
+								}
 								$purl = parse_url(XOOPS_URL);
-								$nowpath = $r->SERVER['PHP_SELF'];
+								$nowpath = $r->SERVER['REQUEST_URI'];
 								if (isset($purl['path'])) {
 									$nowpath = preg_replace('#^' . $purl['path'] . '#', '', $nowpath);
 								}
-								if (strpos($nowpath, $this->k_tai_conf['easyLoginConfPath']) === 0 && $this->HypKTaiRender->vars['ua']['xoopsUid'] == @ $_GET[$this->k_tai_conf['easyLoginConfuid']]) {
+								if (strpos($nowpath, $this->k_tai_conf['easyLoginConfPath']) === 0 && ($confPathHasUid || $this->HypKTaiRender->vars['ua']['xoopsUid'] == @ $_GET[$this->k_tai_conf['easyLoginConfuid']])) {
 
 									$uaUid = md5($r->vars['ua']['uid'] . XOOPS_DB_PASS);
 
