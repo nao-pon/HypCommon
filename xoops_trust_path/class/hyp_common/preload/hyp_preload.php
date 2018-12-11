@@ -494,7 +494,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 		if (defined('XOOPS_CUBE_LEGACY')) {
 			
 			// xoopsTpl plugins dir
-			$this->mRoot->mDelegateManager->add( 'XoopsTpl.New' , array(& $this , '_xoopsConfig_tpl_hook' ) , XCUBE_DELEGATE_PRIORITY_FIRST + 1) ;
+			$this->mRoot->mDelegateManager->add( 'XoopsTpl.New' , array($this , '_xoopsConfig_tpl_hook' ) , XCUBE_DELEGATE_PRIORITY_FIRST + 1) ;
 			
 			// Use K_TAI Render 
 			if (defined('HYP_K_TAI_RENDER') && HYP_K_TAI_RENDER) {
@@ -502,13 +502,13 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				if (isset($this->k_tai_conf['themeSet']) && is_file(XOOPS_THEME_PATH . '/' . $this->k_tai_conf['themeSet'] . '/theme.html')) {
 					$GLOBALS['xoopsConfig']['theme_set'] = $this->k_tai_conf['themeSet'];
 					$this->mRoot->mContext->setThemeName($this->k_tai_conf['themeSet']);
-					$this->mRoot->mDelegateManager->add( 'XoopsTpl.New' , array(& $this , '_xoopsConfig_theme_set' ) , XCUBE_DELEGATE_PRIORITY_FIRST) ;
+					$this->mRoot->mDelegateManager->add( 'XoopsTpl.New' , array($this , '_xoopsConfig_theme_set' ) , XCUBE_DELEGATE_PRIORITY_FIRST) ;
 				}
 	
 				// Set template set
 				if (! empty($this->k_tai_conf['templateSet'])) {
 					$GLOBALS['xoopsConfig']['template_set'] = $this->k_tai_conf['templateSet'];
-					$this->mRoot->mDelegateManager->add( 'XoopsTpl.New' , array(& $this , '_xoopsConfig_template_set' ) , XCUBE_DELEGATE_PRIORITY_FIRST) ;
+					$this->mRoot->mDelegateManager->add( 'XoopsTpl.New' , array($this , '_xoopsConfig_template_set' ) , XCUBE_DELEGATE_PRIORITY_FIRST) ;
 				}
 				
 		        // For cubeUtils (disable auto login)
@@ -519,11 +519,11 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				}
 	
 				include_once(dirname(dirname(__FILE__)).'/xc_classes/disabledBlock.php');
-				$this->mRoot->mDelegateManager->add( 'Legacy_Utils.CreateBlockProcedure' , array(& $this , 'blockControlXCL' )) ;
+				$this->mRoot->mDelegateManager->add( 'Legacy_Utils.CreateBlockProcedure' , array($this , 'blockControlXCL' )) ;
 	
 				// For STD cache module (cache disabled)
-				$this->mController->mSetBlockCachePolicy->add(array(& $this, '_stdCacheHook'), XCUBE_DELEGATE_PRIORITY_FIRST + 11);
-				$this->mController->mSetModuleCachePolicy->add(array(& $this, '_stdCacheHook'), XCUBE_DELEGATE_PRIORITY_FIRST + 11);
+				$this->mController->mSetBlockCachePolicy->add(array($this, '_stdCacheHook'), XCUBE_DELEGATE_PRIORITY_FIRST + 11);
+				$this->mController->mSetModuleCachePolicy->add(array($this, '_stdCacheHook'), XCUBE_DELEGATE_PRIORITY_FIRST + 11);
 			}
 		}
 	}
@@ -670,13 +670,13 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			) {
 				if (defined('XCUBE_DELEGATE_CHAIN_BREAK')) {
 					$this->mRoot->mDelegateManager->add('Site.TextareaEditor.BBCode.Show',
-							array(&$this, 'BBCode_wiki_render'), XCUBE_DELEGATE_PRIORITY_FIRST);
+							array($this, 'BBCode_wiki_render'), XCUBE_DELEGATE_PRIORITY_FIRST);
 					$this->mRoot->mDelegateManager->add('Site.TextareaEditor.BBCode.Show',
-							array(&$this, 'BBCode_add_switch'), XCUBE_DELEGATE_PRIORITY_FINAL + 10);
+							array($this, 'BBCode_add_switch'), XCUBE_DELEGATE_PRIORITY_FINAL + 10);
 				} else {
 					$this->mRoot->mDelegateManager->reset('Site.TextareaEditor.BBCode.Show');
 					$this->mRoot->mDelegateManager->add('Site.TextareaEditor.BBCode.Show',
-							array(&$this, 'BBCode_wiki_render'));
+							array($this, 'BBCode_wiki_render'));
 				}
 			}
 		}
@@ -962,7 +962,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 
 		// Insert tag into <head>
 		if (! defined('HYP_K_TAI_RENDER') || HYP_K_TAI_RENDER !== 1) {
-			ob_start(array(& $this, 'addHeadTag'));
+			ob_start(array($this, 'addHeadTag'));
 		}
 
 		// Set Query Words
@@ -972,7 +972,7 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 				if (constant($this->q_word)) {
 					$GLOBALS['hyp_preload_head_tag'] .= '<link rel="stylesheet" type="text/css" href="'.XOOPS_URL.'/class/hyp_common/words_highlight.css" />';
 				}
-				ob_start(array(& $this, 'wordsHighlight'));
+				ob_start(array($this, 'wordsHighlight'));
 			}
 		}
 
@@ -1068,28 +1068,28 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 			}
 
 			// keitai Filter
-			ob_start(array(& $this, 'keitaiFilter'));
+			ob_start(array($this, 'keitaiFilter'));
 			
 			// <from> Filter
-			ob_start(array(& $this, 'formFilter'));
+			ob_start(array($this, 'formFilter'));
 
 			// smart redirection for smartphone
 			if (HYP_K_TAI_RENDER > 1) {
-				ob_start(array(& $this, 'smartRedirect'));
+				ob_start(array($this, 'smartRedirect'));
 			}
 
-			register_shutdown_function(array(& $this, '_onShutdownKtai'));
+			register_shutdown_function(array($this, '_onShutdownKtai'));
 		} else {
 			// <from> Filter
-			ob_start(array(& $this, 'formFilter'));
+			ob_start(array($this, 'formFilter'));
 
 			// emoji Filter
 			if (! empty($this->use_k_tai_render)) {
-				ob_start(array(& $this, 'emojiFilter'));
+				ob_start(array($this, 'emojiFilter'));
 			}
 
 			if (isset($_SERVER['HTTP_X_ORIGINAL_USER_AGENT']) && $this->encode !== 'UTF-8'){
-				ob_start(array(& $this, 'utf8Filter'));
+				ob_start(array($this, 'utf8Filter'));
 			}
 
 			// Add button to smartphone style
@@ -1100,12 +1100,12 @@ class HypCommonPreLoadBase extends XCube_ActionFilter {
 						mb_convert_variables($this->encode, $this->configEncoding, $this->k_tai_conf['msg']);
 					}
 				}
-				ob_start(array(& $this, 'switchOfSmartPhone'));
+				ob_start(array($this, 'switchOfSmartPhone'));
 			}
 
 			// smart redirection
 			if (! empty($this->use_smart_redirect)) {
-				ob_start(array(& $this, 'smartRedirect'));
+				ob_start(array($this, 'smartRedirect'));
 			}
 
 		}
@@ -1725,7 +1725,7 @@ EOD;
 			}
 		}
 
-		$r =& $this->HypKTaiRender;
+		$r = $this->HypKTaiRender;
 
 		// use jquery mobile?
 		$use_jquery = $r->Config_jquery;
@@ -2746,4 +2746,3 @@ class HypCommonPreLoad extends HypCommonPreLoadBase {
 	}
 }
 }
-?>
