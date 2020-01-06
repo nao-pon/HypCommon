@@ -159,7 +159,7 @@ class HypCommonFunc
 	// 配列対応 & gpc 対応のstripslashes
 	public static function stripslashes_gpc(&$v, $check = false)
 	{
-		if ($check || get_magic_quotes_gpc()) 
+		if ($check || (version_compare(PHP_VERSION, '5.4.0', '<') && get_magic_quotes_gpc())) 
 		{
 			if (is_array($v))
 			{
